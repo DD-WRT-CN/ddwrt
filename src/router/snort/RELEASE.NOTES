@@ -1,0 +1,24 @@
+2017-12-06 - Snort 2.9.11.1
+  
+[*] New Additions
+
+ * Added support to block portscan. In addition to tracking the scanning packets, action(drop/sdrop/reject) will be taken for all the packets, which means snort will block the packet and generate logs.
+
+ * Added support to re-evaluate reputation after reputation update for all flows except those that have already been blacklisted.
+
+[*] Improvements
+
+ * Fixed issue to detect RTP upto two SSRC switches in each traffic direction.
+
+ * Fixed issues related to HTTP POST header flushing, calling file processing directly if it is not a multipart header and changes to avoid expensive copy of segment data by not splitting them when flushing headers.
+
+ * Fixed issue of triggering protocol sweep alert when there are multiple destinations from single source ip protocol scan.
+
+ * Added changes to fix IP portscan for protocol other than ICMP and fixed issue of bad fragment size event not being generated for oversized packets.
+
+ * Added changes to use raw data in case of PDF and SWF files during file processing for SHA calculation and Malware Cloud Lookup.
+
+ * Fixed issue of correct session matching for TCP SYN packets without window scale option so that FTP data channels match the same rule as FTP control channels.
+
+ * Fixed issue of applying new configuration in file inspection after snort reload.
+

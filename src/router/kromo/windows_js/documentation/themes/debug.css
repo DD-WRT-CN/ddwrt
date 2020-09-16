@@ -1,0 +1,25 @@
+div.inspector div.inspectable {
+ padding: 0.25em 0 0.25em 1em;
+ background-color: Gray;
+ color: white;
+ border: outset 2px white;
+ cursor: pointer;
+}
+ 
+div.inspector div.child {
+ margin: 0 0 0 1em;
+}
+ 
+#debug_window_content {  
+ width:250px;
+ height:100px;
+ background-color:#000;
+}
+ 
+#debug {          
+ padding:3px;
+ color:#0f0;
+ font-family:monaco, Tahoma, Verdana, Arial, Helvetica, sans-serif;
+ font-size:10px;
+}
+ 

@@ -1,0 +1,22 @@
+## Copyright (C) 1996-2020 The Squid Software Foundation and contributors
+##
+## Squid software is distributed under GPLv2+ license and includes
+## contributions from numerous individuals and organizations.
+## Please see the COPYING and CONTRIBUTORS files for details.
+##
+
+## DEFAULT_MIME_TABLE      = $(sysconfdir)/mime.conf
+## DEFAULT_ERROR_DIR       = $(datadir)/errors
+
+SUBSTITUTE=sed "\
+	s%@DEFAULT_ERROR_DIR@%$(DEFAULT_ERROR_DIR)%g;\
+	s%@DEFAULT_MIME_TABLE@%$(DEFAULT_MIME_TABLE)%g;\
+	s%@DEFAULT_SSL_CRTD@%$(DEFAULT_SSL_CRTD)%g;\
+	s%@DEFAULT_SSL_DB_DIR@%$(DEFAULT_SSL_DB_DIR)%g;\
+	s%@""PACKAGE_STRING""@%$(PACKAGE_STRING)%g;\
+	s%@SYSCONFDIR@%$(sysconfdir)%g;\
+	"
+
+## Example of how to substitute:
+## squid.8: $(srcdir)/squid.8.in Makefile
+##	$(SUBSTITUTE) < $(srcdir)/squid.8.in > $@

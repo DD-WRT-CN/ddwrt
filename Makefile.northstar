@@ -1,0 +1,36 @@
+#
+# Toplevel Makefile for the Sveasoft Firmware
+#
+# Copyright 2004, Sveasoft
+# All Rights Reserved.
+#
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+#
+# $Id: Makefile,v 1.2 2004/05/02 14:33:32 rwhitby Exp $
+#
+
+RELEASEDIR := $(shell pwd)
+SRCBASE := src
+IMAGEDIR := $(RELEASEDIR)/image
+export PATH := $(RELEASEDIR)/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin:$(PATH)
+export TOOLCHAIN := $(RELEASEDIR)/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin
+
+install: all
+	install -d $(RELEASEDIR)/image
+	$(MAKE) -C src install
+
+all clean:
+	if [ ! -f src/router/.config ]; then \
+		cp src/router/configs/northstar/.config_northstar src/router/.config; \
+	fi
+	$(MAKE) -C src/router/ -f Makefile.northstar $@
+
+distclean:
+	$(MAKE) -C src $@
+	rm -rf $(IMAGEDIR)
+
+.PHONY: all clean install
+

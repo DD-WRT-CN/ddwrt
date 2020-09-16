@@ -1,0 +1,289 @@
+#include "qcom-ipq8064-v2.0.dtsi"
+
+/ {
+	model = "Qualcomm IPQ8065";
+	compatible = "qcom,ipq8065", "qcom,ipq8064";
+
+	qcom,pvs {
+		qcom,pvs-format-a;
+		qcom,speed0-pvs0-bin-v0 =
+			< 1725000000 1262500 >,
+			< 1400000000 1175000 >,
+			< 1000000000 1100000 >,
+			 < 800000000 1050000 >,
+			 < 600000000 1000000 >,
+			 < 384000000 975000 >;
+		qcom,speed0-pvs1-bin-v0 =
+			< 1725000000 1225000 >,
+			< 1400000000 1150000 >,
+			< 1000000000 1075000 >,
+			 < 800000000 1025000 >,
+			 < 600000000 975000 >,
+			 < 384000000 950000 >;
+		qcom,speed0-pvs2-bin-v0 =
+			< 1725000000 1200000 >,
+			< 1400000000 1125000 >,
+			< 1000000000 1050000 >,
+			 < 800000000 1000000 >,
+			 < 600000000 950000 >,
+			 < 384000000 925000 >;
+		qcom,speed0-pvs3-bin-v0 =
+			< 1725000000 1175000 >,
+			< 1400000000 1100000 >,
+			< 1000000000 1025000 >,
+			 < 800000000 975000 >,
+			 < 600000000 925000 >,
+			 < 384000000 900000 >;
+		qcom,speed0-pvs4-bin-v0 =
+			< 1725000000 1150000 >,
+			< 1400000000 1075000 >,
+			< 1000000000 1000000 >,
+			 < 800000000 950000 >,
+			 < 600000000 900000 >,
+			 < 384000000 875000 >;
+		qcom,speed0-pvs5-bin-v0 =
+			< 1725000000 1100000 >,
+			< 1400000000 1025000 >,
+			< 1000000000 950000 >,
+			 < 800000000 900000 >,
+			 < 600000000 850000 >,
+			 < 384000000 825000 >;
+		qcom,speed0-pvs6-bin-v0 =
+			< 1725000000 1050000 >,
+			< 1400000000 975000 >,
+			< 1000000000 900000 >,
+			 < 800000000 850000 >,
+			 < 600000000 800000 >,
+			 < 384000000 775000 >;
+	};
+	
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			compatible = "qcom,krait";
+			device_type = "cpu";
+			reg = <0>;
+			next-level-cache = <&L2>;
+			qcom,acc = <&acc0>;
+			qcom,saw = <&saw0>;
+			clocks = <&kraitcc 0>, <&kraitcc 4>;
+			clock-names = "cpu", "l2";
+			clock-latency-ns = <100000>;
+			cpu-supply = <&smb208_s2a>;
+			voltage-tolerance = <5>;
+			cooling-min-state = <0>;
+			cooling-max-state = <10>;
+			#cooling-cells = <2>;
+			cpu-idle-states = <&CPU_SPC>;
+			cpu_fab_threshold = <1000000000>;
+			operating-points-v2 = <&cpu0_opp_table>;
+			
+		};
+
+		cpu1: cpu@1 {
+			compatible = "qcom,krait";
+			enable-method = "qcom,kpss-acc-v1";
+			device_type = "cpu";
+			reg = <1>;
+			next-level-cache = <&L2>;
+			qcom,acc = <&acc1>;
+			qcom,saw = <&saw1>;
+			clocks = <&kraitcc 1>, <&kraitcc 4>;
+			clock-names = "cpu", "l2";
+			clock-latency-ns = <100000>;
+			cpu-supply = <&smb208_s2b>;
+			voltage-tolerance = <5>;
+			cooling-min-state = <0>;
+			cooling-max-state = <10>;
+			#cooling-cells = <2>;
+			cpu-idle-states = <&CPU_SPC>;
+			cpu_fab_threshold = <1000000000>;
+			operating-points-v2 = <&cpu1_opp_table>;
+			
+
+		};
+		
+		cpu0_opp_table: opp_table0 {
+                compatible = "operating-points-v2";
+                opp-shared;
+                
+                opp@384000000 {
+                        opp-hz = /bits/ 64 <384000000>;
+                        clock-latency-ns = <100000>;
+                };
+                opp@600000000 {
+                        opp-hz = /bits/ 64 <600000000>;
+                        clock-latency-ns = <100000>;
+                };
+                opp@800000000 {
+                        opp-hz = /bits/ 64 <800000000>;
+                        clock-latency-ns = <100000>;
+                };
+                opp@1000000000 {
+                        opp-hz = /bits/ 64 <1000000000>;
+                        clock-latency-ns = <100000>;
+                };
+                opp@1400000000 {
+                        opp-hz = /bits/ 64 <1400000000>;
+                        clock-latency-ns = <100000>;
+                };
+				opp@1725000000 {
+                        opp-hz = /bits/ 64 <1725000000>;
+                        clock-latency-ns = <100000>;
+                };
+                
+        };
+		
+		cpu1_opp_table: opp_table1 {
+                compatible = "operating-points-v2";
+                opp-shared;
+                
+                opp@384000000 {
+                        opp-hz = /bits/ 64 <384000000>;
+                        clock-latency-ns = <100000>;
+                };
+                opp@600000000 {
+                        opp-hz = /bits/ 64 <600000000>;
+                        clock-latency-ns = <100000>;
+                };
+                opp@800000000 {
+                        opp-hz = /bits/ 64 <800000000>;
+                        clock-latency-ns = <100000>;
+                };
+                opp@1000000000 {
+                        opp-hz = /bits/ 64 <1000000000>;
+                        clock-latency-ns = <100000>;
+                };
+                opp@1400000000 {
+                        opp-hz = /bits/ 64 <1400000000>;
+                        clock-latency-ns = <100000>;
+                };
+				opp@1725000000 {
+                        opp-hz = /bits/ 64 <1725000000>;
+                        clock-latency-ns = <100000>;
+                };
+                
+        };
+	};
+
+	soc: soc {
+
+		rpm@108000 {
+
+			regulators {
+
+				smb208_s2a: s2a {
+					regulator-min-microvolt = <775000>;
+					regulator-max-microvolt = <1275000>;
+				};
+
+				smb208_s2b: s2b {
+					regulator-min-microvolt = <775000>;
+					regulator-max-microvolt = <1275000>;
+				};
+			};
+		};
+		
+		nss0: nss@40000000 {
+			compatible = "qcom,nss";
+			qcom,low-frequency = <110000000>;
+			qcom,mid-frequency = <600000000>;
+			qcom,max-frequency = <800000000>;
+		};
+
+		nss1: nss@40800000 {
+			compatible = "qcom,nss";
+			qcom,low-frequency = <110000000>;
+			qcom,mid-frequency = <600000000>;
+			qcom,max-frequency = <800000000>;
+		};
+
+		ss_phy_0: phy@110f8830 {
+			rx_eq = <2>;
+			tx_deamp_3_5db = <32>;
+			mpll = <0xa0>;
+		};
+		ss_phy_1: phy@100f8830 {
+			rx_eq = <2>;
+			tx_deamp_3_5db = <32>;
+			mpll = <0xa0>;
+		};
+
+		/* Temporary fixed regulator */
+		vsdcc_fixed: vsdcc-regulator {
+			compatible = "regulator-fixed";
+			regulator-name = "SDCC Power";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-always-on;
+		};
+
+		sdcc1bam:dma@12402000 {
+			compatible = "qcom,bam-v1.3.0";
+			reg = <0x12402000 0x8000>;
+			interrupts = <0 98 0>;
+			clocks = <&gcc SDC1_H_CLK>;
+			clock-names = "bam_clk";
+			#dma-cells = <1>;
+			qcom,ee = <0>;
+                };
+
+		sdcc3bam:dma@12182000 {
+			compatible = "qcom,bam-v1.3.0";
+			reg = <0x12182000 0x8000>;
+			interrupts = <0 96 0>;
+			clocks = <&gcc SDC3_H_CLK>;
+			clock-names = "bam_clk";
+			#dma-cells = <1>;
+			qcom,ee = <0>;
+		};
+
+		amba {
+			compatible = "arm,amba-bus";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+			sdcc1: sdcc@12400000 {
+				status          = "disabled";
+				compatible      = "arm,pl18x", "arm,primecell";
+				arm,primecell-periphid = <0x00051180>;
+				reg             = <0x12400000 0x2000>;
+				interrupts      = <GIC_SPI 104 IRQ_TYPE_LEVEL_HIGH>;
+				interrupt-names = "cmd_irq";
+				clocks          = <&gcc SDC1_CLK>, <&gcc SDC1_H_CLK>;
+				clock-names     = "mclk", "apb_pclk";
+				bus-width       = <8>;
+				max-frequency   = <96000000>;
+				non-removable;
+				cap-sd-highspeed;
+				cap-mmc-highspeed;
+				vmmc-supply = <&vsdcc_fixed>;
+				dmas = <&sdcc1bam 2>, <&sdcc1bam 1>;
+				dma-names = "tx", "rx";
+			};
+
+			sdcc3: sdcc@12180000 {
+				compatible      = "arm,pl18x", "arm,primecell";
+				arm,primecell-periphid = <0x00051180>;
+				status          = "disabled";
+				reg             = <0x12180000 0x2000>;
+				interrupts      = <GIC_SPI 102 IRQ_TYPE_LEVEL_HIGH>;
+				interrupt-names = "cmd_irq";
+				clocks          = <&gcc SDC3_CLK>, <&gcc SDC3_H_CLK>;
+				clock-names     = "mclk", "apb_pclk";
+				bus-width       = <8>;
+				cap-sd-highspeed;
+				cap-mmc-highspeed;
+				max-frequency   = <192000000>;
+				#mmc-ddr-1_8v;
+				sd-uhs-sdr104;
+				sd-uhs-ddr50;
+				vqmmc-supply = <&vsdcc_fixed>;
+				dmas = <&sdcc3bam 2>, <&sdcc3bam 1>;
+				dma-names = "tx", "rx";
+			};
+		};
+	};
+};

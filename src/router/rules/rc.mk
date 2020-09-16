@@ -1,0 +1,2 @@
+rc: nvram shared libnet
+

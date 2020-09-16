@@ -1,0 +1,8 @@
+The gettext-dummy library provides stubs for gettext() family of functions.
+The library might be useful when porting a progarm that requires these
+functions to a system that does not provide them neither in libc nor with
+a separate libintl library. The proper way to fix this problem is to use
+GNU gettext, but in some rare cases it might make sense to use gettext-dummy
+instead. For instance, if proper I18N is not important for your project and
+you do not want to waste your time porting GNU gettext. Or if your target
+system is extremely resource scarce.

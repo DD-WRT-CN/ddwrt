@@ -1,0 +1,138 @@
+#!/bin/sh
+nv=/usr/sbin/nvram
+/bin/mkdir -p /tmp/oet/pid
+cd /tmp/oet/pid
+rmmod eoip
+tunnels=`$nv get oet_tunnels`
+for i in `seq 1 $tunnels`
+do
+	if test -e "${i}.pid" 
+	then 
+	    emf del iface $(getbridge oet${i}) oet${i} 2>&1 > /dev/null
+	    brctl delif $(getbridge oet${i}) oet${i} 2>&1 > /dev/null
+	    ip tunnel del oet${i} 2>&1 > /dev/null
+	    ip link del oet${i} 2>&1 > /dev/null
+	    wg set oet${i} peer $($nv get oet${i}_peerkey) remove 2>&1 > /dev/null
+	    rm -f ${i}.pid
+	fi
+	if [ `$nv get oet${i}_en` -eq 1 ]
+	then
+		if [ `$nv get oet${i}_proto` -eq 2 ]
+		then
+			mkdir -p /tmp/wireguard
+			insmod ipv6
+			insmod udp_tunnel
+			insmod ip6_udp_tunnel
+			insmod ip_tunnel
+			insmod wireguard
+			logger -p user.info "Enable WireGuard interface oet${i} on port $($nv get oet${i}_port)"
+			if [ -z "$($nv get oet${i}_mtu)" ]
+			then
+				overhead=40
+				if [ "$($nv get ipv6_enable)" == "1" ]
+				then
+					overhead=80
+				fi
+				if [ "$($nv get wan_proto)" != "disabled" ]
+				then
+					nvram set oet${i}_mtu=$(($($nv get wan_mtu) - $overhead))
+				else
+					nvram set oet${i}_mtu=$((1500 - $overhead))
+				fi
+			fi
+			ip link add oet${i} type wireguard
+			wg set oet${i} listen-port $($nv get oet${i}_port)
+			$nv get oet${i}_private > /tmp/wireguard/oet${i}_private
+			wg set oet${i} private-key /tmp/wireguard/oet${i}_private
+			rm /tmp/wireguard/oet${i}_private
+			
+			## egc add code to regenerate public key from private key if private key is set manually
+			$nv set oet${i}_public=$($nv get oet${i}_private|wg pubkey)
+			
+			peers=$((`$nv get oet${i}_peers` - 1))
+			$nv set oet${i}_bridged=0
+			for p in `seq 0 $peers`
+			do
+				PSKARG1=
+				PSKARG2=
+				ENDPOINTARG1=
+				ENDPOINTARG2=
+				if [ `$nv get oet${i}_usepsk${p}` -eq 1 ]
+				then
+					$nv get oet${i}_psk${p} > /tmp/wireguard/oet${i}_psk${p}
+					PSKARG1="preshared-key" 
+					PSKARG2="/tmp/wireguard/oet${i}_psk${p}"
+				fi
+				if [ `$nv get oet${i}_endpoint${p}` -eq 1 ]
+				then
+					logger -p user.info "Establish WireGuard tunnel with peer endpoint $($nv get oet${i}_rem${p}):$($nv get oet${i}_peerport${p})"
+					ENDPOINTARG1="endpoint"
+					ENDPOINTARG2="$($nv get oet${i}_rem${p}):$($nv get oet${i}_peerport${p})"
+					#egc: add way out if default route is set via tunnel
+					
+					# # not working on  WAP's as wan_gateway is 0.0.0.0 on WAP 's should use lan_gateway first ask BS if this is feasible
+					# GATEWAY="$(nvram get wan_gateway)"
+					# [[ $GATEWAY = "0.0.0.0" ]] && { GATEWAY="$(nvram get lan_gateway)"; logger -p user.info "WireGuard no wan_gateway detected, assuming WAP"; }
+					# route add -host $($nv get oet${i}_rem${p}) gw $GATEWAY dev $(get_wanface) 2>&1 > /dev/null
+					
+					route add -host $($nv get oet${i}_rem${p}) gw $($nv get wan_gateway) dev $(get_wanface) 2>&1 > /dev/null
+				fi
+				wg set oet${i} peer $($nv get oet${i}_peerkey${p}) persistent-keepalive $($nv get oet${i}_ka${p}) $PSKARG1 $PSKARG2 allowed-ips "$($nv get oet${i}_aip${p})" $ENDPOINTARG1 $ENDPOINTARG2 &
+				#rm -f /tmp/wireguard/oet${i}_psk${p}
+			done
+			ifconfig oet${i} promisc up 2>&1 > /dev/null
+			ip link set mtu $($nv get oet${i}_mtu) up dev oet${i} 2>&1 > /dev/null
+			ip addr add $($nv get oet${i}_ipaddr)/$(getmask $($nv get oet${i}_netmask)) dev oet${i} 2>&1 > /dev/null
+			echo enable > ${i}.pid
+			#add routes based on allowed IP's has to be after interface is up
+			#spawn process so that it does not stop, tunnel is send as parameter maybe use nohup
+			/usr/bin/eop-tunnel-raip.sh $i &
+
+		fi
+		if [ `$nv get oet${i}_proto` -eq 1 ]
+		then
+			insmod gre
+			insmod eoip
+			logger -p user.info "Enable Mikrotik Tunnel interface oet${i} on address $($nv get oet${i}_local) with peer $($nv get oet${i}_rem)"
+			eoip add tunnel-id $($nv get oet${i}_id) name oet${i} remote $($nv get oet${i}_rem) local $($nv get oet${i}_local)
+			if [ `$nv get oet${i}_bridged` -eq 1 ]
+			then
+				ifconfig oet${i} up 2>&1 > /dev/null
+				ifconfig oet${i} promisc 2>&1 > /dev/null
+				brctl addif $(getbridge oet${i}) oet${i} 2>&1 > /dev/null
+				setportprio $(getbridge oet${i}) oet${i}
+				emf add iface $(getbridge oet${i}) oet${i} 2>&1 > /dev/null
+			else
+				ifconfig oet${i} promisc up 2>&1 > /dev/null
+				ip addr add $($nv get oet${i}_ipaddr)/$(getmask $($nv get oet${i}_netmask)) dev oet${i} 2>&1 > /dev/null
+			fi
+			echo enable > ${i}.pid
+		fi
+		if [ `$nv get oet${i}_proto` -eq 0 ]
+		then
+			insmod etherip
+			if [ `$nv get oet${i}_local` == "0.0.0.0" ]
+			then
+				logger -p user.info "Enable RFC 3378 EtherIP Tunnel interface oet${i} with peer $($nv get oet${i}_rem)"
+				ip tunnel add oet${i} mode etherip remote $($nv get oet${i}_rem) local any
+			else
+				logger -p user.info "Enable RFC 3378 EtherIP Tunnel interface oet${i} on address $($nv get oet${i}_local) with peer $($nv get oet${i}_rem)"
+				ip tunnel add oet${i} mode etherip remote $($nv get oet${i}_rem) local $($nv get oet${i}_local)			
+			fi
+			if [ `$nv get oet${i}_bridged` -eq 1 ]
+			then
+				ip link set dev oet${i} up
+				ifconfig oet${i} up 2>&1 > /dev/null
+				ifconfig oet${i} promisc 2>&1 > /dev/null
+				brctl addif $(getbridge oet${i}) oet${i} 2>&1 > /dev/null
+				setportprio $(getbridge oet${i}) oet${i}
+				emf add iface $(getbridge oet${i}) oet${i} 2>&1 > /dev/null
+			else
+				ip link set dev oet${i} up
+				ifconfig oet${i} promisc 2>&1 > /dev/null
+				ip addr add $($nv get oet${i}_ipaddr)/$(getmask $($nv get oet${i}_netmask)) dev oet${i} 2>&1 > /dev/null
+    			fi
+			echo enable > ${i}.pid
+		fi
+	fi
+done

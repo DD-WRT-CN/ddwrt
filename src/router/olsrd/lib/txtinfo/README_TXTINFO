@@ -1,0 +1,61 @@
+============
+INTRODUCTION
+============
+
+The txtinfo plugin is an info plugin.
+
+Please first read what's written in the file lib/info/README_INFO.
+
+
+==================
+SUPPORTED COMMANDS
+==================
+
+Grouped information:
+* /all
+* /runtime
+* /startup
+
+Runtime information:
+* /nei
+* /lin
+* /rou
+* /hna
+* /mid
+* /top
+* /gat
+* /int
+* /2ho
+* /sgw
+
+A special case for Freifunk, combining /nei and /lin:
+* /neighbours
+
+Start-up information:
+* /ver
+* /config  (not supported, will output nothing)
+* /plugins (not supported, will output nothing)
+
+The current configuration, formatted for writing directly to a configuration
+file, like /etc/olsrd/olsrd.conf:
+* /con
+
+
+====================
+PLUGIN CONFIGURATION
+====================
+
+The plugin is configured with the generic info plugin configuration parameters
+and with 1 extra parameter.
+
+The port in the generic info plugin configuration is set to 2006.
+
+LoadPlugin "olsrd_txtinfo.so.1.1"
+{
+  # <generic info plugin configuration>
+  # The option "httpheaders" is overridden to "false" by default
+
+  # Set to true to include VTime values into Link/Topology commands
+  # Default: false
+  # PlParam "vtime" "false"
+}

@@ -1,0 +1,399 @@
+#
+# Broadcom Linux Router Makefile
+#
+# Copyright 2001-2003, Broadcom Corporation
+# All Rights Reserved.
+#
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+#
+# $Id: Makefile,v 1.2 2005/09/26 11:06:58 seg Exp $
+#
+
+include .config
+ifneq ($(wildcard ../cy_conf.mak),)
+  include ../cy_conf.mak
+endif
+
+#
+# Paths
+
+CONFIG_NOOPT=y
+OPENSER_MODULES := sl tm rr maxfwd usrloc registrar dbtext textops exec auth auth_db nathelper
+OPENSER_MODULE_FILES := $(foreach module,$(OPENSER_MODULES),openser/modules/$(module)/$(module).so)
+OPENSSL_NO_CIPHERS:= no-idea no-md2 no-mdc2 no-rc5 no-sha0 no-rmd160 no-aes192
+OPENSSL_OPTIONS:= shared no-ec no-err no-fips no-hw no-krb5 no-threads zlib-dynamic
+
+# Source bases
+
+export PLATFORM LINUXDIR LIBDIR USRLIBDIR
+export TOP := $(shell pwd)
+export SRCBASE := $(shell (cd $(TOP)/.. && pwd -P))
+
+
+# Set the HAL directory if you have the HAL sources
+
+# Set the Atheros Rate Control directory if you have the proprietary rate control
+export ATH_RATE=ath_rate/sample
+
+#
+# Cross-compile environment variables
+#
+
+# Build platform
+export BUILD := i386-pc-linux-gnu
+export HOSTCC := gcc
+
+# uClibc wrapper
+export ARCH:=$(PLATFORM)
+ifeq ($(CONFIG_UCLIBC),y)
+export PLATFORM := $(PLATFORM)-uclibc
+endif
+
+#export LINUXDIR := $(SRCBASE)/linux/linux.v24
+ifeq ($(ARCH),mips)
+export LINUXDIR := $(SRCBASE)/linux/brcm63xx/linux-2.6.17
+endif
+#ifeq ($(ARCH),armeb)
+#export LINUXDIR := $(SRCBASE)/linux/xscale/linux-2.6.23
+#endif
+ifeq ($(ARCH),mipsel)
+export LINUXDIR := $(SRCBASE)/kernel/rb500/linux-2.6.17-rc5
+endif
+ifeq ($(ARCH),i386)
+export LINUXDIR := $(SRCBASE)/kernel/wrap/linux-2.6.16.7
+endif
+
+export KERNELRELEASE = $(shell cat $(LINUXDIR)/include/config/kernel.release 2> /dev/null)
+
+#export KERNELRELEASE = $(shell cat $(LINUXDIR)/.kernelrelease 2> /dev/null)
+
+#ifeq ($(PLATFORM),mipsel)
+#export CROSS_COMPILE := mipsel-linux-
+#export CONFIGURE := ./configure mipsel-linux --build=$(BUILD)
+#export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../mipsel-linux && pwd -P)
+#endif
+
+#ifeq ($(PLATFORM),mipsel-uclibc)
+export CROSS_COMPILE := aarch64-linux-uclibc-
+export CONFIGURE := ./configure $(ARCH)-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+#endif
+
+#ifeq ($(CONFIG_BCMWPA2),y)
+#export CFLAGS += -DBCMWPA2 
+#endif
+
+export BASEOPT:=-O2
+#export ARCH:= mipsel
+
+ifeq ($(ARCH),mipsel)
+export COPTS:=$(BASEOPT) -pipe -mips32 -mtune=mips32 -funit-at-a-time 
+endif
+ifeq ($(ARCH),armeb)
+export COPTS:=$(BASEOPT) -pipe -mtune=xscale -march=armv5te -Wa,-mcpu=xscale -mno-thumb-interwork -mno-thumb 
+endif
+ifeq ($(ARCH),arm)
+#export COPTS:=$(BASEOPT) -pipe -mtune=cortex-a9 -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard
+export COPTS:=$(BASEOPT) -pipe -mtune=cortex-a9 -march=armv7-a -mfpu=neon -mfloat-abi=hard -fno-caller-saves -fno-plt
+#-D_FILE_OFFSET_BITS=64
+endif
+ifeq ($(ARCH),aarch64)
+#export COPTS:=$(BASEOPT) -pipe -mtune=cortex-a9 -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard
+export COPTS:=$(BASEOPT) -pipe -mtune=thunderx -march=armv8-a -fno-caller-saves -fno-plt
+#-D_FILE_OFFSET_BITS=64
+endif
+ifeq ($(ARCH),mips)
+export COPTS:=$(BASEOPT) -pipe -mips32 -mtune=mips32 -funit-at-a-time 
+endif
+ifeq ($(ARCH),i386)
+export COPTS:=$(BASEOPT) -pipe -march=i486 -funit-at-a-time 
+endif
+
+export CC := ccache $(CROSS_COMPILE)gcc
+export CXX := ccache $(CROSS_COMPILE)g++
+export AR := $(CROSS_COMPILE)ar
+export AS := $(CROSS_COMPILE)as
+export LD := $(CROSS_COMPILE)ld
+export NM := $(CROSS_COMPILE)nm
+export RANLIB := $(CROSS_COMPILE)ranlib
+export STRIP := $(CROSS_COMPILE)strip
+export SIZE := $(CROSS_COMPILE)size
+
+export CFLAGS := $(COPTS)
+
+#
+# Install and target directories
+#
+
+export PLATFORMDIR := $(TOP)/$(PLATFORM)
+export INSTALLDIR := $(PLATFORMDIR)/install
+export TARGETDIR := $(PLATFORMDIR)/target
+
+ifeq ($(PLATFORM),mipsel)
+obj-y += libcrypto
+endif
+#
+# Configuration
+#
+CONFIG_IPTABLES=y
+
+include rules/configs.mk
+
+obj-clean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-clean)
+obj-install := $(foreach obj,$(obj-y),$(obj)-install)
+obj-distclean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-distclean)
+
+all: install_headers build_date clean_target $(obj-y) $(LINUXDIR)/.config kernel
+
+build_date:
+	echo "#define BUILD_DATE \"$(shell date +%D)\"" > ../../opt/build.h 
+
+
+kernelsource:
+	mkdir -p $(LINUXDIR)
+	wget http://www.de.kernel.org/pub/linux/kernel/v2.6/linux-$(KERNELVERSION).tar.bz2 -O $(LINUXDIR)/../linux-$(KERNELVERSION).tar.bz2
+	cd $(LINUXDIR)/../ && tar -xvjf $(LINUXDIR)/../linux-$(KERNELVERSION).tar.bz2
+	cd $(LINUXDIR)/../ && ./patch $(KERNELVERSION)
+
+include kernel-features.mk
+
+kernel:
+	# Also build kernel
+	cp $(LINUXDIR)/.config_newport $(LINUXDIR)/.config
+
+	$(kernelfeatures)
+	$(MAKE) -C $(LINUXDIR) ARCH=arm64 oldconfig	
+
+	if ! grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -j 4 -C $(LINUXDIR) Image ARCH=arm64 dtbs CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" ; \
+	fi
+	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -j 4 -C $(LINUXDIR) modules ARCH=arm64 CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" ; \
+	fi
+
+	rm -rf $(TARGETDIR)/lib/modules
+	$(MAKE) -C $(LINUXDIR) modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR)
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/build
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/source
+
+	-$(MAKE) -f Makefile.thunderx ath9k
+	-$(MAKE) -f Makefile.thunderx ath9k-install
+	-$(MAKE) -f Makefile.thunderx libutils
+	-$(MAKE) -f Makefile.thunderx madwifi
+	-$(MAKE) -f Makefile.thunderx madwifi-install
+	-$(MAKE) -f Makefile.thunderx batman-adv
+	-$(MAKE) -f Makefile.thunderx batman-adv-install
+	-$(MAKE) -f Makefile.thunderx ndpi-netfilter
+	-$(MAKE) -f Makefile.thunderx ndpi-netfilter-install
+ifeq ($(CONFIG_ZFS),y)
+	-$(MAKE) -f Makefile.thunderx zfs
+	-$(MAKE) -f Makefile.thunderx zfs-install
+endif
+ifeq ($(CONFIG_I2C_GPIO_CUSTOM),y)
+	-$(MAKE) -f Makefile.thunderx i2c-custom-gpio
+	-$(MAKE) -f Makefile.thunderx i2c-custom-gpio-install
+endif
+ifeq ($(CONFIG_SMBD),y)
+	-$(MAKE) -f Makefile.thunderx smbd
+	-$(MAKE) -f Makefile.thunderx smbd-install
+endif
+ifeq ($(CONFIG_WIREGUARD),y)
+	-$(MAKE) -f Makefile.thunderx wireguard
+	-$(MAKE) -f Makefile.thunderx wireguard-install
+endif
+ifeq ($(CONFIG_CAKE),y)
+	-$(MAKE) -f Makefile.thunderx cake
+	-$(MAKE) -f Makefile.thunderx cake-install
+	-$(MAKE) -f Makefile.thunderx fq_codel_fast
+	-$(MAKE) -f Makefile.thunderx fq_codel_fast-install
+endif
+	-$(MAKE) -f Makefile.thunderx uniwip-gpio
+	-$(MAKE) -f Makefile.thunderx uniwip-gpio-install
+
+	find $(ARCH)-uclibc/install $(ARCH)-uclibc/target  -name \*.ko | \
+		xargs $(ARCH)-linux-nm | \
+		awk '$$1 == "U" { print $$2 } ' | \
+		sort -u > $(LINUXDIR)/mod_symtab.txt
+	$(ARCH)-linux-nm -n $(LINUXDIR)/vmlinux.o | grep ' r __ksymtab' | sed -e 's,................ r __ksymtab_,,' > $(LINUXDIR)/kernel_symtab.txt
+	$(ARCH)-linux-nm -n $(LINUXDIR)/vmlinux.o | grep ' R __ksymtab' | sed -e 's,................ R __ksymtab_,,' >> $(LINUXDIR)/kernel_symtab.txt
+	grep -f $(LINUXDIR)/mod_symtab.txt $(LINUXDIR)/kernel_symtab.txt -F > $(LINUXDIR)/sym_include.txt
+	grep -vf $(LINUXDIR)/mod_symtab.txt $(LINUXDIR)/kernel_symtab.txt -F > $(LINUXDIR)/sym_exclude.txt
+	( \
+		echo '#define SYMTAB_KEEP \'; \
+		cat $(LINUXDIR)/sym_include.txt | \
+			awk '{print "KEEP(*(___ksymtab+" $$$$1 ")) \\" }'; \
+		echo; \
+		echo '#define SYMTAB_KEEP_GPL \'; \
+		cat $(LINUXDIR)/sym_include.txt | \
+			awk '{print "KEEP(*(___ksymtab_gpl+" $$$$1 ")) \\" }'; \
+		echo; \
+		echo '#define SYMTAB_DISCARD \'; \
+		cat $(LINUXDIR)/sym_exclude.txt | \
+			awk '{print "*(___ksymtab+" $$$$1 ") \\" }'; \
+		echo; \
+		echo '#define SYMTAB_DISCARD_GPL \'; \
+		cat $(LINUXDIR)/sym_exclude.txt | \
+			awk '{print "*(___ksymtab_gpl+" $$$$1 ") \\" }'; \
+		echo; \
+	) > $(LINUXDIR)/symtab.h
+	rm -f $(LINUXDIR)/vmlinux
+	$(MAKE) -j 4 -C $(LINUXDIR) Image dtbs  ARCH=arm64 EXTRA_LDSFLAGS="-I$(LINUXDIR) -include symtab.h" CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-"
+	
+testimage:
+	cp tools/newport/base3.img $(ARCH)-uclibc/newport.img
+	# inject kernel.itb into FATFS
+##	tools/newport/fatfs-tool -i $(ARCH)-uclibc/newport.img mkfs
+	tools/newport/fatfs-tool -i $(ARCH)-uclibc/newport.img cp $(ARCH)-uclibc/kernel.itb /
+	# inject bootscript into FATFS
+	cd $(ARCH)-uclibc && ../tools/newport/mkimage -A arm64 -T script -C none -d $(TOP)/tools/newport/newport.scr newport.scr
+	#tools/newport/fatfs-tool -i $(ARCH)-uclibc/newport.img cp tools/newport/boot/* /
+	tools/newport/fatfs-tool -i $(ARCH)-uclibc/newport.img cp $(ARCH)-uclibc/newport.scr /
+	# copy openwrt rootfs to image
+#	$(LINUXDIR)/scripts/squashfs/mksquashfs4 $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -comp xz -root-owned -noappend -Xbcj arm
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/newport.img bs=16M seek=1
+	# compress it
+	gzip -k -f $(ARCH)-uclibc/newport.img 
+	./tools/newp $(ARCH)-uclibc/newport.img $(ARCH)-uclibc/newport-webupgrade.bin
+
+include common.mk
+
+install package: clean_target $(filter-out lib.$(ARCH)-install,$(obj-install)) $(LINUXDIR)/.config
+        # Install binaries into target directory
+	install -d $(TARGETDIR)
+	for dir in $(wildcard $(patsubst %,$(INSTALLDIR)/%,$(obj-y))) ; do \
+	    (cd $${dir} && tar cpf - .) | (cd $(TARGETDIR) && tar xpf -) \
+	done
+	mkdir -p $(ARCH)-uclibc/target/etc/config
+	mkdir -p $(ARCH)-uclibc/target/etc/kaid
+	mkdir -p $(ARCH)-uclibc/target/etc/langpack
+	cp ./opt/bin/ipkg $(ARCH)-uclibc/target/bin
+	cd  $(ARCH)-uclibc/target/lib
+	cp ./opt/etc/preinit $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/postinit $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/ipkg.conf $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/config/* $(ARCH)-uclibc/target/etc/config
+	cp ./opt/usr/lib/smb.conf $(ARCH)-uclibc/target/usr/lib
+	ln -sf ../tmp/smbshare $(ARCH)-uclibc/target/www/smb
+	# optimize the crypto library by removing unneeded symbols
+	# Install (and possibly optimize) C library
+#	$(MAKE) -f Makefile.thunderx lib.$(ARCH)-install
+	# optimize the others library by removing unneeded symbols
+	$(MAKE) -f Makefile.thunderx optimize-lib
+	# Install modules into filesystem
+	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -C $(LINUXDIR) modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR) ; \
+	fi
+ifeq ($(CONFIG_MADWIFI),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/wl
+endif
+ifeq ($(CONFIG_WP18),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/scsi
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/e1000
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/char
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/ipv6
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/sunrpc
+endif
+ifeq ($(CONFIG_WAVESAT),y)
+	make -f Makefile.thunderx wavesat-install
+endif
+#	cp lib.$(ARCH)/libgcc_s.so.1 $(TARGETDIR)/lib
+	find $(TARGETDIR) -name "wl_*.o"  | xargs rm -rf
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+endif
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/build
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/source
+        # Prepare filesystem
+        # Make sure mksquashfs-2.0 is used
+	cd $(TARGETDIR)  &&  find . -iname "CVS" | xargs rm -rf
+	cd $(TARGETDIR)  &&  find . -iname ".svn" | xargs rm -rf
+
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/extra -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/extra
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net
+	#e2fsck -y -f $(ARCH)-uclibc/root.fs
+	./busybox/examples/depmod.pl -F $(LINUXDIR)/System.map -b $(ARCH)-uclibc/target/lib/modules
+#	tar --directory=$(TARGETDIR) --remove-files -cvvjf $(TARGETDIR)/etc/local.tar.bz2 usr/local
+	rm -rf $(TARGETDIR)/usr/local
+	mkdir $(TARGETDIR)/usr/local
+ifeq ($(CONFIG_KAID),y)
+	cp kaid/kaid $(TARGETDIR)/usr/sbin
+endif
+#	mv $(TARGETDIR)/usr/lib/services.so $(TARGETDIR)/lib
+	export STRIP_KMOD="$(LINUXDIR)/scripts/strip-kmod.sh" && \
+	export STRIP="sstrip" && \
+	$(LINUXDIR)/scripts/rstrip.sh $(TARGETDIR)
+	cd $(TARGETDIR) && $(TOP)/misc/rootprep.sh
+	$(TOP)/../../tools/removewhitespace.sh $(TOP)/../../tools $(TARGETDIR)/etc/config
+
+	cp $(LINUXDIR)/arch/arm64/boot/Image $(ARCH)-uclibc/vmlinux
+	gzip -f $(ARCH)-uclibc/vmlinux
+	cd $(ARCH)-uclibc && ../tools/newport/mkits.sh -o kernel.its -k vmlinux.gz -C gzip -v "dd-wrt"
+	cd $(ARCH)-uclibc && ../tools/newport/mkimage -f kernel.its kernel.itb
+
+#FIXED_SIZE = 0x100000 # 1M of Fixed data, see flash_create()
+#FATFS_SIZE = 0xD00000 # 13312KB of FAT filesystem data, see fatfs_create()
+
+#	start_sector=2048
+#	end_sector=28671
+#    # Create a partition table in the file
+#    # Note that FatFS currently only looks at the first partition
+#    p1 = "1:%d:%d " % (start_sector, end_sector)
+#    p2 = "0x83:16M:%s" % partsize
+#    subprocess.check_call(["./ptgen", "-o", filename,
+#        "-p", p1, "-p", p2])
+#
+#
+#	./tools/newport/ptgen -o $(ARCH)-uclibc/newport.img -p "1:2048:28671" -p "0x83:16M:128M"
+
+	cp tools/newport/base3.img $(ARCH)-uclibc/newport.img
+	# inject kernel.itb into FATFS
+##	tools/newport/fatfs-tool -i $(ARCH)-uclibc/newport.img mkfs
+	tools/newport/fatfs-tool -i $(ARCH)-uclibc/newport.img cp $(ARCH)-uclibc/kernel.itb /
+	# inject bootscript into FATFS
+	cd $(ARCH)-uclibc && ../tools/newport/mkimage -A arm64 -T script -C none -d $(TOP)/tools/newport/newport.scr newport.scr
+	#tools/newport/fatfs-tool -i $(ARCH)-uclibc/newport.img cp tools/newport/boot/* /
+	tools/newport/fatfs-tool -i $(ARCH)-uclibc/newport.img cp $(ARCH)-uclibc/newport.scr /
+	# copy openwrt rootfs to image
+	$(LINUXDIR)/scripts/squashfs/mksquashfs4 $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -comp xz -root-owned -noappend -Xbcj arm -b 262144
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/newport.img bs=16M seek=1
+	# compress it
+	gzip -k -f $(ARCH)-uclibc/newport.img 
+	./tools/newp $(ARCH)-uclibc/newport.img $(ARCH)-uclibc/newport-webupgrade.bin
+	
+#	cp $(LINUXDIR)/arch/arm64/boot/Image $(TARGETDIR)/boot
+#	./tools/ext2/genext2fs -d $(ARCH)-uclibc/target -b 300000 -i 65536 -N 65536 -q $(ARCH)-uclibc/disc_emmc.img
+#	gzip -9 $(ARCH)-uclibc/disc_emmc.img
+
+
+	
+	
+	
+#	$(LINUXDIR)/scripts/squashfs/mksquashfs-lzma $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -noappend -root-owned -le
+#	mkfs.jffs2 --pad --big-endian --squash -e 0x20000 -o $(ARCH)-uclibc/dd-wrt.jffs2 -d $(ARCH)-uclibc/target
+#	echo -ne '\xde\xad\xc0\xde' >> $(ARCH)-uclibc/dd-wrt.jffs2
+#	dd if=$(LINUXDIR)/arch/arm/boot/uImage of=$(ARCH)-uclibc/thunderx-firmware.raw1 bs=131072 conv=sync
+#	dd if=$(LINUXDIR)/arch/arm/boot/uImage of=$(ARCH)-uclibc/thunderx-firmware.raw2 bs=131072 conv=sync
+#	cat $(ARCH)-uclibc/dd-wrt.jffs2>>$(ARCH)-uclibc/thunderx-firmware.raw1
+#	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/thunderx-firmware.raw2
+#	-./tools/trx_n -m 30000000 -o $(ARCH)-uclibc/thunderx-firmware-jffs.bin $(ARCH)-uclibc/thunderx-firmware.raw1
+#	./tools/trx_n -m 30000000 -o $(ARCH)-uclibc/thunderx-firmware-squashfs.bin $(ARCH)-uclibc/thunderx-firmware.raw2
+
+
+
+include rules/all.mk
+
+.PHONY: all clean distclean mrproper install package
+.PHONY: conf mconf oldconf kconf kmconf config menuconfig oldconfig
+.PHONY: dummy fixkc libnet libpcap
+
+
+

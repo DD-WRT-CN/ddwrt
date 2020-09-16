@@ -1,0 +1,2073 @@
+#8
+# Broadcom Linux Router Makefile
+#
+# Copyright 2001-2003, Broadcom Corporation
+# All Rights Reserved.
+#
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+#
+# $Id: Makefile,v 1.2 2005/09/26 11:06:58 seg Exp $
+#
+
+include .config
+ifneq ($(wildcard ../cy_conf.mak),)
+  include ../cy_conf.mak
+endif
+
+CONFIG_WPE72_SIZE?=0x3d0000
+CONFIG_MUSL=y
+#CONFIG_NOOPT=y
+
+#
+# Paths
+#
+OPENSER_MODULES := sl tm rr maxfwd usrloc registrar dbtext textops exec auth auth_db nathelper
+OPENSER_MODULE_FILES := $(foreach module,$(OPENSER_MODULES),openser/modules/$(module)/$(module).so)
+OPENSSL_NO_CIPHERS:= no-idea no-md2 no-mdc2 no-rc5 no-sha0 no-rmd160 no-aes192
+OPENSSL_OPTIONS:= shared no-ec no-err no-fips no-hw no-krb5 no-threads zlib-dynamic no-engines
+
+# Source bases
+
+export PLATFORM LINUXDIR LIBDIR USRLIBDIR
+export TOP := $(shell pwd)
+export SRCBASE := $(shell (cd $(TOP)/.. && pwd -P))
+
+
+# Set the HAL directory if you have the HAL sources
+
+# Set the Atheros Rate Control directory if you have the proprietary rate control
+export ATH_RATE=ath_rate/sample
+
+#
+# Cross-compile environment variables
+#
+
+# Build platform
+export BUILD := i386-pc-linux-gnu
+export HOSTCC := gcc
+
+# uClibc wrapper
+export ARCH:=$(PLATFORM)
+ifeq ($(CONFIG_UCLIBC),y)
+export PLATFORM := $(PLATFORM)-uclibc
+endif
+
+#export LINUXDIR := $(SRCBASE)/linux/linux.v24
+#ifeq ($(ARCH),mips)
+#export LINUXDIR := $(SRCBASE)/linux/ar531x/linux-2.6.22
+#endif
+ifeq ($(ARCH),armeb)
+export LINUXDIR := $(SRCBASE)/linux/xscale/linux-2.6.17
+endif
+ifeq ($(ARCH),powerpc)
+export LINUXDIR := $(SRCBASE)/linux/magicbox/linux-2.6.19
+endif
+ifeq ($(ARCH),mipsel)
+export LINUXDIR := $(SRCBASE)/kernel/rb500/linux-2.6.17-rc5
+endif
+ifeq ($(ARCH),i386)
+export LINUXDIR := $(SRCBASE)/kernel/wrap/linux-2.6.16.7
+endif
+
+export KERNELRELEASE = $(shell cat $(LINUXDIR)/include/config/kernel.release 2> /dev/null)
+
+#ifeq ($(KERNELRELEASE),"")
+#export KERNELRELEASE = $(shell cat $(LINUXDIR)/include/config/kernel.release 2> /dev/null)
+#endif
+#ifeq ($(PLATFORM),mipsel)
+#export CROSS_COMPILE := mipsel-linux-
+#export CONFIGURE := ./configure mipsel-linux --build=$(BUILD)
+#export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../mipsel-linux && pwd -P)
+#endif
+
+#ifeq ($(PLATFORM),mipsel-uclibc)
+export CROSS_COMPILE := $(ARCH)-linux-uclibc-
+export CONFIGURE := ./configure $(ARCH)-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+#endif
+
+#ifeq ($(CONFIG_BCMWPA2),y)
+#export CFLAGS += -DBCMWPA2 
+#endif
+
+export BASEOPT:=-Os
+#export ARCH:= mipsel
+
+
+
+ifeq ($(ARCH),mipsel)
+export COPTS:=$(BASEOPT) -pipe -mips32 -mtune=mips32 -funit-at-a-time 
+endif
+ifeq ($(ARCH),armeb)
+export COPTS:=$(BASEOPT) -pipe -mtune=xscale -march=armv5te -Wa,-mcpu=xscale -mno-thumb-interwork -mno-thumb -funit-at-a-time 
+endif
+ifeq ($(ARCH),mips)
+export COPTS:=$(BASEOPT) -pipe -mips32r2 -mtune=34kc -msoft-float  -fno-caller-saves  -mno-branch-likely
+endif
+ifeq ($(ARCH),powerpc)
+export COPTS:=$(BASEOPT) -pipe -funit-at-a-time -mcpu=405fp -mtune=405fp -mmultiple -mstring -mno-bit-align 
+endif
+ifeq ($(ARCH),i386)
+export COPTS:=$(BASEOPT) -pipe -march=i486 -funit-at-a-time 
+endif
+
+export CC := ccache $(CROSS_COMPILE)gcc
+export CXX := ccache $(CROSS_COMPILE)g++
+export AR := $(CROSS_COMPILE)ar
+export AS := $(CROSS_COMPILE)as
+export LD := $(CROSS_COMPILE)ld
+export NM := $(CROSS_COMPILE)nm
+export RANLIB := $(CROSS_COMPILE)ranlib
+export STRIP := $(CROSS_COMPILE)strip
+export SIZE := $(CROSS_COMPILE)size
+export CFLAGS := $(COPTS)
+export MIPS16_OPT:= -minterlink-mips16 -mips16
+
+#
+# Install and target directories
+#
+
+export PLATFORMDIR := $(TOP)/$(PLATFORM)
+export INSTALLDIR := $(PLATFORMDIR)/install
+export TARGETDIR := $(PLATFORMDIR)/target
+
+ifeq ($(PLATFORM),mipsel)
+obj-y += libcrypto
+endif
+#
+# Configuration
+#
+CONFIG_IPTABLES=y
+include rules/configs.mk
+
+obj-clean := $(foreach obj,$(obj-y) $(obj-n) $(obj-m),$(obj)-clean)
+obj-install := $(foreach obj,$(obj-y) $(obj-m),$(obj)-install)
+obj-distclean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-distclean)
+
+#
+# Basic rules
+#
+
+
+all: kernel install_headers build_date clean_target $(obj-y) $(obj-m) $(LINUXDIR)/.config
+
+
+build_date:
+	echo "#define BUILD_DATE \"$(shell date +%D)\"" > ../../opt/build.h 
+	echo "CONFIG_MUSL=y" >> .config 
+
+drop-sections	= .comment
+strip-flags	= $(addprefix --remove-section=,$(drop-sections))
+
+kernelsource:
+	mkdir -p $(LINUXDIR)
+	wget http://www.de.kernel.org/pub/linux/kernel/v2.6/linux-$(KERNELVERSION).tar.bz2 -O $(LINUXDIR)/../linux-$(KERNELVERSION).tar.bz2
+	cd $(LINUXDIR)/../ && tar -xvjf $(LINUXDIR)/../linux-$(KERNELVERSION).tar.bz2
+	cd $(LINUXDIR)/../ && ./patch $(KERNELVERSION)
+
+include kernel-features.mk
+
+kernel:
+        # Also build kernel
+	# Also build kernel
+ifeq ($(CONFIG_LSX),y)
+	cp $(LINUXDIR)/.config_lsx $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_LSX_PROTO),y)
+	cp $(LINUXDIR)/.config_lsx_4m $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_RS),y)
+	cp $(LINUXDIR)/.config_rs $(LINUXDIR)/.config
+endif
+
+ifeq ($(CONFIG_RSPRO),y)
+	cp $(LINUXDIR)/.config_rspro $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_PB44),y)
+	cp $(LINUXDIR)/.config_pb44 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_AP83),y)
+	cp $(LINUXDIR)/.config_ap83 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR1043),y)
+	cp $(LINUXDIR)/.config_wr1043 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR941),y)
+	cp $(LINUXDIR)/.config_wr941 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WA901),y)
+	cp $(LINUXDIR)/.config_wa901 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR741),y)
+	cp $(LINUXDIR)/.config_wr741 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_MR3420),y)
+	cp $(LINUXDIR)/.config_mr3240 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR842),y)
+	cp $(LINUXDIR)/.config_wr842 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR741V4),y)
+	cp $(LINUXDIR)/.config_wr741v4 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR703),y)
+	cp $(LINUXDIR)/.config_wr703 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WRT400),y)
+	cp $(LINUXDIR)/.config_wrt400 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR825),y)
+	cp $(LINUXDIR)/.config_dir825 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WNDR3700),y)
+	cp $(LINUXDIR)/.config_wndr3700 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WNDR3700V2),y)
+	cp $(LINUXDIR)/.config_wndr3700v2 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WP543),y)
+	cp $(LINUXDIR)/.config_wp543 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WP546),y)
+	cp $(LINUXDIR)/.config_wp546 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_UBNTM),y)
+	cp $(LINUXDIR)/.config_ar724x $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WRT160NL),y)
+	cp $(LINUXDIR)/.config_wrt160nl $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_TEW632BRP),y)
+	cp $(LINUXDIR)/.config_tew632brp $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WHRHPGN),y)
+	cp $(LINUXDIR)/.config_ar7240_nousb $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WNR2000),y)
+	cp $(LINUXDIR)/.config_ar7240_nousb $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WNR2200),y)
+	cp $(LINUXDIR)/.config_wnr2200 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR615E),y)
+	cp $(LINUXDIR)/.config_dir615e $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR615I),y)
+	cp $(LINUXDIR)/.config_dir615i $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_UBNTTI),y)
+	cp $(LINUXDIR)/.config_dir615i $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR842V2),y)
+	cp $(LINUXDIR)/.config_wr842v2 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_TG2521),y)
+	cp $(LINUXDIR)/.config_tg2521 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_JA76PF),y)
+	cp $(LINUXDIR)/.config_jjplus $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_JWAP003),y)
+	cp $(LINUXDIR)/.config_jjplus_jwap003 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ALFAAP94),y)
+	cp $(LINUXDIR)/.config_alfaap94 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WZRHPAG300NH),y)
+	cp $(LINUXDIR)/.config_wzrhpag300nh $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WZRG450),y)
+	cp $(LINUXDIR)/.config_wzrg450 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WZRG300NH2),y)
+	cp $(LINUXDIR)/.config_wzrg300nh2 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR632),y)
+	cp $(LINUXDIR)/.config_dir632 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_HORNET),y)
+	cp $(LINUXDIR)/.config_hornet $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_CARAMBOLA),y)
+	cp $(LINUXDIR)/.config_carambola $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WASP),y)
+	cp $(LINUXDIR)/.config_wasp $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_PERU),y)
+	cp $(LINUXDIR)/.config_peru $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_FMS2111),y)
+	cp $(LINUXDIR)/.config_fms2111 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_RAMBUTAN),y)
+	cp $(LINUXDIR)/.config_rambutan $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR825C1),y)
+	cp $(LINUXDIR)/.config_dir825c1 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ARCHERC25),y)
+	cp $(LINUXDIR)/.config_archerc25 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_MMS344),y)
+	cp $(LINUXDIR)/.config_dir825c1 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_CPE880),y)
+	cp $(LINUXDIR)/.config_dir825c1 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_RB2011),y)
+	cp $(LINUXDIR)/.config_rb2011 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WDR2543),y)
+	cp $(LINUXDIR)/.config_wdr2543 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_UBNTXW),y)
+	cp $(LINUXDIR)/.config_ubntxw $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_JJAP93),y)
+	cp $(LINUXDIR)/.config_ar7240_nousb $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_JJAP005),y)
+	cp $(LINUXDIR)/.config_ar7240_nousb $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_JJAP501),y)
+	cp $(LINUXDIR)/.config_ar7240_nousb $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_AC722),y)
+	cp $(LINUXDIR)/.config_ar7240_nousb $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_AC622),y)
+	cp $(LINUXDIR)/.config_ar7240_nousb $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WNDR3700V4),y)
+	cp $(LINUXDIR)/.config_wndr3700v4 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DAP2230),y)
+	cp $(LINUXDIR)/.config_dap2230 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR710),y)
+ifeq ($(CONFIG_WR710V1),y)
+	cp $(LINUXDIR)/.config_carambola $(LINUXDIR)/.config
+endif
+	sed -i 's/\# CONFIG_AG7240_GE0_IS_CONNECTED is not set/CONFIG_AG7240_GE0_IS_CONNECTED=y/g' $(LINUXDIR)/.config
+	sed -i 's/\# CONFIG_WR741 is not set/CONFIG_WR741=y/g' $(LINUXDIR)/.config
+	echo "# CONFIG_WZRG450 is not set" >> $(LINUXDIR)/.config
+	echo "# CONFIG_AR7242_RTL8309G_PHY is not set" >> $(LINUXDIR)/.config
+	echo "# CONFIG_AR7242_VIR_PHY is not set" >> $(LINUXDIR)/.config
+	echo "# CONFIG_AR7242_RGMII_PHY is not set" >> $(LINUXDIR)/.config
+	echo "CONFIG_AR7242_S16_PHY=y" >> $(LINUXDIR)/.config
+	echo "CONFIG_WR710=y" >> $(LINUXDIR)/.config
+	echo "CONFIG_GL150=y" >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR710 is not set" >> $(LINUXDIR)/.config
+	echo "# CONFIG_GL150 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ALFANX),y)
+	echo CONFIG_ALFANX=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_ALFANX is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_LOCOXW),y)
+	echo CONFIG_XWLOCO=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_XWLOCO is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_M400XW),y)
+	echo CONFIG_XWM400=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_XWM400 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_UAPAC),y)
+	echo CONFIG_UAPAC=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_UAPAC is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_UAPACPRO),y)
+	echo CONFIG_UAPACPRO=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_UAPACPRO is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_NANOAC),y)
+	echo CONFIG_NANOAC=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_NANOAC is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR859),y)
+	echo CONFIG_DIR859=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_DIR859 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR650AC),y)
+	echo CONFIG_WR650AC=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR650AC is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_E355AC),y)
+	echo CONFIG_E355AC=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_E355AC is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_AP120C),y)
+	sed -i 's/\# CONFIG_AT803X_PHY is not set/CONFIG_AT803X_PHY=y/g' $(LINUXDIR)/.config
+	echo CONFIG_AP120C=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_AP120C is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_E325N),y)
+	echo CONFIG_E325N=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_E325N is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR615N),y)
+	echo CONFIG_WR615N=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR615N is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_XD9531),y)
+	sed -i 's/\# CONFIG_LEDS_TRIGGER_NETDEV is not set/CONFIG_LEDS_TRIGGER_NETDEV=y/g' $(LINUXDIR)/.config
+	echo CONFIG_XD9531=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_XD9531 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_E380AC),y)
+	sed -i 's/\# CONFIG_AT803X_PHY is not set/CONFIG_AT803X_PHY=y/g' $(LINUXDIR)/.config
+	echo CONFIG_E380AC=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_E380AC is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_XD3200),y)
+	echo CONFIG_XD3200=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_XD3200 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WZR450HP2),y)
+	echo CONFIG_WZR450HP2=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WZR450HP2 is not set" >> $(LINUXDIR)/.config
+endif
+
+ifeq ($(CONFIG_AP135),y)
+	echo CONFIG_AP135=y >> $(LINUXDIR)/.config
+ifneq ($(CONFIG_MMS344),y)
+	sed -i 's/\CONFIG_USB_EHCI_AR9130=y/# CONFIG_USB_EHCI_AR9130 is not set/g' $(LINUXDIR)/.config
+endif
+else
+	echo "# CONFIG_AP135 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DAP3310),y)
+	sed -i 's/\# CONFIG_LEDS_TRIGGER_NETDEV is not set/CONFIG_LEDS_TRIGGER_NETDEV=y/g' $(LINUXDIR)/.config
+	echo CONFIG_DAP3310=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_DAP3310 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR1043V2),y)
+	echo CONFIG_WR1043V2=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR1043V2 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ARCHERC7),y)
+	echo CONFIG_ARCHERC7=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_ARCHERC7 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ARCHERC25),y)
+	sed -i 's/\CONFIG_DIR825C1=y/# CONFIG_DIR825C1 is not set/g' $(LINUXDIR)/.config
+	echo CONFIG_ARCHERC25=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_ARCHERC25 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WDR4900V2),y)
+	echo CONFIG_WDR4900V2=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WDR4900V2 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR1043V4),y)
+	echo CONFIG_WR1043V4=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR1043V4 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR1043V5),y)
+	echo CONFIG_WR1043V5=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR1043V5 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ARCHERC7V4),y)
+	echo CONFIG_ARCHERC7V4=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_ARCHERC7V4 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ARCHERC7V5),y)
+	echo CONFIG_ARCHERC7V5=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_ARCHERC7V5 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ARCHERA7V5),y)
+	echo CONFIG_ARCHERA7V5=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_ARCHERA7V5 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_UBNTM),y)
+	echo CONFIG_UBNTFIX=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_UBNTFIX is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DAP3662),y)
+	echo CONFIG_DAP3662=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_DAP3662 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DAP2330),y)
+	sed -i 's/\# CONFIG_AT803X_PHY is not set/CONFIG_AT803X_PHY=y/g' $(LINUXDIR)/.config
+	echo CONFIG_DAP2330=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_DAP2330 is not set" >> $(LINUXDIR)/.config
+
+endif
+ifeq ($(CONFIG_DAP2230),y)
+	echo CONFIG_DAP2230=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_DAP2230 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_KERNEL_ELF_CORE),y)
+	sed -i 's/\# CONFIG_ELF_CORE is not set/CONFIG_ELF_CORE=y/g' $(LINUXDIR)/.config
+endif
+	$(kernelfeatures)
+ifeq ($(CONFIG_E2100),y)
+	sed -i 's/\# CONFIG_E2100L is not set/CONFIG_E2100L=y/g' $(LINUXDIR)/.config
+else
+ifeq ($(CONFIG_WRT160NL),y)
+	sed -i 's/\# CONFIG_WRT160NL is not set/CONFIG_WRT160NL=y/g' $(LINUXDIR)/.config
+endif
+endif
+ifeq ($(CONFIG_WR810N),y)
+	echo CONFIG_WR810N=y >> $(LINUXDIR)/.config
+	echo "# CONFIG_DIR615I is not set" >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR810N is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WR841V8),y)
+	echo CONFIG_WR841V8=y >> $(LINUXDIR)/.config
+	echo "# CONFIG_DIR615I is not set" >> $(LINUXDIR)/.config
+ifeq ($(CONFIG_WR841V9),y)
+	echo CONFIG_WR841V9=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR841V9 is not set" >> $(LINUXDIR)/.config
+endif
+
+ifeq ($(CONFIG_WR941V6),y)
+	echo CONFIG_WR941V6=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WR941V6 is not set" >> $(LINUXDIR)/.config
+endif
+else
+ifeq ($(CONFIG_DIR615I),y)
+	echo CONFIG_DIR615I=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_DIR615I is not set" >> $(LINUXDIR)/.config
+endif
+	echo "# CONFIG_WR841V8 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WA901),y)
+	echo CONFIG_WA901=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WA901 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WDR4300),y)
+	echo CONFIG_WDR4300=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WDR4300 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WDR3500),y)
+	echo CONFIG_WDR3500=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WDR3500 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WDR2543),y)
+	echo CONFIG_WDR2543=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WDR2543 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_LIMA),y)
+	echo CONFIG_LIMA=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_LIMA is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_PERU),y)
+	echo CONFIG_PERU=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_PERU is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_FMS2111),y)
+	sed -i 's/\# CONFIG_LEDS_TRIGGER_NETDEV is not set/CONFIG_LEDS_TRIGGER_NETDEV=y/g' $(LINUXDIR)/.config
+	echo CONFIG_FMS2111=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_FMS2111 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_RAMBUTAN),y)
+	echo CONFIG_RAMBUTAN=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_RAMBUTAN is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_CPE880),y)
+	sed -i 's/\# CONFIG_LEDS_TRIGGER_NETDEV is not set/CONFIG_LEDS_TRIGGER_NETDEV=y/g' $(LINUXDIR)/.config
+	echo CONFIG_CPE880=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_CPE880 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WA7510),y)
+	echo CONFIG_WA7510=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WA7510 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_MMS344),y)
+	echo CONFIG_MMS344=y >> $(LINUXDIR)/.config
+	sed -i 's/\# CONFIG_USB_SERIAL_QUALCOMM is not set/CONFIG_USB_SERIAL_QUALCOMM=m/g' $(LINUXDIR)/.config
+else
+	echo "# CONFIG_MMS344 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_JWAP606),y)
+	echo CONFIG_JWAP606=y >> $(LINUXDIR)/.config
+	sed -i 's/\# CONFIG_AT803X_PHY is not set/CONFIG_AT803X_PHY=y/g' $(LINUXDIR)/.config
+else
+	echo "# CONFIG_JWAP606 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR862),y)
+	echo CONFIG_DIR862=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_DIR862 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_ERC),y)
+	sed -i 's/\# CONFIG_ERC is not set/CONFIG_ERC=y/g' $(LINUXDIR)/.config
+	echo CONFIG_ERC=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_ERC is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WILLY),y)
+	sed -i 's/\# CONFIG_WILLY is not set/CONFIG_WILLY=y/g' $(LINUXDIR)/.config
+	echo CONFIG_WILLY=y >> $(LINUXDIR)/.config
+	sed -i 's/\# CONFIG_AT803X_PHY is not set/CONFIG_AT803X_PHY=y/g' $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WILLY is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_EHCI),y)
+	sed -i 's/\# CONFIG_USB_EHCI_HCD is not set/CONFIG_USB_EHCI_HCD=m/g' $(LINUXDIR)/.config
+	echo "CONFIG_USB_EHCI_ROOT_HUB_TT=y" >> $(LINUXDIR)/.config
+	echo "CONFIG_USB_EHCI_TT_NEWSCHED=y" >> $(LINUXDIR)/.config
+	echo "CONFIG_USB_EHCI_HCD_PLATFORM=m" >> $(LINUXDIR)/.config
+	echo "# CONFIG_USB_SISUSBVGA is not set" >> $(LINUXDIR)/.config
+	echo "CONFIG_USB_EHCI_AR9130=y" >> $(LINUXDIR)/.config
+	echo "# CONFIG_USB_CHIPIDEA is not set" >> $(LINUXDIR)/.config
+	echo "# CONFIG_USB_SIERRA_NET is not set" >> $(LINUXDIR)/.config
+	echo "# CONFIG_USB_NET_INT51X1 is not set" >> $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WPE72),y)
+	sed -i 's/\# CONFIG_LEDS_TRIGGER_NETDEV is not set/CONFIG_LEDS_TRIGGER_NETDEV=y/g' $(LINUXDIR)/.config
+	echo "CONFIG_WPE72=y" >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_WPE72 is not set" >> $(LINUXDIR)/.config
+endif
+ifneq ($(CONFIG_ATH10K),y)
+	sed -i 's/\CONFIG_THERMAL=y/# CONFIG_THERMAL is not set/g' $(LINUXDIR)/.config
+	sed -i 's/\CONFIG_THERMAL=m/# CONFIG_THERMAL is not set/g' $(LINUXDIR)/.config
+	sed -i 's/\CONFIG_HWMON=y/# CONFIG_HWMON is not set/g' $(LINUXDIR)/.config
+	sed -i 's/\CONFIG_HWMON=m/# CONFIG_HWMON is not set/g' $(LINUXDIR)/.config
+endif
+
+	rm -f $(LINUXDIR)/symtab.h
+	touch $(LINUXDIR)/symtab.h
+
+	$(MAKE) -C $(LINUXDIR) oldconfig	
+	if ! grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -j 4 -C $(LINUXDIR) vmlinux CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" ; \
+	fi
+	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -j 4 -C $(LINUXDIR) modules CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" ; \
+	fi
+	$(ARCH)-linux-objcopy -O binary $(LINUXDIR)/vmlinux $(ARCH)-uclibc/vmlinus_old 
+
+	rm -rf $(TARGETDIR)/lib/modules
+	$(MAKE) -C $(LINUXDIR) modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR)
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/build
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/source
+
+	-$(MAKE) -f Makefile.pb42 ath9k
+	-$(MAKE) -f Makefile.pb42 ath9k-install
+	-$(MAKE) -f Makefile.pb42 libutils
+	-$(MAKE) -f Makefile.pb42 madwifi
+	-$(MAKE) -f Makefile.pb42 madwifi-install
+ifeq ($(CONFIG_BATMANADV),y)
+	-$(MAKE) -f Makefile.pb42 batman-adv
+	-$(MAKE) -f Makefile.pb42 batman-adv-install
+endif
+ifeq ($(CONFIG_OPENDPI),y)
+	-$(MAKE) -f Makefile.pb42 ndpi-netfilter
+	-$(MAKE) -f Makefile.pb42 ndpi-netfilter-install
+endif
+ifeq ($(CONFIG_ZFS),y)
+	-$(MAKE) -f Makefile.pb42 zfs
+	-$(MAKE) -f Makefile.pb42 zfs-install
+endif
+ifeq ($(CONFIG_CAKE),y)
+	-$(MAKE) -f Makefile.pb42 cake
+	-$(MAKE) -f Makefile.pb42 cake-install
+	-$(MAKE) -f Makefile.pb42 fq_codel_fast
+	-$(MAKE) -f Makefile.pb42 fq_codel_fast-install
+endif
+ifeq ($(CONFIG_SMBD),y)
+	-$(MAKE) -f Makefile.pb42 smbd
+	-$(MAKE) -f Makefile.pb42 smbd-install
+endif
+ifeq ($(CONFIG_WIREGUARD),y)
+	-$(MAKE) -f Makefile.pb42 wireguard
+	-$(MAKE) -f Makefile.pb42 wireguard-install
+endif
+ifeq ($(CONFIG_SERVICEGATE),y)
+	-$(MAKE) -f Makefile.pb42 servicegate
+	-$(MAKE) -f Makefile.pb42 servicegate-install
+endif
+ifeq ($(CONFIG_I2C_GPIO_CUSTOM),y)
+	-$(MAKE) -f Makefile.pb42 i2c-gpio-custom
+	-$(MAKE) -f Makefile.pb42 i2c-gpio-custom-install
+endif
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+endif
+ifneq ($(CONFIG_JFFS2),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jffs2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzma
+endif
+ifneq ($(CONFIG_IPV6),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/ipv6
+endif
+ifneq ($(CONFIG_BONDING),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/bonding
+endif
+ifneq ($(CONFIG_USBIP),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/staging/usbip
+endif
+ifneq ($(CONFIG_USB),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/scsi
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/cdrom
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/isofs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/exportfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/fat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/vfat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/msdos
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/mbcache.ko
+endif
+ifneq ($(CONFIG_UQMI),y)
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/usb/qmi_wwan.ko
+endif
+ifeq ($(CONFIG_3G_ONLY),y)
+#	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls
+endif
+ifneq ($(CONFIG_USB_ADVANCED),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext4
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/btrfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd	
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd2	
+endif
+
+	find $(ARCH)-uclibc/install $(ARCH)-uclibc/target  -name \*.ko | \
+		xargs $(ARCH)-linux-nm | \
+		awk '$$1 == "U" { print $$2 } ' | \
+		sort -u > $(LINUXDIR)/mod_symtab.txt
+	$(ARCH)-linux-nm -n $(LINUXDIR)/vmlinux.o | grep ' r __ksymtab' | sed -e 's,........ r __ksymtab_,,' > $(LINUXDIR)/kernel_symtab.txt
+	$(ARCH)-linux-nm -n $(LINUXDIR)/vmlinux.o | grep ' R __ksymtab' | sed -e 's,........ R __ksymtab_,,' >> $(LINUXDIR)/kernel_symtab.txt
+	grep -f $(LINUXDIR)/mod_symtab.txt $(LINUXDIR)/kernel_symtab.txt -F > $(LINUXDIR)/sym_include.txt
+	grep -vf $(LINUXDIR)/mod_symtab.txt $(LINUXDIR)/kernel_symtab.txt -F > $(LINUXDIR)/sym_exclude.txt
+	( \
+		echo '#define SYMTAB_KEEP \'; \
+		cat $(LINUXDIR)/sym_include.txt | \
+			awk '{print "KEEP(*(___ksymtab+" $$$$1 ")) \\" }'; \
+		echo; \
+		echo '#define SYMTAB_KEEP_GPL \'; \
+		cat $(LINUXDIR)/sym_include.txt | \
+			awk '{print "KEEP(*(___ksymtab_gpl+" $$$$1 ")) \\" }'; \
+		echo; \
+		echo '#define SYMTAB_DISCARD \'; \
+		cat $(LINUXDIR)/sym_exclude.txt | \
+			awk '{print "*(___ksymtab+" $$$$1 ") \\" }'; \
+		echo; \
+		echo '#define SYMTAB_DISCARD_GPL \'; \
+		cat $(LINUXDIR)/sym_exclude.txt | \
+			awk '{print "*(___ksymtab_gpl+" $$$$1 ") \\" }'; \
+		echo; \
+	) > $(LINUXDIR)/symtab.h
+	rm -f $(LINUXDIR)/vmlinux
+	if ! grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -j 4 -C $(LINUXDIR) vmlinux EXTRA_LDSFLAGS="-I$(LINUXDIR) -include symtab.h" CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" ; \
+	fi
+	$(ARCH)-linux-objcopy -O binary $(LINUXDIR)/vmlinux $(ARCH)-uclibc/vmlinus 
+
+
+validate: $(eval FILE_SIZE = $(shell stat -c %s $(EX_PATH)))
+	@if [ ${FILE_SIZE} -gt ${MAXIMUM_SIZE} ] ; then \
+		echo "Image is to large. Maximum size ${MAXIMUM_SIZE} current size  ${FILE_SIZE}." ; \
+		rm -f $(EX_PATH) ; \
+	fi
+
+
+include common.mk
+
+wndr:
+	./tools/wndr3700/wndr3700v4 \
+		$(ARCH)-uclibc/root.uimage \
+		$(ARCH)-uclibc/root.wndr3700v4
+
+
+	mkimage -A mips -O linux -T filesystem -C none \
+		-a 0xbf070000 -e 0xbf070000 \
+		-n 'wndr3700v4-V1.1.4.68' \
+		-d $(ARCH)-uclibc/root.fs \
+		$(ARCH)-uclibc/rootfs.uimage
+
+	./tools/wndr3700/wndr3700v4 \
+		$(ARCH)-uclibc/rootfs.uimage \
+		$(ARCH)-uclibc/rootfs.wndr3700v4
+	sync	
+	-fsync $(ARCH)-uclibc/rootfs.wndr3700v4
+	-fsync $(ARCH)-uclibc/root.wndr3700v4
+	dd if=$(TOP)/$(ARCH)-uclibc/root.wndr3700v4 bs=$(shell expr $(shell expr $(shell expr $(shell expr $(shell expr 128 + $(shell du -b $(TOP)/$(ARCH)-uclibc/root.wndr3700v4 | awk {'print $$1'})) / 131072) + 1) \* 131072) - 64) conv=sync of=$(TOP)/$(ARCH)-uclibc/root.wndr3700v4.final
+	sync
+	-fsync $(TOP)/$(ARCH)-uclibc/root.wndr3700v4.final
+	dd if=$(ARCH)-uclibc/rootfs.wndr3700v4 bs=64 count=1 conv=fsync >> $(ARCH)-uclibc/root.wndr3700v4.final
+	( \
+	    dd if=$(ARCH)-uclibc/root.wndr3700v4.final bs=$(shell du -b $(ARCH)-uclibc/root.wndr3700v4.final | awk {'print $$1'}) conv=sync; \
+	    dd if=$(ARCH)-uclibc/root.fs bs=64k; \
+	) > $(ARCH)-uclibc/aligned.wndr3700v4
+	./tools/wndr3700/mkdniimg -B WNDR3700v4 -v 1.1.4.68 -r "" -i $(ARCH)-uclibc/aligned.wndr3700v4 -o $(ARCH)-uclibc/wndr3700v4-factory.img -H "29763948+128+128"
+	./tools/wndr3700/mkdniimg -B WNDR4300 -v 1.1.4.68 -r "" -i $(ARCH)-uclibc/aligned.wndr3700v4 -o $(ARCH)-uclibc/wndr4300-factory.img -H "29763948+0+128+128+2x2+3x3"
+	./tools/trx_n  -m 40000000 -o$(ARCH)-uclibc/wndr3700v4-webflash.bin  $(ARCH)-uclibc/aligned.wndr3700v4 
+	-$(MAKE) -f Makefile.pb42 validate MAXIMUM_SIZE=26214400 EX_PATH=$(ARCH)-uclibc/wndr3700v4-factory.img
+	-$(MAKE) -f Makefile.pb42 validate MAXIMUM_SIZE=26214400 EX_PATH=$(ARCH)-uclibc/wndr4300-factory.img
+
+
+
+install package: clean_target $(filter-out lib.$(ARCH)-install,$(obj-install)) $(LINUXDIR)/.config
+	install -d $(TARGETDIR)
+	install -d $(ARCH)-uclibc/modules
+	for dir in $(wildcard $(patsubst %,$(INSTALLDIR)/%,$(obj-y))) ; do \
+	    (cd $${dir} && tar cpf - .) | (cd $(TARGETDIR) && tar xpf -) \
+	done
+	for dir in $(wildcard $(patsubst %,%,$(obj-m))) ; do \
+	    (cd $(INSTALLDIR)/$${dir} && tar -cvvzf $(TOP)/$(ARCH)-uclibc/modules/$${dir}.tar.gz .) \
+	done
+	mkdir -p $(ARCH)-uclibc/target/etc/config
+	mkdir -p $(ARCH)-uclibc/target/etc/kaid
+	mkdir -p $(ARCH)-uclibc/target/etc/langpack
+#	cp ./opt/bin/ipkg $(ARCH)-uclibc/target/bin
+	cd  $(ARCH)-uclibc/target/lib
+	cp ./opt/etc/preinit $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/postinit $(ARCH)-uclibc/target/etc
+#	cp ./opt/etc/ipkg.conf $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/config/* $(ARCH)-uclibc/target/etc/config
+ifeq ($(CONFIG_HTTPD),y)
+	cp ./opt/usr/lib/smb.conf $(ARCH)-uclibc/target/usr/lib
+	ln -sf ../tmp/smbshare $(ARCH)-uclibc/target/www/smb
+endif
+ifeq ($(CONFIG_KAID),y)
+	cp kaid/kaid $(TARGETDIR)/usr/sbin
+endif
+ifeq ($(CONFIG_RC),y)
+#	mv $(TARGETDIR)/usr/lib/services.so $(TARGETDIR)/lib
+endif
+
+	# optimize the crypto library by removing unneeded symbols
+	#[ ! -d libcrypto ] || $(MAKE) -C libcrypto optimize
+	#[ ! -d libcrypto ] || $(MAKE) -C libcrypto optimize
+	# Install (and possibly optimize) C library
+
+	# optimize the others library by removing unneeded symbols
+	$(MAKE) -f Makefile.pb42 optimize-lib
+	# Install modules into filesystem
+	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -C $(LINUXDIR) modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR) ; \
+	fi
+ifeq ($(CONFIG_MADWIFI),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/wl
+endif
+#	mkdir -p $(TARGETDIR)/lib/modules/2.4.32/kernel/drivers/net/ctmisc
+#	cp ../wl/ctmisc/ctmisc.o $(TARGETDIR)/lib/modules/2.4.32/kernel/drivers/net/ctmisc
+	##not used yet
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#cp ./switch/switch-core.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+#	cp ./viarhine/via-rhine.o $(TARGETDIR)/lib/modules/2.4.32/kernel/drivers/net
+
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#cp ./switch/switch-adm.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#cp ./switch/switch-robo.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc1/kernel/drivers/net/et
+	#cp ../et/linux/et.o $(TARGETDIR)/lib/modules/2.4.32-rc1/kernel/drivers/net/et
+	
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/et.4702
+	#cp ../et.4702/linux/4702et.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/et.4702
+	# robo switch
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/robo
+	#cp ../robo/linux/robo.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/robo
+
+	find $(TARGETDIR) -name "wl_*.o"  | xargs rm -rf
+	# quick n dirty - stuff Nikki's module where it belongs
+	#mkdir $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/adm6996
+#	if [ "$(CONFIG_MMC)" = "y" ] ; then \
+#	mkdir $(TARGETDIR)/lib/modules/2.4.32/kernel/fs/mmc ; \
+#	cp mmc/mmc.o $(TARGETDIR)/lib/modules/2.4.32/kernel/fs/mmc ; \
+#	fi ; 
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+endif
+ifneq ($(CONFIG_JFFS2),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jffs2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzma
+endif
+ifneq ($(CONFIG_IPV6),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/ipv6
+endif
+ifneq ($(CONFIG_BONDING),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/bonding
+endif
+ifneq ($(CONFIG_USBIP),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/staging/usbip
+endif
+ifneq ($(CONFIG_USB),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/scsi
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/cdrom
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/isofs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/exportfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/fat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/vfat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/msdos
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/mbcache.ko
+endif
+ifneq ($(CONFIG_UQMI),y)
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/usb/qmi_wwan.ko
+endif
+ifeq ($(CONFIG_3G_ONLY),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls
+endif
+ifneq ($(CONFIG_USB_ADVANCED),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext4
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/btrfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd	
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd2	
+endif
+
+
+#ifeq ($(CONFIG_MSSID),y)
+#	cp adm6996.v24/adm6996.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/adm6996/adm6996.o
+#else	
+#	cp adm6996/adm6996.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/adm6996/adm6996.o
+#endif
+
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/build
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/source
+	
+        # Prepare filesystem
+	cd $(TARGETDIR) && $(TOP)/misc/rootprep.sh
+        # Make sure mksquashfs-2.0 is used
+#	$(MAKE) -C $(LINUXDIR)/scripts/squashfs mksquashfs
+	cd $(TARGETDIR)  &&  find . -iname "CVS" | xargs rm -rf
+	cd $(TARGETDIR)  &&  find . -iname ".svn" | xargs rm -rf
+#	cp viarhine/pci-scan.o $(TARGETDIR)/lib/modules/2.4.32/kernel/drivers/net/pci-scan.o
+#	cp -f test/* $(TARGETDIR)/lib/modules/2.4.33-pre1/kernel/drivers/net
+	
+#	mknod $(TARGETDIR)/dev/cfa b 13 0
+#	mknod $(TARGETDIR)/dev/cfa1 b 13 1
+#	mknod $(TARGETDIR)/dev/cfa2 b 13 2
+#	mknod $(TARGETDIR)/dev/cfa3 b 13 3
+#	mknod $(TARGETDIR)/dev/cfa4 b 13 4
+#	umount $(TARGETDIR)
+	find $(TARGETDIR)/lib -name *.ko -exec mips-linux-strip --strip-unneeded --remove-section=.comment {} +		
+	#e2fsck -y -f $(ARCH)-uclibc/root.fs
+	find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/extra -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/extra
+	#e2fsck -y -f $(ARCH)-uclibc/root.fs
+	./busybox/examples/depmod.pl -F $(LINUXDIR)/System.map -b $(ARCH)-uclibc/target/lib/modules
+	
+	#cd $(TARGETDIR)
+#	tar --directory=$(TARGETDIR) --remove-files -cvvjf $(TARGETDIR)/etc/local.tar.bz2 usr/local
+	rm -rf $(TARGETDIR)/usr/local
+	mkdir $(TARGETDIR)/usr/local
+#ifneq ($(CONFIG_NOOPT),y)
+	export STRIP_KMOD="$(LINUXDIR)/scripts/strip-kmod.sh" && \
+	export STRIP="sstrip" && \
+	$(LINUXDIR)/scripts/rstrip.sh $(TARGETDIR)
+#endif
+ifeq ($(CONFIG_WRK54G),y)
+	misc/makeDevs $(ARCH)-uclibc/target	
+endif
+	@true
+#ifeq ($(CONFIG_LIBOPT),y)
+#	cp -f lib.$(ARCH)/libpthread.so.0 $(TARGETDIR)/lib
+#	sstrip/sstrip $(TARGETDIR)/lib/libpthread.so.0
+#endif
+
+
+	$(TOP)/../../tools/removewhitespace.sh $(TOP)/../../tools $(TARGETDIR)/etc/config
+#ifeq ($(CONFIG_DLNA),y)
+#	$(LINUXDIR)/scripts/squashfs/mksquashfs-lzma $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -noappend -be -b 262144
+#else
+	$(LINUXDIR)/scripts/squashfs/mksquashfs4 $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -comp xz -nopad  -root-owned -noappend -b 262144
+
+#	$(LINUXDIR)/scripts/squashfs/mksquashfs-lzma $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -noappend -be
+#endif
+	mkfs.jffs2 --pad --big-endian --squash -e 0x10000 -o $(ARCH)-uclibc/dd-wrt.jffs2 -d $(ARCH)-uclibc/target
+	
+	cp $(LINUXDIR)/vmlinux $(ARCH)-uclibc/vmlinux
+
+	cp $(ARCH)-uclibc/vmlinux $(ARCH)-uclibc/vmlinux.bak 
+	mips-linux-uclibc-objcopy -O binary $(strip-flags) -g $(ARCH)-uclibc/vmlinux $(ARCH)-uclibc/vmlinux.bin
+	lzma e -lc1 -lp2 -pb2 -d25 $(ARCH)-uclibc/vmlinux.bin $(ARCH)-uclibc/vmlinux.lzma
+	lzma e $(ARCH)-uclibc/vmlinux.bin $(ARCH)-uclibc/vmlinux.tpl
+#	gzip -9 $(ARCH)-uclibc/vmlinux.bin $(ARCH)-uclibc/vmlinux.gz
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.bin.l7 bs=65536 conv=sync
+
+#	dd if=$(ARCH)-uclibc/vmlinux.gz of=$(ARCH)-uclibc/vmlinux.bin.gz bs=65536 conv=sync
+ifeq ($(CONFIG_LSX),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.lsx bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.lsx
+endif
+
+ifeq ($(CONFIG_AP83),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ap83-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_GL150),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ap96-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_AP96),y)
+ifeq ($(CONFIG_DIR825C1),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=65536 conv=sync
+else
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+endif
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ap96-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_AP94),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+ifeq ($(CONFIG_DIR825),y)
+ifneq ($(CONFIG_TEW673GRU),y)
+	-$(MAKE) -f Makefile.pb42 validate MAXIMUM_SIZE=6356992 EX_PATH=$(ARCH)-uclibc/aligned.uimage
+endif
+endif
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ap94-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_ALFAAP94),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ap94-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_WZRG300NH),y)
+	tools/wzrg300nh/tftpfw $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh-firmware.tftp
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),MULTI)
+
+	tools/bufenc/encryptRC4 WZR-HP-G300NH 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh-firmware.enc
+	tools/bufenc/encryptRC4 WZR-HP-G300NH 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg301nh-firmware.enc
+ifeq ($(CONFIG_BUFFALO),y)
+	tools/bufenc/mkfw -hw_ver=2 -hcrypt="Buffalo" "WZR-HP-G300NH" "WZR-HP-G300NH" "1.74" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh-firmware.enc $(ARCH)-uclibc/wzrg300nh-firmware_MULTI.enc
+	tools/bufenc/mkfw -hw_ver=3 -hcrypt="Buffalo" "WZR-HP-G300NH" "WZR-HP-G300NH" "1.74" "3.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg301nh-firmware.enc $(ARCH)-uclibc/wzrg301nh-firmware_MULTI.enc
+else
+	tools/bufenc/mkfw-multi -hw_ver=2 -hcrypt="Buffalo" "WZR-HP-G300NH" "WZR-HP-G300NH" "1.74" "1.01" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh-firmware.enc $(ARCH)-uclibc/wzrg300nh-firmware_MULTI.enc
+	tools/bufenc/mkfw-multi -hw_ver=3 -hcrypt="Buffalo" "WZR-HP-G300NH" "WZR-HP-G300NH" "1.74" "3.01" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg301nh-firmware.enc $(ARCH)-uclibc/wzrg301nh-firmware_MULTI.enc
+endif
+else
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),EU-US)
+#eu-us region
+	tools/bufenc/encryptRC4 WZR-HP-G300NH 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=2 -hcrypt="Buffalo" "WZR-HP-G300NH" "WZR-HP-G300NH" "1.74" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh-firmware.enc $(ARCH)-uclibc/wzrg300nh-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+	tools/bufenc/encryptRC4 WZR-HP-G300NH 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg301nh-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=3 -hcrypt="Buffalo" "WZR-HP-G300NH" "WZR-HP-G300NH" "1.74" "3.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg301nh-firmware.enc $(ARCH)-uclibc/wzrg301nh-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+else
+	tools/bufenc/encryptRC4 WZR-HP-G300NH 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh-firmware.enc
+	tools/bufenc/mkfw -hw_ver=2 -hcrypt="Buffalo" "WZR-HP-G300NH" "WZR-HP-G300NH" "1.74" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh-firmware.enc $(ARCH)-uclibc/wzrg300nh-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+	tools/bufenc/encryptRC4 WZR-HP-G300NH 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg301nh-firmware.enc
+	tools/bufenc/mkfw -hw_ver=3 -hcrypt="Buffalo" "WZR-HP-G300NH" "WZR-HP-G300NH" "1.74" "3.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg301nh-firmware.enc $(ARCH)-uclibc/wzrg301nh-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+endif
+endif
+endif
+
+
+
+
+ifeq ($(CONFIG_WZR450HP2),y)
+	tools/wzrg300nh/tftpfw $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr450hp2-firmware.tftp
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),MULTI)
+ifeq ($(CONFIG_BUFFALO),y)
+ifeq ($(CONFIG_BUFFALO_SA),y)
+	tools/bufenc/encryptRC4 WZR-450HP2 1.86 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr450hp2-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003  -hcrypt="Buffalo" "WZR-450HP2" "WZR-450HP2" "1.86" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr450hp2-firmware.enc $(ARCH)-uclibc/wzr450hp2-firmware_MULTI.enc
+else
+	tools/bufenc/encryptRC4 WZR-450HP2 1.86 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr450hp2-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003  -hcrypt="Buffalo" "WZR-450HP2" "WZR-450HP2" "1.86" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr450hp2-firmware.enc $(ARCH)-uclibc/wzr450hp2-firmware_MULTI.enc
+endif
+else
+	tools/bufenc/encryptRC4 WZR-450HP2 1.86 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr450hp2-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "WZR-450HP2" "WZR-450HP2" "1.86" "2.08" "US-EU-AP-TW-KR-CH-JP-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr450hp2-firmware.enc $(ARCH)-uclibc/wzr450hp2-firmware_MULTI.enc
+endif
+else
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),EU-US)
+#eu-us region
+	tools/bufenc/encryptRC4 WZR-450HP2 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr450hp2-firmware.enc
+	tools/bufenc/mkfw-new -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "WZR-450HP2" "WZR-450HP2" "1.75" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr450hp2-firmware.enc $(ARCH)-uclibc/wzr450hp2-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+else
+	tools/bufenc/encryptRC4 WZR-450HP2 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr450hp2-firmware.enc
+	tools/bufenc/mkfw-new -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "WZR-450HP2" "WZR-450HP2" "1.75" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr450hp2-firmware.enc $(ARCH)-uclibc/wzr450hp2-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+endif
+endif
+endif
+
+
+
+
+ifeq ($(CONFIG_WZRG450),y)
+	tools/wzrg300nh/tftpfw $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg450-firmware.tftp
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),MULTI)
+ifeq ($(CONFIG_BUFFALO),y)
+ifeq ($(CONFIG_BUFFALO_SA),y)
+	tools/bufenc/encryptRC4 WZR-HP-G450H 1.86 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg450-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003  -hcrypt="Buffalo" "WZR-HP-G450H" "WZR-HP-G450H" "1.86" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg450-firmware.enc $(ARCH)-uclibc/wzrg450-firmware_MULTI.enc
+	#test
+	#tools/bufenc/encryptRC4 WZR-HP-G450H 1.99 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg450-firmware.enc
+	#tools/bufenc/mkfw -hw_ver=0 -productid=00000003  -hcrypt="Buffalo" "WZR-HP-G450H" "WZR-HP-G450H" "1.99" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg450-firmware.enc $(ARCH)-uclibc/wzrg450-firmware_MULTI.enc
+
+	tools/bufenc/encryptRC4 BHR-4GRV 1.93 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/bhr4grv-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "BHR-4GRV" "BHR-4GRV" "1.93" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/bhr4grv-firmware.enc $(ARCH)-uclibc/bhr4grv-firmware_MULTI.enc
+
+else
+	tools/bufenc/encryptRC4 WZR-HP-G450H 1.86 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg450-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003  -hcrypt="Buffalo" "WZR-HP-G450H" "WZR-HP-G450H" "1.86" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg450-firmware.enc $(ARCH)-uclibc/wzrg450-firmware_MULTI.enc
+
+	tools/bufenc/encryptRC4 BHR-4GRV 1.93 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/bhr4grv-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "BHR-4GRV" "BHR-4GRV" "1.93" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/bhr4grv-firmware.enc $(ARCH)-uclibc/bhr4grv-firmware_MULTI.enc
+
+endif
+else
+	tools/bufenc/encryptRC4 WZR-HP-G450H 1.86 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg450-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "WZR-HP-G450H" "WZR-HP-G450H" "1.86" "2.08" "US-EU-AP-TW-KR-CH-JP-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg450-firmware.enc $(ARCH)-uclibc/wzrg450-firmware_MULTI.enc
+
+	tools/bufenc/encryptRC4 BHR-4GRV 1.93 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/bhr4grv-firmware.enc
+#	tools/bufenc/mkfw -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "BHR-4GRV" "BHR-4GRV" "1.93" "1.04" "JP" "jp" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/bhr4grv-firmware.enc $(ARCH)-uclibc/bhr4grv-firmware_MULTI.enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "BHR-4GRV" "BHR-4GRV" "1.93" "1.04" "US-EU-AP-TW-KR-CH-JP-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/bhr4grv-firmware.enc $(ARCH)-uclibc/bhr4grv-firmware_MULTI.enc
+
+endif
+else
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),EU-US)
+#eu-us region
+	tools/bufenc/encryptRC4 WZR-HP-G450H 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg450-firmware.enc
+	tools/bufenc/mkfw-new -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "WZR-HP-G450H" "WZR-HP-G450H" "1.75" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg450-firmware.enc $(ARCH)-uclibc/wzrg450-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+else
+	tools/bufenc/encryptRC4 WZR-HP-G450H 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg450-firmware.enc
+	tools/bufenc/mkfw-new -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "WZR-HP-G450H" "WZR-HP-G450H" "1.75" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg450-firmware.enc $(ARCH)-uclibc/wzrg450-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+	tools/bufenc/mkfw -hw_ver=0 -productid=00000003 -hcrypt="Buffalo" "BHR-4GRV" "BHR-4GRV" "1.93" "1.04" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/bhr4grv-firmware.enc $(ARCH)-uclibc/bhr4grv-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+endif
+endif
+endif
+
+
+
+ifeq ($(CONFIG_WZRG300NH2),y)
+ifeq ($(CONFIG_WZR300HP),y)
+	tools/wzrg300nh/tftpfw $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr300hp-firmware.tftp
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),MULTI)
+	tools/bufenc/encryptRC4 WZR-300HP 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr_300hp-firmware.enc
+	tools/bufenc/mkfw -hw_ver=4 -hcrypt="Buffalo" "WZR-300HP" "WZR-300HP" "1.82" "1.06" "US-EU-AP-TW-KR-CH-RU-JP" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr_300hp-firmware.enc $(ARCH)-uclibc/wzr_300hp-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WZR-HP-G302H 1.81 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr_g300nh2-firmware.enc
+	tools/bufenc/mkfw -hw_ver=4 -hcrypt="Buffalo" "WZR-HP-G300NH2" "WZR-HP-G302H" "1.81" "1.06" "US-EU-AP-TW-KR-CH-RU-JP" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr_g300nh2-firmware.enc $(ARCH)-uclibc/wzr_hp_g300nh2_to_wzr_300hp-firmware_MULTI.enc
+endif
+else
+	tools/wzrg300nh/tftpfw $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh2-firmware.tftp
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),MULTI)
+ifeq ($(CONFIG_BUFFALO),y)
+ifeq ($(CONFIG_BUFFALO_SA),y)
+	tools/bufenc/encryptRC4 WZR-HP-G302H 1.81 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh2-firmware.enc
+	tools/bufenc/mkfw -hw_ver=4 -hcrypt="Buffalo" "WZR-HP-G300NH2" "WZR-HP-G302H" "1.81" "1.06" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh2-firmware.enc $(ARCH)-uclibc/wzrg300nh2-firmware_MULTI.enc
+	#wzr-300hp downgrade
+	tools/bufenc/encryptRC4 WZR-300HP 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh2-firmware.enc
+	tools/bufenc/mkfw -hw_ver=4 -hcrypt="Buffalo" "WZR-300HP" "WZR-G300HP" "1.82" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh2-firmware.enc $(ARCH)-uclibc/wzr_300hp_to_wzr_hp_g300nh2-firmware_MULTI.enc
+else
+	tools/bufenc/encryptRC4 WZR-HP-G302H 1.80 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh2-firmware.enc
+	tools/bufenc/mkfw -hw_ver=4 -hcrypt="Buffalo" "WZR-HP-G300NH2" "WZR-HP-G302H" "1.81" "2.08" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh2-firmware.enc $(ARCH)-uclibc/wzrg300nh2-firmware_MULTI.enc
+endif
+else
+	tools/bufenc/encryptRC4 WZR-HP-G302H 1.80 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh2-firmware.enc
+	tools/bufenc/mkfw-multi -hw_ver=4 -hcrypt="Buffalo" "WZR-HP-G300NH2" "WZR-HP-G302H" "1.80" "2.08" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh2-firmware.enc $(ARCH)-uclibc/wzrg300nh2-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WZR-300HP 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr_300hp-firmware.enc
+	tools/bufenc/mkfw-multi -hw_ver=4 -hcrypt="Buffalo" "WZR-300HP" "WZR-300HP" "1.82" "1.06" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr_300hp-firmware.enc $(ARCH)-uclibc/wzr_300hp-firmware_MULTI.enc
+endif
+else
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),EU-US)
+#eu-us region
+	tools/bufenc/encryptRC4 WZR-HP-G302H 1.80 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh2-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=4 -hcrypt="Buffalo" "WZR-HP-G300NH2" "WZR-HP-G302H" "1.80" "2.08" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh2-firmware.enc $(ARCH)-uclibc/wzrg300nh2-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+	tools/bufenc/encryptRC4 WZR-300HP 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr_300hp-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=4 -hcrypt="Buffalo" "WZR-300HP" "WZR-300HP" "1.82" "1.06" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr_300hp-firmware.enc $(ARCH)-uclibc/wzr_300hp-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+else
+	tools/bufenc/encryptRC4 WZR-HP-G302H 1.80 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrg300nh2-firmware.enc
+	tools/bufenc/mkfw -hw_ver=4 -hcrypt="Buffalo" "WZR-HP-G300NH2" "WZR-HP-G302H" "1.80" "2.08" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrg300nh2-firmware.enc $(ARCH)-uclibc/wzrg300nh2-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+	tools/bufenc/encryptRC4 WZR-300HP 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr_300hp-firmware.enc
+	tools/bufenc/mkfw -hw_ver=4 -hcrypt="Buffalo" "WZR-300HP" "WZR-300HP" "1.82" "1.06" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr_300hp-firmware.enc $(ARCH)-uclibc/wzr_300hp-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+endif
+endif
+endif
+endif
+
+ifeq ($(CONFIG_WZRHPAG300NH),y)
+ifeq ($(CONFIG_WZR600DHP),y)
+	tools/wzrg300nh/tftpfw $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr_600dhp-firmware.tftp
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),MULTI)
+	tools/bufenc/encryptRC4 WZR-600DHP 1.78 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr_600dhp-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WZR-600DHP" "WZR-600DHP" "1.78" "3.01" "US-EU-AP-TW-KR-CH-RU-JP" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr_600dhp-firmware.enc $(ARCH)-uclibc/wzr_600dhp-firmware_MULTI.enc
+	#tools/bufenc/encryptRC4 WZR-600DHP 1.99 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzr_600dhp-firmware_1.99.enc
+	#tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WZR-600DHP" "WZR-600DHP" "1.99" "3.01" "US-EU-AP-TW-KR-CH-RU-JP" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzr_600dhp-firmware_1.99.enc $(ARCH)-uclibc/wzr_600dhp-firmware_MULTI_1.99.enc
+	tools/bufenc/encryptRC4 WZR-HP-AG300H 1.77 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WZR-HP-AG300H" "WZR-HP-AG300H" "1.77" "3.01" "US-EU-AP-TW-KR-CH-RU-JP" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzr_ag300h_to_wzr_600dhp-firmware_MULTI.enc
+endif
+else
+	tools/wzrg300nh/tftpfw $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300nh-firmware.tftp
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),MULTI)
+ifeq ($(CONFIG_BUFFALO),y)
+ifeq ($(CONFIG_BUFFALO_SA),y)
+	#tools/bufenc/encryptRC4 WZR-HP-AG300H 1.99 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	#tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WZR-HP-AG300H" "WZR-HP-AG300H" "1.99" "3.01" "US-EU-AP-TW-KR-CH-RU-JP" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzrag300h-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WZR-HP-AG300H 1.77 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WZR-HP-AG300H" "WZR-HP-AG300H" "1.77" "3.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzrag300h-firmware_MULTI.enc
+	#wzr-600dhp downgrade
+	tools/bufenc/encryptRC4 WZR-600DHP 1.77 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WZR-600DHP" "WZR-600DHP" "1.77" "3.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzr_600dhp_to_wzr_hp_ag300h-firmware_MULTI.enc
+else
+	tools/bufenc/encryptRC4 WZR-HP-AG300H 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WZR-HP-AG300H" "WZR-HP-AG300H" "1.74" "3.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzrag300h-firmware_MULTI.enc
+endif
+else
+	tools/bufenc/encryptRC4 WZR-HP-AG300H 1.74 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	tools/bufenc/mkfw-multi -hw_ver=0 -hcrypt="Buffalo" "WZR-HP-AG300H" "WZR-HP-AG300H" "1.74" "3.01" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzrag300h-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WZR-600DHP 1.99 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	tools/bufenc/mkfw-multi -hw_ver=0 -hcrypt="Buffalo" "WZR-600DHP" "WZR-600DHP" "1.99" "3.01" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzr_600dhp-firmware_MULTI.enc
+endif
+else
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),EU-US)
+#eu-us region
+	tools/bufenc/encryptRC4 WZR-HP-AG300H 1.71 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=0 -hcrypt="Buffalo" "WZR-HP-AG300H" "WZR-HP-AG300H" "1.74" "3.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzrag300h-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+else
+	tools/bufenc/encryptRC4 WZR-HP-AG300H 1.71 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/wzrag300h-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WZR-HP-AG300H" "WZR-HP-AG300H" "1.74" "3.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/wzrag300h-firmware.enc $(ARCH)-uclibc/wzrag300h-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+endif
+endif
+endif
+endif
+
+ifeq ($(CONFIG_RSPRO),y)
+	-./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/rspro-firmware.bin $(ARCH)-uclibc/vmlinux.lsx
+	-tools/ubnt/src/mkfwimage -v RSPRO.ar7100pro.DD-WRT -o mips-uclibc/RSPRO.dd-wrt.bin -i tools/ubnt/rs-ddwrt.txt
+else
+
+ifeq ($(CONFIG_RS),y)
+	-./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/rs-firmware.bin $(ARCH)-uclibc/vmlinux.lsx
+	-tools/ubnt/src/mkfwimage -v RSx.ar7100.DD-WRT -o mips-uclibc/RS.dd-wrt.bin -i tools/ubnt/rs-ddwrt.txt
+
+else
+ifeq ($(CONFIG_LSX),y)
+	-./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/lsx-firmware.bin $(ARCH)-uclibc/vmlinux.lsx
+	-tools/ubnt/src/mkfwimage -v LS-SR71.ar7100.DD-WRT -o mips-uclibc/LSX.dd-wrt.bin -i tools/ubnt/lsx-ddwrt.txt
+endif
+ifeq ($(CONFIG_WP543),y)
+	-./tools/compex/mkmylofw -B WP543 \
+		-p0x30000:0x7d0000:alp:0x80060000 \
+		-b0x30000:0x7d0000::$(ARCH)-uclibc/vmlinux.lsx 	\
+		mips-uclibc/wp543.img
+endif
+ifeq ($(CONFIG_WP546),y)
+	-./tools/compex/mkmylofw -B WP546 \
+		-p0x30000:0x7d0000:alp:0x80060000 \
+		-b0x30000:0x7d0000::$(ARCH)-uclibc/vmlinux.lsx 	\
+		mips-uclibc/wp546.img
+
+endif
+endif
+endif
+ifeq ($(CONFIG_WPE72),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.lsx bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.lsx
+	-./tools/compex/mkmylofw -B WP72E \
+		-p0x30000:$(strip $(CONFIG_WPE72_SIZE)):alp:0x80060000 \
+		-b0x30000:$(strip $(CONFIG_WPE72_SIZE))::$(ARCH)-uclibc/vmlinux.lsx 	\
+		mips-uclibc/wpe72.img
+endif
+ifeq ($(CONFIG_MMS344),y)
+#	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.lsx bs=65536 conv=sync
+#	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.lsx
+	-./tools/compex/mkmylofw -B MMS344HV \
+		-p0x30000:0x630000:: \
+		-b0x30000:0x630000::$(ARCH)-uclibc/root.fs 	\
+		-p0x660000:0x150000:al:0x80060000 \
+		-b0x660000:0x150000::$(ARCH)-uclibc/root.uimage 	\
+		mips-uclibc/mms344.img
+
+	-./tools/compex/mkmylofw -B DR342 \
+		-p0x50000:0xfa0000:alp:0x80060000 \
+		-b0x50000:0xfa0000::$(ARCH)-uclibc/vmlinux.lsx 	\
+		mips-uclibc/willy.img
+endif
+ifeq ($(CONFIG_UBNTM),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ar7420-firmware.bin $(ARCH)-uclibc/aligned.uimage
+	-tools/ubnt/src/mkfwimage -v XM.ar7240.v6.0.0.133900.2000 -o $(ARCH)-uclibc/ubntm-dd-wrt.bin -i tools/ubnt/m-dd-wrt.txt
+	-tools/ubnt/src/mkfwimage -v BZ.ar7240.v6.0.0.133900.2000 -o $(ARCH)-uclibc/ubntbz-dd-wrt.bin -i tools/ubnt/m-dd-wrt.txt
+	cd ubnt_mtd && make clean && make
+endif
+
+ifeq ($(CONFIG_UBNTXW),y)
+	-tools/ubnt/src/mkfwimage -v XW.ar934x.v6.0.0.133900.2000 -o $(ARCH)-uclibc/ubntxw-dd-wrt.bin -i tools/ubnt/m-dd-wrt.txt
+	-tools/ubnt/src/mkfwimage -v BZ.qca9342.v6.0.0.133900.2000 -o $(ARCH)-uclibc/ubntbz2-dd-wrt.bin -i tools/ubnt/m-dd-wrt.txt
+#	-tools/ubnt/src/mkfwimage2 -f 0x9f000000 -v BZ.qca9342.v6.0.0.133900.2000 -p kernel:0x50000:0x760000:0:0:mips-uclibc/aligned.uimage -o $(ARCH)-uclibc/ubntbz2-dd-wrt.bin 
+#	-tools/ubnt/src/mkfwimage -v BZ.ar7240.v6.0.0.133900.2000 -o $(ARCH)-uclibc/ubntbz-dd-wrt.bin -i tools/ubnt/m-dd-wrt.txt
+endif
+ifeq ($(CONFIG_DAP3410),y)
+	tools/dap3410/makedap $(ARCH)-uclibc/root.uimage $(ARCH)-uclibc/root.fs $(ARCH)-uclibc/dap3410.bin DAP3410
+	tools/dap3410/makedap $(ARCH)-uclibc/root.uimage $(ARCH)-uclibc/root.fs $(ARCH)-uclibc/dap3310.bin DAP3310
+endif
+ifeq ($(CONFIG_UBNTTI),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ar9344-firmware.bin $(ARCH)-uclibc/aligned.uimage
+	tools/ubnt/src/mkfwimage -v TI.ar934x.v6.0.0.133900.2000 -o $(ARCH)-uclibc/ubntti-dd-wrt.bin -i tools/ubnt/m-dd-wrt.txt
+endif
+ifeq ($(CONFIG_JJAP93),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 30000000 -o $(ARCH)-uclibc/ap93-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_JJAP005),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 30000000 -o $(ARCH)-uclibc/ap93-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_JJAP501),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 30000000 -o $(ARCH)-uclibc/ap93-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_AC722),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 30000000 -o $(ARCH)-uclibc/ap93-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_AC622),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/trx_n  -m 30000000 -o $(ARCH)-uclibc/ap93-firmware.bin $(ARCH)-uclibc/aligned.uimage
+endif
+ifeq ($(CONFIG_WHRHPGN),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	-./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ap93-firmware.bin $(ARCH)-uclibc/aligned.uimage
+	-tools/wzrg300nh/tftpfw $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-hp-gn-firmware.tftp
+
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),MULTI)
+#multi region
+ifeq ($(CONFIG_BUFFALO_SA),y)
+ifeq ($(CONFIG_WHR300HP),y)
+	tools/bufenc/encryptRC4 WHR-300HP 1.85 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-300HP" "WHR-300HP" "1.85" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr_300hp-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WHR-HP-G300N 1.84 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-G300N" "WHR-HP-G300N" "1.84" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr_hp_g300n_to_whr_300hp-firmware_MULTI.enc
+else
+	tools/bufenc/encryptRC4 WHR-HP-G300N 1.84 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-G300N" "WHR-HP-G300N" "1.84" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-hp-g300n-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WHR-HP-GN 1.84 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-GN" "WHR-HP-GN" "1.84" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-hp-gn-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WHR-G301N 1.84 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-G301N" "WHR-G301N" "1.84" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-g300n-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WLAE-AG300N 1.84 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WLAE-AG300N" "WLAE-AG300N" "1.84" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/wlae-ag300n-firmware_MULTI.enc
+	#WHR-300HP downgrade
+	tools/bufenc/encryptRC4 WHR-300HP 1.85 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-300HP" "WHR-300HP" "1.85" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr_300hp_to_whr_hp_g300n-firmware_MULTI.enc
+endif
+else
+	tools/bufenc/encryptRC4 WHR-HP-G300N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-G300N" "WHR-HP-G300N" "1.82" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-hp-g300n-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WHR-HP-GN 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-GN" "WHR-HP-GN" "1.82" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-hp-gn-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WHR-G301N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-G301N" "WHR-G301N" "1.82" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-g300n-firmware_MULTI.enc
+	tools/bufenc/encryptRC4 WLAE-AG300N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WLAE-AG300N" "WLAE-AG300N" "1.82" "1.01" "US-EU-AP-TW-KR-CH-RU" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/wlae-ag300n-firmware_MULTI.enc
+endif
+else
+ifeq ($(CONFIG_DEFAULT_COUNTRYCODE),EU-US)
+#eu-us region
+	tools/bufenc/encryptRC4 WHR-HP-G300N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-G300N" "WHR-HP-G300N" "1.82" "1.01" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-hp-g300n-firmware_EU-US.enc
+	tools/bufenc/encryptRC4 WHR-HP-GN 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-GN" "WHR-HP-GN" "1.82" "1.01" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-hp-gn-firmware_EU-US.enc
+	tools/bufenc/encryptRC4 WHR-G301N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=0 -hcrypt="Buffalo" "WHR-G301N" "WHR-G301N" "1.82" "1.01" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-g300n-firmware_EU-US.enc
+	tools/bufenc/encryptRC4 WLAE-AG300N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw-eu-us -hw_ver=0 -hcrypt="Buffalo" "WLAE-AG300N" "WLAE-AG300N" "1.82" "1.01" "US" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/wlae-ag300n-firmware_EU-US.enc
+else
+	tools/bufenc/encryptRC4 WHR-HP-G300N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-G300N" "WHR-HP-G300N" "1.82" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-hp-g300n-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+	tools/bufenc/encryptRC4 WHR-HP-GN 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-HP-GN" "WHR-HP-GN" "1.82" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-hp-gn-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+	tools/bufenc/encryptRC4 WHR-G301N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WHR-G301N" "WHR-G301N" "1.82" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/whr-g300n-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+	tools/bufenc/encryptRC4 WLAE-AG300N 1.82 Buffalo $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/whr-firmware.enc
+	tools/bufenc/mkfw -hw_ver=0 -hcrypt="Buffalo" "WLAE-AG300N" "WLAE-AG300N" "1.82" "1.01" "$(CONFIG_DEFAULT_COUNTRYCODE)" "mlang8" "ath" "" 80041000 80200000 1 $(ARCH)-uclibc/whr-firmware.enc $(ARCH)-uclibc/wlae-ag300n-firmware_$(CONFIG_DEFAULT_COUNTRYCODE).enc
+endif
+endif
+
+endif
+ifeq ($(CONFIG_DIR825),y)
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/dir825-uimage.bin
+	cat tools/dir825.tag >> $(ARCH)-uclibc/dir825-uimage.bin
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/dir825ww-uimage.bin
+	cat tools/dir825ww.tag >> $(ARCH)-uclibc/dir825ww-uimage.bin
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/dir825tw-uimage.bin
+	cat tools/dir825tw.tag >> $(ARCH)-uclibc/dir825tw-uimage.bin
+	
+endif
+ifeq ($(CONFIG_DIR866),y)
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/dir866-uimage.bin
+	cat tools/dir866a1.tag >> $(ARCH)-uclibc/dir866-uimage.bin
+endif
+ifeq ($(CONFIG_DIR862),y)
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/dir862-uimage.bin
+	cat tools/dir862a1.tag >> $(ARCH)-uclibc/dir862-uimage.bin
+endif
+ifeq ($(CONFIG_DIR825C1),y)
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/dir825c1-uimage.bin
+	cat tools/dir825c1.tag >> $(ARCH)-uclibc/dir825c1-uimage.bin	
+endif
+ifeq ($(CONFIG_TEW673GRU),y)
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/tew673gru-uimage.bin
+	cat tools/tew673gru.tag >> $(ARCH)-uclibc/tew673gru-uimage.bin
+endif
+ifeq ($(CONFIG_WNDR3700V4),y)
+	./tools/wndr3700/wndr3700v4 \
+		$(ARCH)-uclibc/root.uimage \
+		$(ARCH)-uclibc/root.wndr3700v4
+
+
+	mkimage -A mips -O linux -T filesystem -C none \
+		-a 0xbf070000 -e 0xbf070000 \
+		-n 'wndr3700v4-V1.1.4.68' \
+		-d $(ARCH)-uclibc/root.fs \
+		$(ARCH)-uclibc/rootfs.uimage
+
+	./tools/wndr3700/wndr3700v4 \
+		$(ARCH)-uclibc/rootfs.uimage \
+		$(ARCH)-uclibc/rootfs.wndr3700v4
+	
+	dd if=$(TOP)/$(ARCH)-uclibc/root.wndr3700v4 bs=$(shell expr $(shell expr $(shell expr $(shell expr $(shell expr 128 + $(shell du -b $(TOP)/$(ARCH)-uclibc/root.wndr3700v4 | awk {'print $$1'})) / 131072) + 1) \* 131072) - 64) conv=sync of=$(TOP)/$(ARCH)-uclibc/root.wndr3700v4.final
+	export KERNEL_SIZE=$(shell du -b $(TOP)/$(ARCH)-uclibc/root.wndr3700v4.final | awk {'print $$1'})
+	dd if=$(ARCH)-uclibc/rootfs.wndr3700v4 bs=64 count=1 >> $(ARCH)-uclibc/root.wndr3700v4.final
+	( \
+	    dd if=$(ARCH)-uclibc/root.wndr3700v4.final bs=$(shell du -b $(ARCH)-uclibc/root.wndr3700v4.final | awk {'print $$1'}) conv=sync; \
+	    dd if=$(ARCH)-uclibc/root.fs bs=64k; \
+	) > $(ARCH)-uclibc/aligned.wndr3700v4
+	./tools/wndr3700/mkdniimg -B WNDR3700v4 -v 1.1.4.68 -r "" -i $(ARCH)-uclibc/aligned.wndr3700v4 -o $(ARCH)-uclibc/wndr3700v4-factory.img -H "29763948+128+128"
+	./tools/trx_n  -m 40000000 -o$(ARCH)-uclibc/wndr3700v4-webflash.bin  $(ARCH)-uclibc/aligned.wndr3700v4 
+endif
+
+ifeq ($(CONFIG_WNR2000),y)
+	mkdir -p $(ARCH)-uclibc/wnr2000v3/image
+	./tools/wndr3700/wnr2000v3 \
+		$(ARCH)-uclibc/root.uimage \
+		$(ARCH)-uclibc/wnr2000v3/image/uImage
+
+	./tools/wndr3700/mksquashfs-lzma \
+		$(ARCH)-uclibc/wnr2000v3 $(ARCH)-uclibc/kernel2000v3.squashfs \
+		-nopad -noappend -root-owned -be
+	-rm -rf $(ARCH)-uclibc/wnr2000v3
+
+	mkimage -A mips -O linux -T filesystem -C none \
+		-a 0xbf070000 -e 0xbf070000 \
+		-n 'wnr2000v3-V1.1.4.68' \
+		-d $(ARCH)-uclibc/kernel2000v3.squashfs \
+		$(ARCH)-uclibc/kernel2000v3.uimage
+
+	./tools/wndr3700/wnr2000v3 \
+		$(ARCH)-uclibc/kernel2000v3.uimage \
+		$(ARCH)-uclibc/kernel2000v3.image	
+
+	( \
+		dd if=$(ARCH)-uclibc/kernel2000v3.image bs=1024k conv=sync; \
+		dd if=$(ARCH)-uclibc/root.fs bs=64k; \
+	) > $(ARCH)-uclibc/wnr2000v3-uimage.bin
+
+	./tools/wndr3700/mkdniimg -B wnr2000v3 -v 1.1.4.68 -r NA -i $(ARCH)-uclibc/wnr2000v3-uimage.bin -o $(ARCH)-uclibc/wnr2000v3-factory_NA.img
+	./tools/wndr3700/mkdniimg -B wnr2000v3 -v 1.1.4.68 -r "" -i $(ARCH)-uclibc/wnr2000v3-uimage.bin -o $(ARCH)-uclibc/wnr2000v3-factory_WW.img
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/wnr2000v3-webflash.bin $(ARCH)-uclibc/wnr2000v3-uimage.bin	
+
+endif
+ifeq ($(CONFIG_WNR2200),y)
+	mkdir -p $(ARCH)-uclibc/wnr2200/image
+	./tools/wndr3700/wnr2200 \
+		$(ARCH)-uclibc/root.uimage \
+		$(ARCH)-uclibc/wnr2200/image/uImage
+
+	./tools/wndr3700/mksquashfs-lzma \
+		$(ARCH)-uclibc/wnr2200 $(ARCH)-uclibc/kernel2200.squashfs \
+		-nopad -noappend -root-owned -be
+	-rm -rf $(ARCH)-uclibc/wnr2200
+
+	mkimage -A mips -O linux -T filesystem -C none \
+		-a 0xbf070000 -e 0xbf070000 \
+		-n 'wnr2200-V1.1.4.68' \
+		-d $(ARCH)-uclibc/kernel2200.squashfs \
+		$(ARCH)-uclibc/kernel2200.uimage
+
+	./tools/wndr3700/wnr2200 \
+		$(ARCH)-uclibc/kernel2200.uimage \
+		$(ARCH)-uclibc/kernel2200.image	
+
+	( \
+		dd if=$(ARCH)-uclibc/kernel2200.image bs=1024k conv=sync; \
+		dd if=$(ARCH)-uclibc/root.fs bs=64k; \
+	) > $(ARCH)-uclibc/wnr2200-uimage.bin
+
+	./tools/wndr3700/mkdniimg -B wnr2200 -v 1.1.4.68 -r NA -i $(ARCH)-uclibc/wnr2200-uimage.bin -o $(ARCH)-uclibc/wnr2200-factory_NA.img
+	./tools/wndr3700/mkdniimg -B wnr2200 -v 1.1.4.68 -r "" -i $(ARCH)-uclibc/wnr2200-uimage.bin -o $(ARCH)-uclibc/wnr2200-factory_WW.img
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/wnr2200-webflash.bin $(ARCH)-uclibc/wnr2200-uimage.bin	
+
+endif
+ifeq ($(CONFIG_WNDR3700),y)
+	mkdir -p $(ARCH)-uclibc/wndr3700/image
+	mkdir -p $(ARCH)-uclibc/wndr3700v2/image
+	mkdir -p $(ARCH)-uclibc/wndr3800/image
+	./tools/wndr3700/wndr3700 \
+		$(ARCH)-uclibc/root.uimage \
+		$(ARCH)-uclibc/wndr3700/image/uImage
+
+	./tools/wndr3700/wndr3700v2 \
+		$(ARCH)-uclibc/root.uimage \
+		$(ARCH)-uclibc/wndr3700v2/image/uImage
+
+	./tools/wndr3700/wndr3700v2 \
+		$(ARCH)-uclibc/root.uimage \
+		$(ARCH)-uclibc/wndr3800/image/uImage
+
+	./tools/wndr3700/mksquashfs-lzma \
+		$(ARCH)-uclibc/wndr3700 $(ARCH)-uclibc/kernel.squashfs \
+		-nopad -noappend -root-owned -be
+
+	./tools/wndr3700/mksquashfs-lzma \
+		$(ARCH)-uclibc/wndr3700v2 $(ARCH)-uclibc/kernelv2.squashfs \
+		-nopad -noappend -root-owned -be
+
+	./tools/wndr3700/mksquashfs-lzma \
+		$(ARCH)-uclibc/wndr3800 $(ARCH)-uclibc/kernel3800.squashfs \
+		-nopad -noappend -root-owned -be
+
+	-rm -rf $(ARCH)-uclibc/wndr3700
+	-rm -rf $(ARCH)-uclibc/wndr3700v2
+	-rm -rf $(ARCH)-uclibc/wndr3800
+
+	mkimage -A mips -O linux -T filesystem -C none \
+		-a 0xbf070000 -e 0xbf070000 \
+		-n 'WNDR3700-V1.0.4.68' \
+		-d $(ARCH)-uclibc/kernel.squashfs \
+		$(ARCH)-uclibc/kernel.uimage
+
+	mkimage -A mips -O linux -T filesystem -C none \
+		-a 0xbf070000 -e 0xbf070000 \
+		-n 'WNDR3700v2-V1.0.4.68' \
+		-d $(ARCH)-uclibc/kernelv2.squashfs \
+		$(ARCH)-uclibc/kernelv2.uimage
+
+	mkimage -A mips -O linux -T filesystem -C none \
+		-a 0xbf070000 -e 0xbf070000 \
+		-n 'WNDR3800-V1.0.4.68' \
+		-d $(ARCH)-uclibc/kernel3800.squashfs \
+		$(ARCH)-uclibc/kernel3800.uimage
+
+	./tools/wndr3700/wndr3700v2 \
+		$(ARCH)-uclibc/kernelv2.uimage \
+		$(ARCH)-uclibc/kernelv2.image	
+
+	./tools/wndr3700/wndr3700 \
+		$(ARCH)-uclibc/kernel.uimage \
+		$(ARCH)-uclibc/kernel.image	
+
+	./tools/wndr3700/wndr3700v2 \
+		$(ARCH)-uclibc/kernel3800.uimage \
+		$(ARCH)-uclibc/kernel3800.image	
+	( \
+		dd if=$(ARCH)-uclibc/kernel.image bs=1024k conv=sync; \
+		dd if=$(ARCH)-uclibc/root.fs bs=64k; \
+	) > $(ARCH)-uclibc/wndr3700-uimage.bin
+
+	( \
+		dd if=$(ARCH)-uclibc/kernelv2.image bs=1024k conv=sync; \
+		dd if=$(ARCH)-uclibc/root.fs bs=64k; \
+	) > $(ARCH)-uclibc/wndr3700v2-uimage.bin
+
+	( \
+		dd if=$(ARCH)-uclibc/kernel3800.image bs=1024k conv=sync; \
+		dd if=$(ARCH)-uclibc/root.fs bs=64k; \
+	) > $(ARCH)-uclibc/wndr3800-uimage.bin
+
+	./tools/wndr3700/mkdniimg -B WNDR3700 -v 1.0.4.68 -r NA -i $(ARCH)-uclibc/wndr3700-uimage.bin -o $(ARCH)-uclibc/wndr3700-factory_NA.img
+	./tools/wndr3700/mkdniimg -B WNDR3700 -v 1.0.4.68 -r "" -i $(ARCH)-uclibc/wndr3700-uimage.bin -o $(ARCH)-uclibc/wndr3700-factory_WW.img
+	./tools/wndr3700/mkdniimg -B WNDR3700v2 -v 1.0.4.68 -r NA -i $(ARCH)-uclibc/wndr3700v2-uimage.bin -o $(ARCH)-uclibc/wndr3700v2-factory_NA.img
+	./tools/wndr3700/mkdniimg -B WNDR3700v2 -v 1.0.4.68 -r "" -i $(ARCH)-uclibc/wndr3700v2-uimage.bin -o $(ARCH)-uclibc/wndr3700v2-factory_WW.img
+	./tools/wndr3700/mkdniimg -B WNDR3800 -v 1.0.4.68 -r NA -i $(ARCH)-uclibc/wndr3800-uimage.bin -o $(ARCH)-uclibc/wndr3800-factory_NA.img
+	./tools/wndr3700/mkdniimg -B WNDR3800 -v 1.0.4.68 -r "" -i $(ARCH)-uclibc/wndr3800-uimage.bin -o $(ARCH)-uclibc/wndr3800-factory_WW.img
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/wndr3700-webflash.bin $(ARCH)-uclibc/wndr3700-uimage.bin	
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/wndr3700v2-webflash.bin $(ARCH)-uclibc/wndr3700v2-uimage.bin	
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/wndr3800-webflash.bin $(ARCH)-uclibc/wndr3800-uimage.bin	
+endif
+ifeq ($(CONFIG_TEW632BRP),y)
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/tew632brp-uimage.bin
+	cat tools/tew632brp.tag >> $(ARCH)-uclibc/tew632brp-uimage.bin
+	
+endif
+ifeq ($(CONFIG_TEW652BRP),y)
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/tew652brp-uimage.bin
+	cat tools/tew652brp.tag >> $(ARCH)-uclibc/tew652brp-uimage.bin
+	
+endif
+ifeq ($(CONFIG_DIR615C1),y)
+	cp $(ARCH)-uclibc/aligned.uimage $(ARCH)-uclibc/dir615c1-uimage.bin
+	cat tools/dir615c2.tag >> $(ARCH)-uclibc/dir615c1-uimage.bin
+	
+endif
+ifeq ($(CONFIG_DIR632),y)
+	dd if=$(ARCH)-uclibc/aligned.uimage of=$(ARCH)-uclibc/dir632-uimage.bin bs=7667712 conv=sync
+	cat tools/dir632na.tag >> $(ARCH)-uclibc/dir632-uimage.bin
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/dir632-firmware.bin $(ARCH)-uclibc/dir632-uimage.bin	
+endif
+ifeq ($(CONFIG_DIR615E),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	dd if=$(ARCH)-uclibc/aligned.uimage of=$(ARCH)-uclibc/dir615e1-uimage.bin bs=3538944 conv=sync
+	cat tools/dir615e1.tag >> $(ARCH)-uclibc/dir615e1-uimage.bin
+	dd if=$(ARCH)-uclibc/aligned.uimage of=$(ARCH)-uclibc/dir615e3-uimage.bin bs=3538944 conv=sync
+	cat tools/dir615e3.tag >> $(ARCH)-uclibc/dir615e3-uimage.bin
+	dd if=$(ARCH)-uclibc/aligned.uimage of=$(ARCH)-uclibc/dir615e4-uimage.bin bs=3538944 conv=sync
+	cat tools/dir615e4.tag >> $(ARCH)-uclibc/dir615e4-uimage.bin
+	dd if=$(ARCH)-uclibc/aligned.uimage of=$(ARCH)-uclibc/dir601-uimage.bin bs=3735552 conv=sync
+	cat tools/dir601.tag >> $(ARCH)-uclibc/dir601-uimage.bin
+	-./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ap93-firmware.bin $(ARCH)-uclibc/aligned.uimage	
+endif
+ifeq ($(CONFIG_DIR615I),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/aligned.uimage bs=4096 conv=sync
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	dd if=$(ARCH)-uclibc/aligned.uimage of=$(ARCH)-uclibc/dir615i1-uimage.bin bs=3801062 conv=sync
+	dd if=$(ARCH)-uclibc/aligned.uimage of=$(ARCH)-uclibc/dir615i3-uimage.bin bs=3801062 conv=sync
+	cat tools/dir615i1.tag >> $(ARCH)-uclibc/dir615i1-uimage.bin
+	cat tools/dir615i3.tag >> $(ARCH)-uclibc/dir615i3-uimage.bin
+endif
+ifeq ($(CONFIG_WRT160NL),y)
+	./tools/wrt160nl/pad $(ARCH)-uclibc/root.uimage $(ARCH)-uclibc/aligned.uimage
+#	cp $(ARCH)-uclibc/root.uimage $(ARCH)-uclibc/aligned.uimage
+	cat $(ARCH)-uclibc/root.fs  >> $(ARCH)-uclibc/aligned.uimage
+	./tools/wrt160nl/trx -m 40000000 -o $(ARCH)-uclibc/wrt160nl-firmware.trx -f $(ARCH)-uclibc/aligned.uimage
+	./tools/wrt160nl/trx -m 40000000 -o $(ARCH)-uclibc/e2100l-firmware.trx -f $(ARCH)-uclibc/aligned.uimage
+	./tools/wrt160nl/addpattern -B WRT160NL -v v1.00.20 -i $(ARCH)-uclibc/wrt160nl-firmware.trx -o $(ARCH)-uclibc/wrt160nl-firmware.bin -g
+	./tools/wrt160nl/addpattern -B E2100L -v v1.00.20 -i $(ARCH)-uclibc/e2100l-firmware.trx -o $(ARCH)-uclibc/e2100l-firmware.bin -g
+endif
+ifeq ($(CONFIG_TG2521),y)
+	./tools/zcom/makefirmware $(ARCH)-uclibc/zcom-firmware.img $(ARCH)-uclibc/root.uimage $(ARCH)-uclibc/root.fs TG2521
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.zcom bs=6356992 conv=sync
+	cat $(ARCH)-uclibc/root.uimage >> $(ARCH)-uclibc/root.zcom
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/zcom-firmware.bin $(ARCH)-uclibc/root.zcom
+endif
+
+ifeq ($(CONFIG_TEW824),y)
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.tew824 bs=14876672 conv=sync
+	cat $(ARCH)-uclibc/root.uimage >> $(ARCH)-uclibc/root.tew824
+	cat tools/tew824.tag >> $(ARCH)-uclibc/root.tew824
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/tew824-firmware.bin $(ARCH)-uclibc/root.tew824
+endif
+
+ifeq ($(CONFIG_WR1043),y)
+	make -C lzma-loader/pb42 clean
+	make -C lzma-loader/pb42
+	cp lzma-loader/pb42/loader.bin.gz $(ARCH)-uclibc/vmlinus.gzip
+	./tools/tplink/mktplinkfw -B TL-WR1043NDv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-firmware.bin
+	./tools/trx_n  -m 40000000 -o $(ARCH)-uclibc/ap83-firmware.bin mips-uclibc/tplink-firmware.bin
+endif
+
+
+ifeq ($(CONFIG_WR941),y)
+	make -C lzma-loader/pb42 clean
+	make -C lzma-loader/pb42
+	cp lzma-loader/pb42/loader.bin.gz $(ARCH)-uclibc/vmlinus.gzip
+	-./tools/tplink/mktplinkfw -B TL-WR941NDv2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR941NDv2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR941NDv2-firmware.bin mips-uclibc/tplink-WR941NDv2-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR841NDv3 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv3-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv3-firmware.bin mips-uclibc/tplink-WR841NDv3-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WA901NDv2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA901NDv2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WA901NDv2-firmware.bin mips-uclibc/tplink-WA901NDv2-firmware.bin
+
+endif
+ifeq ($(CONFIG_WR741),y)
+	make -C lzma-loader/pb42 clean
+	make -C lzma-loader/pb42
+	cp lzma-loader/pb42/loader.bin.gz $(ARCH)-uclibc/vmlinus.gzip
+	-./tools/tplink/mktplinkfw -B TL-WR741NDv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR741NDv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR741NDv1-firmware.bin mips-uclibc/tplink-WR741NDv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B AIP-W411 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/alfa-AIP-W411-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/AIP-W411-firmware.bin mips-uclibc/alfa-AIP-W411-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR741NDv4 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR741NDv4-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR741NDv4-firmware.bin mips-uclibc/tplink-WR741NDv4-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-MR3220v2 DD-WRT -V 24 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-MR3220v2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/MR3220v2-firmware.bin mips-uclibc/tplink-MR3220v2-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR743NDv2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR743NDv2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR743NDv2-firmware.bin mips-uclibc/tplink-WR743NDv2-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR740NDv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR740NDv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR740NDv1-firmware.bin mips-uclibc/tplink-WR740NDv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR740NDv4 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR740NDv4-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR740NDv4-firmware.bin mips-uclibc/tplink-WR740NDv4-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR740NDv5 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR740NDv5-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR740NDv5-firmware.bin mips-uclibc/tplink-WR740NDv5-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR842NDv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR842NDv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR842NDv1-firmware.bin mips-uclibc/tplink-WR842NDv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR703Nv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR703Nv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR703Nv1-firmware.bin mips-uclibc/tplink-WR703Nv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WA701NDv2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA701NDv2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WA701NDv2-firmware.bin mips-uclibc/tplink-WA701NDv2-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR710Nv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR710Nv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR710Nv1-firmware.bin mips-uclibc/tplink-WR710Nv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR710Nv1 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR710Nv1US-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR710Nv1US-firmware.bin mips-uclibc/tplink-WR710Nv1US-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR710Nv2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR710Nv2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR710Nv2-firmware.bin mips-uclibc/tplink-WR710Nv2-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR710Nv2.1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR710Nv2.1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR710Nv2.1-firmware.bin mips-uclibc/tplink-WR710Nv2.1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-MR3020 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-MR3020-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/MR3020-firmware.bin mips-uclibc/tplink-MR3020-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR740NDv3 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR740NDv3-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR740NDv3-firmware.bin mips-uclibc/tplink-WR740NDv3-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR740NDv3WW -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR740NDv3ww-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR740NDv3ww-firmware.bin mips-uclibc/tplink-WR740NDv3ww-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR743NDv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR743NDv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR743NDv1-firmware.bin mips-uclibc/tplink-WR743NDv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR841NDv5 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv5-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv5-firmware.bin mips-uclibc/tplink-WR841NDv5-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR841NDv7 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv7-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv7-firmware.bin mips-uclibc/tplink-WR841NDv7-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B WNRT627V1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/planex-WNRT627V1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WNRT627V1-firmware.bin mips-uclibc/planex-WNRT627V1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-MR3420 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-MR3420-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/MR3420-firmware.bin mips-uclibc/tplink-MR3420-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-MR3220 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-MR3220-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/MR3220-firmware.bin mips-uclibc/tplink-MR3220-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B RNX-N300RT -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/rosewill-RNX-N300RT-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/RNX-N300RT-firmware.bin mips-uclibc/rosewill-RNX-N300RT-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B RNX-N150RT -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/rosewill-RNX-N150RT-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/RNX-N150RT-firmware.bin mips-uclibc/rosewill-RNX-N150RT-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR840Nv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR840Nv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR840Nv1-firmware.bin mips-uclibc/tplink-WR840Nv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR941NDv4 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR941NDv4-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR941NDv4-firmware.bin mips-uclibc/tplink-WR941NDv4-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WA901NDv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA901NDv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WA901NDv1-firmware.bin mips-uclibc/tplink-WA901NDv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WA801NDv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA801NDv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WA801NDv1-firmware.bin mips-uclibc/tplink-WA801NDv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WA7510N -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinus.gzip -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA7510N-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WA7510N-firmware.bin mips-uclibc/tplink-WA7510N-firmware.bin
+endif
+ifeq ($(CONFIG_WR841V8),y)
+	-./tools/tplink/mktplinkfw -B TL-WR841NDv8 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv8-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv8-firmware.bin mips-uclibc/tplink-WR841NDv8-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WA901NDv3 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA901NDv3-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WA901NDv3-firmware.bin mips-uclibc/tplink-WA901NDv3-firmware.bin
+endif
+ifeq ($(CONFIG_WR810N),y)
+	-./tools/tplink/mktplinkfw -B TL-WR810Nv1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR810Nv1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR810Nv1-firmware.bin mips-uclibc/tplink-WR810Nv1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR810Nv2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR810Nv2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR810Nv2-firmware.bin mips-uclibc/tplink-WR810Nv2-firmware.bin
+
+endif
+ifeq ($(CONFIG_WR841V9),y)
+	-./tools/tplink/mktplinkfw -B TL-WR841NDv9 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv9-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv9-firmware.bin mips-uclibc/tplink-WR841NDv9-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR841NDv10 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv10-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv10-firmware.bin mips-uclibc/tplink-WR841NDv10-firmware.bin
+
+	-./tools/tplink/mktplinkfw -s "00000000;45550000;" -B TL-WR841NDv11 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv11-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv11-firmware.bin mips-uclibc/tplink-WR841NDv11-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR841NDv11 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv11-firmwareUS.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv11-firmwareUS.bin mips-uclibc/tplink-WR841NDv11-firmwareUS.bin
+	
+	-./tools/tplink/mktplinkfw -s "00000000;45550000;" -B TL-WR841NDv12 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv12-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv12-firmware.bin mips-uclibc/tplink-WR841NDv12-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR841NDv12 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR841NDv12-firmwareUS.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR841NDv12-firmwareUS.bin mips-uclibc/tplink-WR841NDv12-firmwareUS.bin
+
+endif
+ifeq ($(CONFIG_WR941V6),y)
+	-./tools/tplink/mktplinkfw -B TL-WR941NDv6 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR941NDv6-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR941NDv6-firmware.bin mips-uclibc/tplink-WR941NDv6-firmware.bin
+endif
+ifeq ($(CONFIG_WR940V4),y)
+	-./tools/tplink/mktplinkfw -s "00000000;45550000;" -B TL-WR940NDv4 -N "TP-LINK Technologies" -V "ver. 1.0" -v 3.99.99 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR940NDv4-firmware-eu.bin
+	-./tools/tplink/mktplinkfw -s "00000000;55530000;" -B TL-WR940NDv4 -N "TP-LINK Technologies" -V "ver. 1.0" -v 3.99.99 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR940NDv4-firmware-us.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR940NDv4-firmware.bin mips-uclibc/tplink-WR940NDv4-firmware-eu.bin
+
+	-./tools/tplink/mktplinkfw -s "00000000;45550000;" -B TL-WR940NDv6 -N "TP-LINK Technologies" -V "ver. 1.0" -v 3.99.99 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR940NDv6-firmware-eu.bin
+	-./tools/tplink/mktplinkfw -s "00000000;55530000;" -B TL-WR940NDv6 -N "TP-LINK Technologies" -V "ver. 1.0" -v 3.99.99 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR940NDv6-firmware-us.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR940NDv6-firmware.bin mips-uclibc/tplink-WR940NDv6-firmware-eu.bin
+endif
+
+ifeq ($(CONFIG_WA901V5),y)
+	-./tools/tplink/mktplinkfw -s "00000000;45550000;" -B TL-WA901NDv4 -N "TP-LINK Technologies" -V "ver. 1.0" -v 3.99.99 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA901NDv4-firmware-eu.bin
+	-./tools/tplink/mktplinkfw -s "00000000;55530000;" -B TL-WA901NDv4 -N "TP-LINK Technologies" -V "ver. 1.0" -v 3.99.99 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA901NDv4-firmware-us.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WA901NDv4-firmware.bin mips-uclibc/tplink-WA901NDv4-firmware-eu.bin
+
+	-./tools/tplink/mktplinkfw -s "00000000;45550000;" -B TL-WA901NDv5 -N "TP-LINK Technologies" -V "ver. 1.0" -v 3.99.99 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA901NDv5-firmware-eu.bin
+	-./tools/tplink/mktplinkfw -s "00000000;55530000;" -B TL-WA901NDv5 -N "TP-LINK Technologies" -V "ver. 1.0" -v 3.99.99 -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WA901NDv5-firmware-us.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WA901NDv5-firmware.bin mips-uclibc/tplink-WA901NDv5-firmware-eu.bin
+endif
+ifeq ($(CONFIG_WR842V2),y)
+	-./tools/tplink/mktplinkfw -B TL-WR842NDv2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR842NDv2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR842NDv2-firmware.bin mips-uclibc/tplink-WR842NDv2-firmware.bin
+endif
+ifeq ($(CONFIG_WDR2543),y)
+	-./tools/tplink/mktplinkfw -B TL-WDR2543 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR2543-firmware.bin -v 3.13.99
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR2543-firmware.bin mips-uclibc/tplink-TL-WDR2543-firmware.bin
+endif
+ifeq ($(CONFIG_WDR4300),y)
+	-./tools/tplink/mktplinkfw -B TL-WDR4300 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR4300-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR4300-firmware.bin mips-uclibc/tplink-TL-WDR4300-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WDR4300 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR4300_US-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR4300_US-firmware.bin mips-uclibc/tplink-TL-WDR4300_US-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WDR4310 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR4310-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR4310-firmware.bin mips-uclibc/tplink-TL-WDR4310-firmware.bin
+	-./tools/tplink/mktplinkfw -B TL-WDR3600 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR3600-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR3600-firmware.bin mips-uclibc/tplink-TL-WDR3600-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WDR3600 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR3600_US-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR3600_US-firmware.bin mips-uclibc/tplink-TL-WDR3600_US-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WDR3500 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR3500-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR3500-firmware.bin mips-uclibc/tplink-TL-WDR3500-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WDR3500 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR3500_US-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR3500_US-firmware.bin mips-uclibc/tplink-TL-WDR3500_US-firmware.bin
+endif
+ifeq ($(CONFIG_ARCHERC25),y)
+	-./tools/safeloader/tplink-safeloader -B ARCHER-C25-V1 -V 1 -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C25-firmware.bin
+	-./tools/safeloader/tplink-safeloader -B ARCHER-C25-V1 -V 1 -S -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/archerC25_tp_recovery.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C25-firmware.bin mips-uclibc/archerC25_tp_recovery.bin
+endif
+ifeq ($(CONFIG_WR1043V2),y)
+	-./tools/tplink/mktplinkfw -B TL-WR1043NDv2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WR1043V2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WR1043V2-firmware.bin mips-uclibc/tplink-TL-WR1043V2-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR1043NDv3 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WR1043V3-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WR1043V3-firmware.bin mips-uclibc/tplink-TL-WR1043V3-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B TL-WR1043NDv3 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WR1043V3-firmwareUS.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WR1043V3-firmwareUS.bin mips-uclibc/tplink-TL-WR1043V3-firmwareUS.bin
+
+	-./tools/tplink/mktplinkfw -B ARCHER-C7v1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C7v1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C7v1-firmware.bin mips-uclibc/tplink-ARCHER-C7v1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B ARCHER-C7v2 -s "00000000;45550000;" -x "45550000" -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C7v2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C7v2-firmware.bin mips-uclibc/tplink-ARCHER-C7v2-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B ARCHER-C7v2Israel -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C7v2-firmwareIL.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C7v2-firmwareIL.bin mips-uclibc/tplink-ARCHER-C7v2-firmwareIL.bin
+
+	-./tools/tplink/mktplinkfw -B ARCHER-C7v1 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C7v1-firmwareUS.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C7v1-firmwareUS.bin mips-uclibc/tplink-ARCHER-C7v1-firmwareUS.bin
+
+	-./tools/tplink/mktplinkfw -B ARCHER-C7v2 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C7v2-firmwareUS.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C7v2-firmwareUS.bin mips-uclibc/tplink-ARCHER-C7v2-firmwareUS.bin
+
+	-./tools/tplink/mktplinkfw -B ARCHER-C5v1 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C5v1-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C5v1-firmware.bin mips-uclibc/tplink-ARCHER-C5v1-firmware.bin
+
+	-./tools/tplink/mktplinkfw -B ARCHER-C5v1 -u -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C5v1-firmwareUS.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C5v1-firmwareUS.bin mips-uclibc/tplink-ARCHER-C5v1-firmwareUS.bin
+
+	-./tools/tplink/mktplinkfw -B ARCHER-C5v1Israel -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C5v1-firmwareIL.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C5v1-firmwareIL.bin mips-uclibc/tplink-ARCHER-C5v1-firmwareIL.bin
+
+	-./tools/safeloader/tplink-safeloader -B ARCHER-C7-V4 -V 1 -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C7-v4-firmware.bin
+	-./tools/safeloader/tplink-safeloader -B ARCHER-C7-V4 -V 1 -S -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/archerC7v4_tp_recovery.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C7v4-firmware.bin mips-uclibc/archerC7v4_tp_recovery.bin
+
+	-./tools/safeloader/tplink-safeloader -B ARCHER-C7-V5 -V 1 -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-C7-v5-firmware.bin
+	-./tools/safeloader/tplink-safeloader -B ARCHER-C7-V5 -V 1 -S -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/archerC7v5_tp_recovery.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C7v5-firmware.bin mips-uclibc/archerC7v5_tp_recovery.bin
+
+	-./tools/safeloader/tplink-safeloader -B ARCHER-A7-V5 -V 1 -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-ARCHER-A7-v5-firmware.bin
+	-./tools/safeloader/tplink-safeloader -B ARCHER-A7-V5 -V 1 -S -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/archerA7v5_tp_recovery.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-A7v5-firmware.bin mips-uclibc/archerA7v5_tp_recovery.bin
+
+	-./tools/safeloader/mktplinkfw \
+		-c -H 0x10430004 -W 0x1 -L 0x80060000 \
+		-E 0x80060000 \
+		-m 1 "TP-LINK Technologies" -V "ver. 1.0" \
+		-k $(ARCH)-uclibc/vmlinux.tpl -o $(ARCH)-uclibc/vmlinux.v4
+
+	-./tools/safeloader/tplink-safeloader -B TLWR1043NDV4 -V 1 -k $(ARCH)-uclibc/vmlinux.v4 -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR1043v4-firmware.bin
+	-./tools/safeloader/tplink-safeloader -B TLWR1043NDV4 -V 1 -S -k $(ARCH)-uclibc/vmlinux.v4 -r $(ARCH)-uclibc/root.fs -o mips-uclibc/WR1043v4_tp_recovery.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR1043v4-firmware.bin mips-uclibc/WR1043v4_tp_recovery.bin
+
+	-./tools/safeloader/tplink-safeloader -B TLWR1043NV5 -V 1 -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-WR1043v5-firmware.bin
+	-./tools/safeloader/tplink-safeloader -B TLWR1043NV5 -V 1 -S -k $(ARCH)-uclibc/root.uimage -r $(ARCH)-uclibc/root.fs -o mips-uclibc/WR1043v5_tp_recovery.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/WR1043v5-firmware.bin mips-uclibc/WR1043v5_tp_recovery.bin
+
+
+	-./tools/tplink/mktplinkfw -B TL-WDR4900v2 -N "TP-LINK Technologies" -V "ver. 1.0" -k $(ARCH)-uclibc/vmlinux.tpl -r $(ARCH)-uclibc/root.fs -o mips-uclibc/tplink-TL-WDR4900v2-firmware.bin
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/TL-WDR4900v2-firmware.bin mips-uclibc/tplink-TL-WDR4900v2-firmware.bin
+endif
+ifeq ($(CONFIG_WRT400),y)
+	dd if=$(ARCH)-uclibc/root.uimage of=$(ARCH)-uclibc/root.wrt400 bs=1048576 conv=sync
+	./tools/wrt400/wrt400 $(ARCH)-uclibc/root.wrt400 $(ARCH)-uclibc/root.fs $(ARCH)-uclibc/wrt400-firmware.bin
+endif
+ifeq ($(CONFIG_RB2011),y)
+	rm -f $(LINUXDIR)/usr/initramfs_data.cpio.lzma
+	rm -f $(LINUXDIR)/vmlinux
+	rm -f $(LINUXDIR)/vmlinux.o
+	make -f Makefile.pb42 kernel
+endif
+	make -C lzma-loader/relocate
+	$(ARCH)-linux-objcopy -O binary $(LINUXDIR)/vmlinux $(ARCH)-uclibc/vmlinus 
+	cp $(ARCH)-uclibc/vmlinus lzma-loader/relocate/vmlinus.bin.new
+	rm -f lzma-loader/relocate/vmlinus.bin
+	make -C lzma-loader/relocate vmlinus.bin
+
+	lzma e -lc1 -lp2 -pb2 -d25 lzma-loader/relocate/vmlinus.bin $(ARCH)-uclibc/vmlinux.seama
+	
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir859.img -i $(ARCH)-uclibc/vmlinux.seama -i $(ARCH)-uclibc/root.fs  
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir859.img -m dev=/dev/mtdblock/1 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir859.img -i $(ARCH)-uclibc/raw-dir859.img.seama -m signature=wrgac37_dlink.2013gui_dir859
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir859.img
+	dd if=$(ARCH)-uclibc/web-dir859.img of=$(ARCH)-uclibc/webflash-dir859.img skip=52 iflag=skip_bytes 
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir859.trx $(ARCH)-uclibc/webflash-dir859.img
+
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir869.img -i $(ARCH)-uclibc/vmlinux.seama -i $(ARCH)-uclibc/root.fs  
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir869.img -m dev=/dev/mtdblock/1 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir869.img -i $(ARCH)-uclibc/raw-dir869.img.seama -m signature=wrgac54_dlink.2015_dir869
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir869.img
+	dd if=$(ARCH)-uclibc/web-dir869.img of=$(ARCH)-uclibc/webflash-dir869.img skip=48 iflag=skip_bytes 
+	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir869.trx $(ARCH)-uclibc/webflash-dir869.img
+
+
+
+
+ifeq ($(CONFIG_DAP3662),y)
+	cd tools/alpha_pack && ./packimgs -v -o $(TOP)/$(ARCH)-uclibc/raw.img -i $(TOP)/$(ARCH)-uclibc/vmlinux.lzma -i $(TOP)/$(ARCH)-uclibc/root.fs
+	cd tools/alpha_pack && ./v2image -v -i $(TOP)/$(ARCH)-uclibc/raw.img -o $(TOP)/$(ARCH)-uclibc/web-dap3662.img -d /dev/mtdblock/1 -s wapac11_dkbs_dap3662 -c -b
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dap3662.trx $(ARCH)-uclibc/web-dap3662.img
+endif
+ifeq ($(CONFIG_DAP2660),y)
+	cd tools/alpha_pack && ./packimgs -v -o $(TOP)/$(ARCH)-uclibc/raw.img -i $(TOP)/$(ARCH)-uclibc/vmlinux.lzma -i $(TOP)/$(ARCH)-uclibc/root.fs
+	cd tools/alpha_pack && ./v2image -v -i $(TOP)/$(ARCH)-uclibc/raw.img -o $(TOP)/$(ARCH)-uclibc/web-dap2660.img -d /dev/mtdblock/1 -s wapac09_dkbs_dap2660 -c -b
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dap2660.trx $(ARCH)-uclibc/web-dap2660.img
+endif
+ifeq ($(CONFIG_DAP2230),y)
+	cd tools/alpha_pack && ./packimgs -v -o $(TOP)/$(ARCH)-uclibc/raw.img -i $(TOP)/$(ARCH)-uclibc/vmlinux.lzma -i $(TOP)/$(ARCH)-uclibc/root.fs
+	cd tools/alpha_pack && ./v2image -v -i $(TOP)/$(ARCH)-uclibc/raw.img -o $(TOP)/$(ARCH)-uclibc/web-dap2230.img -d /dev/mtdblock/1 -s wapn31_dkbs_dap2230 -c -b
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dap2230.trx $(ARCH)-uclibc/web-dap2230.img
+endif
+ifeq ($(CONFIG_DAP3320),y)
+	cd tools/alpha_pack && ./packimgs -v -o $(TOP)/$(ARCH)-uclibc/raw.img -i $(TOP)/$(ARCH)-uclibc/vmlinux.lzma -i $(TOP)/$(ARCH)-uclibc/root.fs
+	cd tools/alpha_pack && ./v2image -v -i $(TOP)/$(ARCH)-uclibc/raw.img -o $(TOP)/$(ARCH)-uclibc/web-dap3320.img -d /dev/mtdblock/1 -s wapn29_dkbs_dap3320 -c -b
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dap3320.trx $(ARCH)-uclibc/web-dap3320.img
+endif
+ifeq ($(CONFIG_DAP2330),y)
+	cd tools/alpha_pack && ./packimgs -v -o $(TOP)/$(ARCH)-uclibc/raw.img -i $(TOP)/$(ARCH)-uclibc/vmlinux.lzma -i $(TOP)/$(ARCH)-uclibc/root.fs
+	cd tools/alpha_pack && ./v2image -v -i $(TOP)/$(ARCH)-uclibc/raw.img -o $(TOP)/$(ARCH)-uclibc/web-dap2330.img -d /dev/mtdblock/1 -s wapn24_dkbs_dap2330 -c -b
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dap2330.trx $(ARCH)-uclibc/web-dap2330.img
+endif
+ifeq ($(CONFIG_RAMBUTAN),y)
+	cp tools/rambutan/ubinize.cfg $(ARCH)-uclibc
+	tools/rambutan/padjffs2 $(ARCH)-uclibc/root.fs 128
+	cd $(ARCH)-uclibc && ../tools/rambutan/ubinize -v -m 2048 -p 128KiB -s 512 -O 2048 -o root.squashfs.ubi ubinize.cfg && cd ..
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/webflash-rambutan.trx $(ARCH)-uclibc/root.squashfs.ubi
+endif
+
+include rules/all.mk
+
+.PHONY: all clean distclean mrproper install package
+.PHONY: conf mconf oldconf kconf kmconf config menuconfig oldconfig
+.PHONY: dummy fixkc libnet libpcap
+
+
+

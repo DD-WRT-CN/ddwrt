@@ -1,0 +1,28 @@
+/bin/ps | /bin/grep -v grep | /bin/grep watchap
+if test x$? = x1
+then
+/bin/cat >/tmp/watchap << "EOF"
+#!/bin/sh
+COUNT=25
+SLEEP=6
+/bin/sleep 10
+while true
+do
+    /bin/dmesg | /usr/bin/tail -n 3 | /bin/grep "stuck beacon"
+    if test x$? = x0
+    then
+        /bin/date >>/tmp/downup.log
+        /sbin/rc restart
+    fi
+    if test x$COUNT != x0
+    then
+        COUNT=`expr ${COUNT} - 1 `
+        /bin/sleep 6
+    else
+        /bin/sleep 60
+    fi
+done
+EOF
+/bin/chmod 755 /tmp/watchap                  
+/usr/bin/nohup /tmp/watchap >/dev/null 2>&1 &
+fi

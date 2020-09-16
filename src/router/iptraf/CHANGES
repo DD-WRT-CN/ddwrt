@@ -1,0 +1,86 @@
+CHANGES file for iptraf-ng
+
+* Tue Jul 23 2013 Nikola Pajkovsky <npajkovs@redhat.com> - 1.1.4
+- locking code rewrite: only one instance is allowed now
+- promiscuous mode rewrite
+- build system: install iptraf-ng to sbin
+- remove token-ring support
+- remove ISDN interfaces support
+- preparation for packet capturing into the file
+- source code cleanups
+- bugfix: don't segfault when there are no ports to remove
+- rvnamed: fix the IPv6 resolving
+- add 802.1ad and QinQ VLAN handling
+- optimize code (to not use that much CPU)
+
+* Wed May 23 2012 Nikola Pajkovsky <npajkovs@redhat.com> - 1.1.3
+- new building system (based only on make, no automake/autoconf)
+- code cleanups
+- SIT tunnels support
+- space for HW addresses fix
+- sort interfaces by ifindex
+- print rates every second using moving average (over last 5 seconds)
+- packet_get() bugfix (don't count packets when there's no packet ready)
+- fix segfault in the tui/* code
+- fix checksumming for odd-sized IPv4 header
+
+* Fri May 04 2012 Nikola Pajkovsky <npajkovs@redhat.com> - 1.1.2
+- massive code cleanup
+- fix PPP handling
+- move the splash screen to the main menu
+- fix capturing on tun-like interfaces
+- support GRE-over-IP tunnels
+- fix ethernet descriptions
+- change units: bits/sec (bytes/sec) to kbps (kBps)
+- use bind() to lock the socket on interface (should decrease CPU
+  utilization on systems with very busy interfaces)
+- warnings cleanup
+- fix packet length counting for large packets
+- hostmon(): count IPv6 as IP protocol too
+
+* Thu Feb 02 2012 Nikola Pajkovsky <npajkovs@redhat.com> - 1.1.1
+- fix frames in UTF-8 locales
+- fix IPv6 port stats
+- fix IPv6 byte counting
+- fix port data rate
+- fix for interfaces with long name
+
+* Wed Jan 11 2012 Nikola Pajkovsky <npajkovs@redhat.com> - 1.1.0
+- build system fixes
+- brand new command line options parser
+- rename iptraf to iptraf-ng (binaries, mans)
+- code cleanup (useless code removal, warnings erradication, ...)
+- new ip checksum based on rfc1071 implementation
+- landesc.[c,h]: full rewrite
+
+* Sun Apr 11 2010 Nikola Pajkovsky <npajkovs@redhat.com> - 1.0.3
+- documentation cleanup
+
+* Wed Mar 24 2010 Nikola Pajkovsky <npajkovs@redhat.com> - 1.0.2
+- remove warnings
+- rif of PKG_CHECK_MODULES
+- tx_operate_listbox(): use proper format string for size_t in snprintf
+- ltrim(): simplify function and fix situation when strings overlap in strcpy
+- build: pass libpanel_CFLAGS and ncurses_CFLAGS to compiler
+- selectiface(): use strncpy to prevent buffer overflow and thus avoid gcc warning
+- init_promisc_list(): use IF_NAMESIZE as size of buffer for interface name
+- main(): allow regular users to run iptraf if the sticky-bit is set
+- fix strcpy overlap memory
+- remove -Werror option
+
+* Thu Mar 04 2010 Nikola Pajkovsky <npajkovs@redhat.com> - 1.0.1
+- remove dereferencing type-punned pointer will break strict-aliasing rules
+- convmacaddr(): fix assignment casting. One more warning gone.
+- ipmon(), servmon(): unnecessary casting is gone. Fixes strict-aliasing.
+- Fix compilation issues and crash within LAN station monitor
+
+* Mon Mar 01 2010 Nikola Pajkovsky <npajkovs@redhat.com> - 1.0.0
+- compile with -std=gnu99 -pedantic -Wall -Werror
+- add support for devices(used patches from gentoo, debian and fedora):
+  vlan, hsi, ctc, ath, bond, ra, bnep, dsl, modem, ni, br, tap, dummy,  vmnet
+- add longer intefaces names(18 chars)
+- add iptraf -u - show unsupported interfaces(fpeters@debian.org)
+- check if macro is defined ICMP6_DST_UNREACH_NOTNEIGHBOR(jer@gentoo.org)
+- add ipv6 support
+- remove wierd Setup compilation and replaced it by autotools
+- import original iptraf-3.0.0

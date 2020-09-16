@@ -1,0 +1,58 @@
+#!/bin/sh
+
+set -e
+
+echo '---------------------------------------------------------------------'
+echo 'SoftEther VPN for Unix'
+echo
+echo 'Copyright (c) all contributors on SoftEther VPN project in GitHub.'
+echo 'Copyright (c) Daiyuu Nobori, SoftEther Project at University of Tsukuba, and SoftEther Corporation.'
+echo
+echo 'Licensed under the Apache License, Version 2.0 (the License).'
+echo
+echo 'Read and understand README, LICENSE and WARNING before use.'
+echo '---------------------------------------------------------------------'
+echo
+
+echo 'Welcome to the corner-cutting configure script !'
+echo
+
+if [ ! -d "tmp" ]; then
+  mkdir tmp
+fi
+
+if [ ! -z ${CMAKE_FLAGS+x} ]; then
+	CMAKE_FLAGS="${CMAKE_FLAGS}"
+fi
+
+if [ ! -z ${CMAKE_INSTALL_PREFIX+x} ]; then
+	CMAKE_FLAGS="-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} ${CMAKE_FLAGS}"
+fi
+
+if [ -z ${OPENSSL_ROOT_DIR} ]; then
+	unameOut="$(uname -s)"
+	if [ "$unameOut" = "Darwin" ]; then
+		echo "Environment variable OPENSSL_ROOT_DIR not set, using default Homebrew path: /usr/local/opt/openssl/"
+		export OPENSSL_ROOT_DIR="/usr/local/opt/openssl/"
+	fi
+fi
+
+if [ ! -z ${CPACK_GENERATOR+x} ]; then
+	echo "CPACK_GENERATOR is set, CPack will generate ${CPACK_GENERATOR} packages."
+	CMAKE_FLAGS="-DCPACK_GENERATOR=${CPACK_GENERATOR} ${CMAKE_FLAGS}"
+elif [ -x "$(command -v rpm)" ]; then
+	echo "'rpm' executable found, CPack will generate RPM packages."
+	CMAKE_FLAGS="-DCPACK_GENERATOR='RPM' ${CMAKE_FLAGS}"
+else
+	echo "'rpm' executable not found, CPack will generate DEB packages."
+	CMAKE_FLAGS="-DCPACK_GENERATOR='DEB' ${CMAKE_FLAGS}"
+fi
+
+echo ""
+
+(cd tmp && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ${CMAKE_FLAGS} .. || exit 1)
+
+
+echo ""
+
+echo "The Makefile is generated. Run 'make -C tmp' to build SoftEther VPN."

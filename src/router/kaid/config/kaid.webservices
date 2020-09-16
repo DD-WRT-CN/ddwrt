@@ -1,0 +1,54 @@
+
+<fieldset>
+	<legend><% tran("service.kaid_legend"); %></legend>
+	<div class="setting">
+		<div class="label"><% tran("service.kaid_srv"); %></div>
+		<input class="spaceradio" type="radio" value="1" name="kaid_enable" <% nvram_checked("kaid_enable", "1"); %> onclick="show_layer_ext(this, 'idkaid', true)" /><% tran("share.enable"); %>&nbsp;
+		<input class="spaceradio" type="radio" value="0" name="kaid_enable" <% nvram_checked("kaid_enable", "0"); %> onclick="show_layer_ext(this, 'idkaid', false)" /><% tran("share.disable"); %>
+	</div>
+	<div id="idkaid">
+		<div class="setting">
+			<div class="label"><% tran("service.kaid_locdevnum"); %></div>
+			<input class="num" value="<% nvram_get("kaid_devs"); %>" name="kaid_devs" size="3" maxlength="3" onblur="valid_range(this,0,99,service.kaid_locdevnum)" />
+		</div>
+		<div class="setting">
+			<div class="label"><% tran("share.usrname"); %></div>
+			<input value="<% nvram_get("kaid_user"); %>" name="kaid_user" size="20" maxlength="20" />
+		</div>
+		<div class="setting">
+			<div class="label"><% tran("share.passwd"); %></div>
+			<input type="password" id="kaid_pass" value="<% nvram_get("kaid_pass"); %>" name="kaid_pass" size="20" maxlength="20" />&nbsp;&nbsp;&nbsp;
+			<input type="checkbox" name="_kaid_pass_unmask" value="0" onclick="setElementMask('kaid_pass', this.checked)" />&nbsp;<% tran("share.unmask"); %>
+		</div>
+		<div class="setting">
+			<div class="label"><% tran("service.kaid_uibind"); %></div>
+			<input size="5" maxlength="5" class="num" name="kaid_uibind" onblur="valid_range(this,1,65535,service.kaid_uibind)" value="<% nvram_get("kaid_uibind"); %>" />
+			<span class="default"><script type="text/javascript">
+			//<![CDATA[
+			document.write("(" + share.deflt + ": 34522, " + share.range + ": 1 - 65535)");
+			//]]>
+			</script>
+			</span>
+		</div>
+		<div class="setting">
+			<div class="label"><% tran("service.kaid_orbport"); %></div>
+			<input size="5" maxlength="5" class="num" name="kaid_orbport" onblur="valid_range(this,1,65535,service.kaid_orbport)" value="<% nvram_get("kaid_orbport"); %>" />
+			<span class="default"><script type="text/javascript">
+			//<![CDATA[
+			document.write("(" + share.deflt + ": 34525, " + share.range + ": 1 - 65535)");
+			//]]>
+			</script>
+			</span>
+		</div>
+		<div class="setting">
+			<div class="label"><% tran("service.kaid_orbdeepport"); %></div>
+			<input size="5" maxlength="5" class="num" name="kaid_orbdeepport" onblur="valid_range(this,1,65535,service.kaid_orbdeepport)" value="<% nvram_get("kaid_orbdeepport"); %>" />
+			<span class="default"><script type="text/javascript">
+			//<![CDATA[
+			document.write("(" + share.deflt + ": 34523, " + share.range + ": 1 - 65535)");
+			//]]>
+			</script>
+			</span>
+		</div>
+	</div>
+</fieldset><br/>

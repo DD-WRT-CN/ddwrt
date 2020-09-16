@@ -1,0 +1,4 @@
+#define PACKAGE_VERSION "0.0.6-e4f0ba5"
+#define HAVE_STRUCT_TIMESPEC 1
+#define HAVE_CLOCK_GETTIME 1
+

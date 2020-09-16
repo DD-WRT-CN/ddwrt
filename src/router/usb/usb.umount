@@ -1,0 +1,51 @@
+#!/bin/sh
+
+if [ "$(nvram get usb_ses_umount )" = "1" ]; then
+  
+  LOGENTRY="`date +%b` `date +%d` `date +%R`:`date +%S` kumount.info: umounting all usb drives"
+  echo $LOGENTRY >> /var/log/messages
+
+  #flush caches
+  `sync`
+
+  #kill known services that come with dd-wrt and usually access external storage
+  killall proftpd
+  killall smbd
+  killall minidlna
+  killall lighttpd
+  
+  #kill other services that are using the external storage
+  killprocs() {
+    mnts=`awk -v p="$1" '$1 == p {if(m) printf "|"; printf $2; m=1}' \
+	  /proc/mounts`
+    [ -z "$mnts" ] && return
+    pids=`ps | tail -n +3 | awk -F " " '{print $1}'`
+    for pid in $pids; do
+        ( cd /proc/$pid && { ls -l cwd exe root fd; cat maps; } ) 2> /dev/null \
+		| awk '{print $NF}' | grep -qs -E "^($mnts)" && kill -9 $pid
+    done
+  }
+
+  `/sbin/blkid > /tmp/blkid.dump`
+
+  while read line; do
+    part=`echo $line | cut -d: -f1`
+    if [ $part != "" ]; then
+
+      ptype=`disktype $part | grep 'Linux swap'`
+
+      if [ "$ptype" != "" ]; then
+	  `/sbin/swapoff $part`
+      else
+	  killprocs $part
+	  sleep 1
+	  mnts=`awk -v p=$part '$1 == p {print $2}' /proc/mounts`
+	  [ -n "$mnts" ] && `/bin/umount -r $mnts`
+      fi
+
+    fi
+  done < /tmp/blkid.dump
+
+
+  echo "<b>Drives have been umounted</b>" >/tmp/disktype.dump
+fi

@@ -1,0 +1,934 @@
+#
+# Broadcom Linux Router Makefile
+#
+# Copyright 2001-2003, Broadcom Corporation
+# All Rights Reserved.
+#
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+#
+# $Id: Makefile,v 1.2 2005/09/26 11:06:58 seg Exp $
+#
+
+include .config
+ifneq ($(wildcard ../cy_conf.mak),)
+  include ../cy_conf.mak
+endif
+
+
+CONFIG_MUSL=y
+CONFIG_NOOPT=y
+
+#
+# Paths
+#
+OPENSER_MODULES := sl tm rr maxfwd usrloc registrar dbtext textops exec auth auth_db nathelper
+OPENSER_MODULE_FILES := $(foreach module,$(OPENSER_MODULES),openser/modules/$(module)/$(module).so)
+OPENSSL_NO_CIPHERS:= no-idea no-md2 no-mdc2 no-rc5 no-sha0 no-rmd160 no-aes192
+OPENSSL_OPTIONS:= shared no-ec no-err no-fips no-hw no-krb5 no-threads zlib-dynamic no-engines
+
+# Source bases
+
+export PLATFORM LINUXDIR LIBDIR USRLIBDIR
+export TOP := $(shell pwd)
+export SRCBASE := $(shell (cd $(TOP)/.. && pwd -P))
+
+
+# Set the HAL directory if you have the HAL sources
+
+# Set the Atheros Rate Control directory if you have the proprietary rate control
+export ATH_RATE=ath_rate/sample
+
+#
+# Cross-compile environment variables
+#
+
+# Build platform
+export BUILD := i386-pc-linux-gnu
+export HOSTCC := gcc
+
+# uClibc wrapper
+export ARCH:=$(PLATFORM)
+ifeq ($(CONFIG_UCLIBC),y)
+export PLATFORM := $(PLATFORM)-uclibc
+endif
+
+#export LINUXDIR := $(SRCBASE)/linux/linux.v24
+#ifeq ($(ARCH),mips)
+#export LINUXDIR := $(SRCBASE)/linux/ar531x/linux-2.6.22
+#endif
+ifeq ($(ARCH),armeb)
+export LINUXDIR := $(SRCBASE)/linux/xscale/linux-2.6.17
+endif
+ifeq ($(ARCH),powerpc)
+export LINUXDIR := $(SRCBASE)/linux/magicbox/linux-2.6.19
+endif
+ifeq ($(ARCH),mipsel)
+export LINUXDIR := $(SRCBASE)/kernel/rb500/linux-2.6.17-rc5
+endif
+ifeq ($(ARCH),i386)
+export LINUXDIR := $(SRCBASE)/kernel/wrap/linux-2.6.16.7
+endif
+
+export KERNELRELEASE = $(shell cat $(LINUXDIR)/include/config/kernel.release 2> /dev/null)
+
+#ifeq ($(KERNELRELEASE),"")
+#export KERNELRELEASE = $(shell cat $(LINUXDIR)/include/config/kernel.release 2> /dev/null)
+#endif
+#ifeq ($(PLATFORM),mipsel)
+#export CROSS_COMPILE := mipsel-linux-
+#export CONFIGURE := ./configure mipsel-linux --build=$(BUILD)
+#export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../mipsel-linux && pwd -P)
+#endif
+
+#ifeq ($(PLATFORM),mipsel-uclibc)
+export CROSS_COMPILE := $(ARCH)-linux-uclibc-
+export CONFIGURE := ./configure $(ARCH)-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+#export STAGING_DIR := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+
+
+#endif
+
+#ifeq ($(CONFIG_BCMWPA2),y)
+#export CFLAGS += -DBCMWPA2 
+#endif
+
+export BASEOPT:=-Os
+#export ARCH:= mipsel
+
+ifeq ($(ARCH),mipsel)
+export COPTS:=$(BASEOPT) -pipe -mips32 -mtune=mips32 -funit-at-a-time 
+endif
+ifeq ($(ARCH),armeb)
+export COPTS:=$(BASEOPT) -pipe -mtune=xscale -march=armv5te -Wa,-mcpu=xscale -mno-thumb-interwork -mno-thumb -funit-at-a-time 
+endif
+ifeq ($(ARCH),mips)
+ifeq ($(ARCHITECTURE),pb42)
+export COPTS:=$(BASEOPT) -pipe -mips32 -mtune=mips32 -funit-at-a-time 
+else
+export COPTS:=$(BASEOPT) -pipe -mips32 -mtune=mips32 -funit-at-a-time -DHAVE_AR531X 
+endif
+endif
+ifeq ($(ARCH),powerpc)
+export COPTS:=$(BASEOPT) -pipe -funit-at-a-time -mcpu=405fp -mtune=405fp -mmultiple -mstring -mno-bit-align 
+endif
+ifeq ($(ARCH),i386)
+export COPTS:=$(BASEOPT) -pipe -march=i486 -funit-at-a-time 
+endif
+
+export CC := ccache $(CROSS_COMPILE)gcc
+export CXX := ccache $(CROSS_COMPILE)g++
+export AR := $(CROSS_COMPILE)ar
+export AS := $(CROSS_COMPILE)as
+export LD := $(CROSS_COMPILE)ld
+export NM := $(CROSS_COMPILE)nm
+export RANLIB := $(CROSS_COMPILE)ranlib
+export STRIP := $(CROSS_COMPILE)strip
+export SIZE := $(CROSS_COMPILE)size
+#export MIPS16_OPT:= -minterlink-mips16 -mips16
+
+export CFLAGS := $(COPTS)
+
+#
+# Install and target directories
+#
+
+export PLATFORMDIR := $(TOP)/$(PLATFORM)
+export INSTALLDIR := $(PLATFORMDIR)/install
+export TARGETDIR := $(PLATFORMDIR)/target
+
+ifeq ($(PLATFORM),mipsel)
+obj-y += libcrypto
+endif
+#
+# Configuration
+#
+CONFIG_IPTABLES=y
+include rules/configs.mk
+
+obj-clean := $(foreach obj,$(obj-y) $(obj-n) $(obj-m),$(obj)-clean)
+obj-install := $(foreach obj,$(obj-y) $(obj-m),$(obj)-install)
+obj-distclean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-distclean)
+
+#
+# Basic rules
+#
+
+
+all: install_headers build_date clean_target $(obj-y) $(obj-m) $(LINUXDIR)/.config kernel
+
+
+build_date:
+	echo "#define BUILD_DATE \"$(shell date +%D)\"" > ../../opt/build.h 
+	echo "HOSTAPDVERSION=20120910" >> .config
+	echo "CONFIG_MUSL=y" >> .config 
+
+drop-sections	= .comment
+strip-flags	= $(addprefix --remove-section=,$(drop-sections))
+
+include kernel-features.mk
+
+kernel:
+        # Also build kernel
+	# Also build kernel
+ifeq ($(CONFIG_CA8),y)
+	cp $(LINUXDIR)/.config_ca8pro $(LINUXDIR)/.config
+else
+ifeq ($(CONFIG_LS5),y)
+	cp $(LINUXDIR)/.config_ca8 $(LINUXDIR)/.config
+else
+ifeq ($(CONFIG_TW6600_INITRD),y)
+	cp $(LINUXDIR)/.config_initrd $(LINUXDIR)/.config
+else
+ifeq ($(CONFIG_TW6600),y)
+###das ist ne config mit PRINTK=Y args (ja und. ich debugge manchmal gerne)
+	cp $(LINUXDIR)/.config_tw6660 $(LINUXDIR)/.config
+else
+	cp $(LINUXDIR)/.config_generic $(LINUXDIR)/.config
+endif
+endif
+endif
+endif
+ifeq ($(CONFIG_CA8PRO),y)
+	cp $(LINUXDIR)/.config_ca8pro $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_RCAA01),y)
+	cp $(LINUXDIR)/.config_rcaa01 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_RDAT81),y)
+	cp $(LINUXDIR)/.config_ca8pro $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_FONERA2200),y)
+	cp $(LINUXDIR)/.config_generic_selfmap_vlan $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR300),y)
+	cp $(LINUXDIR)/.config_dir300 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DIR400),y)
+	cp $(LINUXDIR)/.config_dir400 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_LS2),y)
+	cp $(LINUXDIR)/.config_generic_selfmap $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_DLM101),y)
+	cp $(LINUXDIR)/.config_generic_selfmap $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WRT54G2),y)
+	cp $(LINUXDIR)/.config_generic_selfmap $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_RTG32),y)
+	cp $(LINUXDIR)/.config_g32 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_MERAKI),y)
+	cp $(LINUXDIR)/.config_generic_selfmap $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_MR3202A),y)
+	cp $(LINUXDIR)/.config_generic_selfmap $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WPE53G),y)
+	cp $(LINUXDIR)/.config_generic_selfmap $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_NP25G),y)
+	cp $(LINUXDIR)/.config_generic_selfmap $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_MR3201A),y)
+	cp $(LINUXDIR)/.config_generic_selfmap $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_GWMF54G2),y)
+	cp $(LINUXDIR)/.config_generic_selfmap_pp $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WRK54G),y)
+	cp $(LINUXDIR)/.config_micro_wrk $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_WHRAG108),y)
+	cp $(LINUXDIR)/.config_whr $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_USR5453),y)
+	cp $(LINUXDIR)/.config_usr5453 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_EOC2610),y)
+	cp $(LINUXDIR)/.config_eoc2610 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_EOC1650),y)
+	cp $(LINUXDIR)/.config_eoc2610 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_EAP3660),y)
+	cp $(LINUXDIR)/.config_eoc2610 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_EOC5610),y)
+	cp $(LINUXDIR)/.config_eoc5610 $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_SOLO51),y)
+	cp $(LINUXDIR)/.config_eoc5610 $(LINUXDIR)/.config
+endif
+
+
+	$(kernelfeatures)
+ifeq ($(CONFIG_SWCONFIG),y)
+	echo CONFIG_AR8216_PHY=y >> $(LINUXDIR)/.config
+	sed -i 's/\CONFIG_SWCONFIG=y/# CONFIG_SWCONFIG is not set/g' $(LINUXDIR)/.config
+#	echo CONFIG_KALLSYMS=y >> $(LINUXDIR)/.config
+else
+	echo "# CONFIG_AR8216_PHY is not set" >> $(LINUXDIR)/.config
+endif
+
+	$(MAKE) -C $(LINUXDIR) oldconfig	
+	if ! grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -j 4 -C $(LINUXDIR) vmlinux CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" ; \
+	fi
+	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -j 4 -C $(LINUXDIR) modules CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" ; \
+	fi
+
+	$(ARCH)-linux-objcopy -O binary $(LINUXDIR)/vmlinux $(ARCH)-uclibc/vmlinus_old
+
+	$(MAKE) -C $(LINUXDIR) modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR)
+#	-$(MAKE) -f Makefile.ar531x ath9k
+#	-$(MAKE) -f Makefile.ar531x ath9k-install
+	-$(MAKE) -f Makefile.ar531x libutils
+	-$(MAKE) -f Makefile.ar531x madwifi
+	-$(MAKE) -f Makefile.ar531x madwifi-install
+	-$(MAKE) -f Makefile.ar531x batman-adv
+	-$(MAKE) -f Makefile.ar531x batman-adv-install
+	-$(MAKE) -f Makefile.ar531x ndpi-netfilter
+	-$(MAKE) -f Makefile.ar531x ndpi-netfilter-install
+ifeq ($(CONFIG_SMBD),y)
+	-$(MAKE) -f Makefile.ar531x smbd
+	-$(MAKE) -f Makefile.ar531x smbd-install
+endif
+ifeq ($(CONFIG_WIREGUARD),y)
+	-$(MAKE) -f Makefile.ar531x wireguard
+	-$(MAKE) -f Makefile.ar531x wireguard-install
+endif
+ifeq ($(CONFIG_CAKE),y)
+	-$(MAKE) -f Makefile.ar531x cake
+	-$(MAKE) -f Makefile.ar531x cake-install
+	-$(MAKE) -f Makefile.ar531x fq_codel_fast
+	-$(MAKE) -f Makefile.ar531x fq_codel_fast-install
+endif
+
+	-$(MAKE) -f Makefile.ar531x uniwip-gpio
+	-$(MAKE) -f Makefile.ar531x uniwip-gpio-install
+
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/build
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/source
+
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nfs
+endif
+ifneq ($(CONFIG_JFFS2),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jffs2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzma
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzo
+endif
+ifneq ($(CONFIG_MMC),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext2
+endif
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+endif
+ifneq ($(CONFIG_JFFS2),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jffs2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzma
+endif
+ifneq ($(CONFIG_IPV6),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/ipv6
+endif
+ifneq ($(CONFIG_BONDING),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/bonding
+endif
+ifneq ($(CONFIG_USBIP),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/staging/usbip
+endif
+ifneq ($(CONFIG_USB),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/fat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/vfat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/msdos
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/mbcache.ko
+endif
+ifneq ($(CONFIG_USB_ADVANCED),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext4
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/btrfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd	
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd2	
+endif
+	find $(ARCH)-uclibc/install $(ARCH)-uclibc/target  -name \*.ko | \
+		xargs $(ARCH)-linux-nm | \
+		awk '$$1 == "U" { print $$2 } ' | \
+		sort -u > $(LINUXDIR)/mod_symtab.txt
+	$(ARCH)-linux-nm -n $(LINUXDIR)/vmlinux.o | grep ' r __ksymtab' | sed -e 's,........ r __ksymtab_,,' > $(LINUXDIR)/kernel_symtab.txt
+	$(ARCH)-linux-nm -n $(LINUXDIR)/vmlinux.o | grep ' R __ksymtab' | sed -e 's,........ R __ksymtab_,,' >> $(LINUXDIR)/kernel_symtab.txt
+	grep -f $(LINUXDIR)/mod_symtab.txt $(LINUXDIR)/kernel_symtab.txt -F > $(LINUXDIR)/sym_include.txt
+	grep -vf $(LINUXDIR)/mod_symtab.txt $(LINUXDIR)/kernel_symtab.txt -F > $(LINUXDIR)/sym_exclude.txt
+	( \
+		echo '#define SYMTAB_KEEP \'; \
+		cat $(LINUXDIR)/sym_include.txt | \
+			awk '{print "KEEP(*(___ksymtab+" $$$$1 ")) \\" }'; \
+		echo; \
+		echo '#define SYMTAB_KEEP_GPL \'; \
+		cat $(LINUXDIR)/sym_include.txt | \
+			awk '{print "KEEP(*(___ksymtab_gpl+" $$$$1 ")) \\" }'; \
+		echo; \
+		echo '#define SYMTAB_DISCARD \'; \
+		cat $(LINUXDIR)/sym_exclude.txt | \
+			awk '{print "*(___ksymtab+" $$$$1 ") \\" }'; \
+		echo; \
+		echo '#define SYMTAB_DISCARD_GPL \'; \
+		cat $(LINUXDIR)/sym_exclude.txt | \
+			awk '{print "*(___ksymtab_gpl+" $$$$1 ") \\" }'; \
+		echo; \
+	) > $(LINUXDIR)/symtab.h
+
+	if ! grep -q "CONFIG_EMBEDDED_RAMDISK=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -j 4 -C $(LINUXDIR) vmlinux EXTRA_LDSFLAGS="-I$(LINUXDIR) -include symtab.h" CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" ; \
+	fi
+
+	$(ARCH)-linux-objcopy -O binary $(LINUXDIR)/vmlinux $(ARCH)-uclibc/vmlinus 
+	cat $(ARCH)-uclibc/vmlinus | lzma e -si -so -eos -lc1 -lp2 -pb2 > lzma-loader/whrag108/vmlinux.lzma
+	cat $(ARCH)-uclibc/vmlinus | lzma e -si -so -eos -lc1 -lp2 -pb2 > lzma-loader/aw6600/vmlinux.lzma
+	cat $(ARCH)-uclibc/vmlinus | lzma e -si -so -eos -lc1 -lp2 -pb2 > lzma-loader/meraki/vmlinux.lzma
+	cat $(ARCH)-uclibc/vmlinus | lzma e -si -so -eos -lc1 -lp2 -pb2 > lzma-loader/ls5/vmlinux.lzma
+	cat $(ARCH)-uclibc/vmlinus | lzma e -si -so -eos -lc1 -lp2 -pb2 > lzma-loader/ca8pro/vmlinux.lzma
+	cat $(ARCH)-uclibc/vmlinus | lzma e -si -so -eos -lc1 -lp2 -pb2 > lzma-loader/bwrg1000/vmlinux.lzma
+	make -C lzma-loader/rt32g clean
+	make -C lzma-loader/rt32g 
+	make -C lzma-loader/whrag108 clean
+	make -C lzma-loader/whrag108 
+	make -C lzma-loader/meraki clean
+	make -C lzma-loader/meraki 
+	make -C lzma-loader/aw6600 clean
+	make -C lzma-loader/aw6600 
+	make -C lzma-loader/ls5 clean
+	make -C lzma-loader/ls5 
+	make -C lzma-loader/ca8pro clean
+	make -C lzma-loader/ca8pro 
+	make -C lzma-loader/bwrg1000 clean
+	make -C lzma-loader/bwrg1000 
+	cp lzma-loader/bwrg1000/lzma.elf $(ARCH)-uclibc/bwrg1000_linux.elf
+#	$(ARCH)-linux-objcopy -O binary $(strip-flags) $(ARCH)-uclibc/bwrg1000_linux.elf $(ARCH)-uclibc/lzma_vmlinus.m
+
+	cp lzma-loader/rt32g/lzma.elf $(ARCH)-uclibc/lzma_vmlinux_rt32g
+	$(ARCH)-linux-objcopy -O binary $(ARCH)-uclibc/lzma_vmlinux_rt32g $(ARCH)-uclibc/lzma_vmlinus_rt32g
+
+
+	cp lzma-loader/meraki/lzma.elf $(ARCH)-uclibc/lzma_vmlinux_meraki
+	$(ARCH)-linux-objcopy -O binary $(strip-flags) $(ARCH)-uclibc/lzma_vmlinux_meraki $(ARCH)-uclibc/lzma_vmlinus.m
+	cp lzma-loader/whrag108/lzma.elf $(ARCH)-uclibc/lzma_vmlinux
+	$(ARCH)-linux-objcopy -O binary $(strip-flags) $(ARCH)-uclibc/lzma_vmlinux $(ARCH)-uclibc/lzma_vmlinus 
+	cp lzma-loader/ca8pro/lzma.elf $(ARCH)-uclibc/lzma_vmlinux
+	$(ARCH)-linux-objcopy -O binary $(strip-flags) $(ARCH)-uclibc/lzma_vmlinux $(ARCH)-uclibc/lzma_vmlinusca8pro 
+	cp lzma-loader/aw6600/lzma.elf $(ARCH)-uclibc/lzma_vmlinuxaw
+	$(ARCH)-linux-objcopy -O binary $(strip-flags) $(ARCH)-uclibc/lzma_vmlinuxaw $(ARCH)-uclibc/lzma_vmlinusaw 
+	cp lzma-loader/aw6600/lzma.elf $(ARCH)-uclibc/lzma_vmlinuxls5
+	$(ARCH)-linux-objcopy -O binary $(strip-flags) $(ARCH)-uclibc/lzma_vmlinuxls5 $(ARCH)-uclibc/lzma_vmlinusls5 
+
+
+
+	# make overtake image
+	$(ARCH)-linux-objcopy -O binary $(strip-flags) lzma-loader/vmlinux $(ARCH)-uclibc/vmlinus_initrd 
+	cat $(ARCH)-uclibc/vmlinus_initrd | lzma e -si -so -eos -lc1 -lp2 -pb2 > lzma-loader/aw6600/vmlinux.lzma
+	make -C lzma-loader/aw6600 clean
+	make -C lzma-loader/aw6600 
+	cp lzma-loader/aw6600/lzma.elf $(ARCH)-uclibc/lzma_vmlinuxaw_initrd
+	$(ARCH)-linux-objcopy -O binary $(strip-flags) $(ARCH)-uclibc/lzma_vmlinuxaw_initrd $(ARCH)-uclibc/lzma_vmlinusaw_initrd 
+
+include common.mk
+
+install package: clean_target $(filter-out lib.$(ARCH)-install,$(obj-install)) $(LINUXDIR)/.config 
+	install -d $(TARGETDIR)
+	install -d $(ARCH)-uclibc/modules
+	for dir in $(wildcard $(patsubst %,$(INSTALLDIR)/%,$(obj-y))) ; do \
+	    (cd $${dir} && tar cpf - .) | (cd $(TARGETDIR) && tar xpf -) \
+	done
+	for dir in $(wildcard $(patsubst %,%,$(obj-m))) ; do \
+	    (cd $(INSTALLDIR)/$${dir} && tar -cvvzf $(TOP)/$(ARCH)-uclibc/modules/$${dir}.tar.gz .) \
+	done
+	mkdir -p $(ARCH)-uclibc/target/etc/config
+	mkdir -p $(ARCH)-uclibc/target/etc/kaid
+	mkdir -p $(ARCH)-uclibc/target/etc/langpack
+	cp ./opt/bin/ipkg $(ARCH)-uclibc/target/bin
+	cd  $(ARCH)-uclibc/target/lib
+	cp ./opt/etc/preinit $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/postinit $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/ipkg.conf $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/config/* $(ARCH)-uclibc/target/etc/config
+ifeq ($(CONFIG_HTTPD),y)
+	cp ./opt/usr/lib/smb.conf $(ARCH)-uclibc/target/usr/lib
+	ln -sf ../tmp/smbshare $(ARCH)-uclibc/target/www/smb
+endif
+
+	# optimize the crypto library by removing unneeded symbols
+	#[ ! -d libcrypto ] || $(MAKE) -C libcrypto optimize
+	#[ ! -d libcrypto ] || $(MAKE) -C libcrypto optimize
+	# Install (and possibly optimize) C library
+ifneq ($(CONFIG_MUSL),y)
+ifeq ($(CONFIG_WRK54G),y)
+	$(MAKE) -f Makefile.ar531x lib.$(ARCH)_micro-install
+else
+	$(MAKE) -f Makefile.ar531x lib.$(ARCH)-install
+endif
+endif
+	# optimize the others library by removing unneeded symbols
+	$(MAKE) -f Makefile.ar531x optimize-lib
+	# Install modules into filesystem
+	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -C $(LINUXDIR) modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR) ; \
+	fi
+ifeq ($(CONFIG_MADWIFI),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/wl
+endif
+#	mkdir -p $(TARGETDIR)/lib/modules/2.4.32/kernel/drivers/net/ctmisc
+#	cp ../wl/ctmisc/ctmisc.o $(TARGETDIR)/lib/modules/2.4.32/kernel/drivers/net/ctmisc
+	##not used yet
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#cp ./switch/switch-core.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+#	cp ./viarhine/via-rhine.o $(TARGETDIR)/lib/modules/2.4.32/kernel/drivers/net
+
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#cp ./switch/switch-adm.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#cp lib.$(ARCH)/libgcc_s.so.1 $(TARGETDIR)/lib
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	#cp ./switch/switch-robo.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/switch
+	
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc1/kernel/drivers/net/et
+	#cp ../et/linux/et.o $(TARGETDIR)/lib/modules/2.4.32-rc1/kernel/drivers/net/et
+	
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/et.4702
+	#cp ../et.4702/linux/4702et.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/et.4702
+	# robo switch
+	#mkdir -p $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/robo
+	#cp ../robo/linux/robo.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/robo
+	
+	find $(TARGETDIR) -name "wl_*.o"  | xargs rm -rf
+	# quick n dirty - stuff Nikki's module where it belongs
+	#mkdir $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/adm6996
+#	if [ "$(CONFIG_MMC)" = "y" ] ; then \
+#	mkdir $(TARGETDIR)/lib/modules/2.4.32/kernel/fs/mmc ; \
+#	cp mmc/mmc.o $(TARGETDIR)/lib/modules/2.4.32/kernel/fs/mmc ; \
+#	fi ; 
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nfs
+endif
+ifneq ($(CONFIG_JFFS2),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jffs2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzma
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzo
+endif
+ifneq ($(CONFIG_MMC),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext2
+endif
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+endif
+ifneq ($(CONFIG_JFFS2),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jffs2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzma
+endif
+ifneq ($(CONFIG_IPV6),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/ipv6
+endif
+ifneq ($(CONFIG_BONDING),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/bonding
+endif
+ifneq ($(CONFIG_USBIP),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/staging/usbip
+endif
+ifneq ($(CONFIG_USB),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/fat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/vfat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/msdos
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/mbcache.ko
+endif
+ifneq ($(CONFIG_USB_ADVANCED),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext4
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/btrfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd	
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd2	
+endif
+
+
+#ifeq ($(CONFIG_MSSID),y)
+#	cp adm6996.v24/adm6996.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/adm6996/adm6996.o
+#else	
+#	cp adm6996/adm6996.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/adm6996/adm6996.o
+#endif
+
+
+#ifeq ($(CONFIG_MSSID),y)
+#	cp adm6996.v24/adm6996.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/adm6996/adm6996.o
+#else	
+#	cp adm6996/adm6996.o $(TARGETDIR)/lib/modules/2.4.32-rc3/kernel/drivers/net/adm6996/adm6996.o
+#endif
+
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/build
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/source
+	
+	
+	
+        # Prepare filesystem
+	cd $(TARGETDIR) && $(TOP)/misc/rootprep.sh
+        # Make sure mksquashfs-2.0 is used
+#	$(MAKE) -C $(LINUXDIR)/scripts/squashfs mksquashfs
+	cd $(TARGETDIR)  &&  find . -iname "CVS" | xargs rm -rf
+	cd $(TARGETDIR)  &&  find . -iname ".svn" | xargs rm -rf
+#	cp viarhine/pci-scan.o $(TARGETDIR)/lib/modules/2.4.32/kernel/drivers/net/pci-scan.o
+#	cp -f test/* $(TARGETDIR)/lib/modules/2.4.33-pre1/kernel/drivers/net
+	
+#	mknod $(TARGETDIR)/dev/cfa b 13 0
+#	mknod $(TARGETDIR)/dev/cfa1 b 13 1
+#	mknod $(TARGETDIR)/dev/cfa2 b 13 2
+#	mknod $(TARGETDIR)/dev/cfa3 b 13 3
+#	mknod $(TARGETDIR)/dev/cfa4 b 13 4
+#	umount $(TARGETDIR)
+	#e2fsck -y -f $(ARCH)-uclibc/root.fs
+	./busybox/examples/depmod.pl -F $(LINUXDIR)/System.map -b $(ARCH)-uclibc/target/lib/modules
+	find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/extra -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/extra
+	export STRIP_KMOD="$(LINUXDIR)/scripts/strip-kmod.sh" && \
+	export STRIP="sstrip" && \
+	$(LINUXDIR)/scripts/rstrip.sh $(TARGETDIR)
+	
+	#cd $(TARGETDIR)
+#	tar --directory=$(TARGETDIR) --remove-files -cvvjf $(TARGETDIR)/etc/local.tar.bz2 usr/local
+	rm -rf $(TARGETDIR)/usr/local
+	mkdir $(TARGETDIR)/usr/local
+ifeq ($(CONFIG_KAID),y)
+	cp kaid/kaid $(TARGETDIR)/usr/sbin
+endif
+ifeq ($(CONFIG_RC),y)
+#	mv $(TARGETDIR)/usr/lib/services.so $(TARGETDIR)/lib
+endif
+ifeq ($(CONFIG_WRK54G),y)
+	misc/makeDevs $(ARCH)-uclibc/target	
+endif
+	$(TOP)/../../tools/removewhitespace.sh $(TOP)/../../tools $(TARGETDIR)/etc/config
+	@true
+	$(LINUXDIR)/scripts/squashfs/mksquashfs4 $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -comp xz -nopad  -root-owned -noappend -b 262144
+#	$(LINUXDIR)/scripts/squashfs/mksquashfs-lzma $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -noappend -be
+	mkfs.jffs2 --pad --big-endian --squash -e 0x10000 -o $(ARCH)-uclibc/dd-wrt.jffs2 -d $(ARCH)-uclibc/target
+	$(MAKE) -f Makefile.ar531x kernel
+	find $(TARGETDIR)/lib/modules -name *.ko -exec mips-linux-strip --strip-unneeded --remove-section=.comment {} +		
+	#e2fsck -y -f $(ARCH)-uclibc/root.fs
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net
+	export STRIP_KMOD="$(LINUXDIR)/scripts/strip-kmod.sh" && \
+	export STRIP="sstrip" && \
+	$(LINUXDIR)/scripts/rstrip.sh $(TARGETDIR)
+	
+	./tools/kernelopt/kernelopt.sh $(LINUXDIR) $(ARCH)-uclibc/target $(ARCH)-linux-
+	cp $(LINUXDIR)/vmlinux_opt $(ARCH)-uclibc/vmlinux
+
+	cp $(ARCH)-uclibc/vmlinux $(ARCH)-uclibc/vmlinux.bak 
+	
+	mips-linux-uclibc-objcopy -O binary $(strip-flags) -g $(ARCH)-uclibc/vmlinux $(ARCH)-uclibc/vmlinux.bin
+	lzma e -lc1 -lp2 -pb2 $(ARCH)-uclibc/vmlinux.bin $(ARCH)-uclibc/vmlinux.lzma
+#	gzip -9 $(ARCH)-uclibc/vmlinux.bin $(ARCH)-uclibc/vmlinux.gz
+ifeq ($(CONFIG_TW6600),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.bin.l7 bs=65536 conv=sync
+else
+ifeq ($(CONFIG_RTG32),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.bin.l7 bs=65536 conv=sync
+else
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.bin.l7 bs=131072 conv=sync
+endif
+endif
+ifeq ($(CONFIG_BWRG1000),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.bin.l7 bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.bin.l7
+	cp $(ARCH)-uclibc/vmlinux.bin.l7 $(ARCH)-uclibc/bwrg1000-linux.bin
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.bin.l7 bs=131072 conv=sync
+	./tools/trx_n -o $(ARCH)-uclibc/bwrg1000-firmware.bin $(ARCH)-uclibc/bwrg1000-linux.bin
+endif
+
+#	dd if=$(ARCH)-uclibc/vmlinux.gz of=$(ARCH)-uclibc/vmlinux.bin.gz bs=65536 conv=sync
+ifeq ($(CONFIG_GLAUCO),y)
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.aligned bs=2818048 conv=sync
+else
+ifeq ($(CONFIG_PB42),y)
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.aligned bs=6750208 conv=sync
+else
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.aligned bs=2883584 conv=sync
+endif
+endif
+ifeq ($(CONFIG_DIR400),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.dir400 bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.dir400
+endif
+ifeq ($(CONFIG_MERAKI),y)
+	dd if=$(ARCH)-uclibc/lzma_vmlinus.m of=$(ARCH)-uclibc/lzma_vmlinus.meraki bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/lzma_vmlinus.meraki
+endif
+#ifeq ($(CONFIG_NP25G),y)
+#	gzip -9 $(ARCH)-uclibc/lzma_vmlinus.m
+#	dd if=$(ARCH)-uclibc/lzma_vmlinus.m.gz of=$(ARCH)-uclibc/lzma_vmlinus.np25g.gz bs=65536 conv=sync
+#	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/lzma_vmlinus.np25g.gz
+#endif
+ifeq ($(CONFIG_DIR300),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.dir300 bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.dir300
+endif
+ifeq ($(CONFIG_WPE53G),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.wpe53g bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.wpe53g
+endif
+ifeq ($(CONFIG_WRT54G2),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.wrt54g2 bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.wrt54g2
+endif
+ifeq ($(CONFIG_RTG32),y)
+	lzma e $(ARCH)-uclibc/lzma_vmlinus_rt32g $(ARCH)-uclibc/lzma_vmlinus_rt32g.lzma 
+	dd if=$(ARCH)-uclibc/lzma_vmlinus_rt32g.lzma of=$(ARCH)-uclibc/rt32_preloader.bin bs=4096 conv=sync	
+	cat mips-uclibc/vmlinux.lzma >> mips-uclibc/rt32_preloader.bin
+	dd if=$(ARCH)-uclibc/rt32_preloader.bin of=$(ARCH)-uclibc/rt32_preloader.align bs=65536 conv=sync
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.g32 bs=3080192 conv=sync
+	cp $(ARCH)-uclibc/root.g32 $(ARCH)-uclibc/g32.bin
+	cat $(ARCH)-uclibc/rt32_preloader.align>>$(ARCH)-uclibc/g32.bin
+endif
+ifeq ($(CONFIG_LS2),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.ls2 bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.ls2
+endif
+ifeq ($(CONFIG_WRK54G),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.wrk bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.wrk
+endif
+ifeq ($(CONFIG_MR3202A),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.mr3202a bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.mr3202a
+endif
+ifeq ($(CONFIG_NP25G),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.mr3202a bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.mr3202a
+endif
+ifeq ($(CONFIG_MR3201A),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.mr3201a bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.mr3201a
+endif
+ifeq ($(CONFIG_FONERA2200),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.fonera bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.fonera
+endif
+ifeq ($(CONFIG_DLM101),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.dlm101 bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.dlm101
+endif
+ifeq ($(CONFIG_GWMF54G2),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.fonera bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.fonera
+endif
+ifeq ($(CONFIG_EOC5610),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.eoc5610 bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.eoc5610
+endif
+ifeq ($(CONFIG_SOLO51),y)
+	dd if=$(ARCH)-uclibc/vmlinux.lzma of=$(ARCH)-uclibc/vmlinux.solo51 bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs>>$(ARCH)-uclibc/vmlinux.solo51
+endif
+
+ifeq ($(CONFIG_WHRAG108),y)
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.whr bs=2752512 conv=sync
+	./tools/trx_n -o $(ARCH)-uclibc/whrag108-firmware.bin $(ARCH)-uclibc/root.whr $(ARCH)-uclibc/lzma_vmlinus
+endif
+ifeq ($(CONFIG_TW6600),y)
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.whr bs=2752512 conv=sync
+	./tools/trx_n -o $(ARCH)-uclibc/whrag108-firmware.bin $(ARCH)-uclibc/root.whr $(ARCH)-uclibc/lzma_vmlinusaw
+endif
+ifeq ($(CONFIG_ALPHA),y)
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.alpha bs=6946816 conv=sync
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/alpha-firmware.bin $(ARCH)-uclibc/root.alpha $(ARCH)-uclibc/vmlinux.bin.l7
+endif
+ifeq ($(CONFIG_USR5453),y)
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.usr bs=6815744 conv=sync
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/usr5453-firmware.bin $(ARCH)-uclibc/root.usr $(ARCH)-uclibc/lzma_vmlinus
+else
+ifneq ($(CONFIG_RCAA01),y)
+ifeq ($(CONFIG_CA8),y)
+	dd if=$(ARCH)-uclibc/lzma_vmlinusca8pro of=$(ARCH)-uclibc/lzma_vmlinusca8pro.fix bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs >> $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/ca8pro/gen_gzimage_ca8 -o $(ARCH)-uclibc/zImage -k $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/ca8-firmware.bin $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+endif
+endif
+endif
+ifneq ($(CONFIG_RCAA01),y)
+ifeq ($(CONFIG_CA8PRO),y)
+	dd if=$(ARCH)-uclibc/lzma_vmlinusca8pro of=$(ARCH)-uclibc/lzma_vmlinusca8pro.fix bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs >> $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/ca8pro/gen_gzimage -o $(ARCH)-uclibc/zImage -k $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/ca8pro/gen_gzimage_client -o $(ARCH)-uclibc/zImageclient -k $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/ca8pro-firmware.bin $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+#	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.ca8 bs=2752512 conv=sync
+#	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/ca8-firmware.bin $(ARCH)-uclibc/root.ca8 $(ARCH)-uclibc/lzma_vmlinus
+endif
+endif
+ifeq ($(CONFIG_RCAA01),y)
+	dd if=$(ARCH)-uclibc/lzma_vmlinusca8pro of=$(ARCH)-uclibc/lzma_vmlinusca8pro.fix bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs >> $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/rcaa01/gen_gzimage_rcaa01 -o $(ARCH)-uclibc/zImage -k $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/rcaa01-firmware.bin $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+endif
+ifeq ($(CONFIG_RDAT81),y)
+	dd if=$(ARCH)-uclibc/lzma_vmlinusca8pro of=$(ARCH)-uclibc/lzma_vmlinusca8pro.fix bs=65536 conv=sync
+	cat $(ARCH)-uclibc/root.fs >> $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/rdat81/gen_gzimage_rdat81 -o $(ARCH)-uclibc/zImage -k $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/rdat81-firmware.bin $(ARCH)-uclibc/lzma_vmlinusca8pro.fix
+endif
+ifneq ($(CONFIG_EOC5610),y)
+ifeq ($(CONFIG_LS5),y)
+	dd if=$(ARCH)-uclibc/root.fs of=$(ARCH)-uclibc/root.ls5 bs=2883584 conv=sync
+	./tools/trx_n -o $(ARCH)-uclibc/ls5-firmware.bin $(ARCH)-uclibc/root.ls5 $(ARCH)-uclibc/vmlinux.lzma
+endif
+endif
+ifeq ($(CONFIG_WRK54G),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/wrk54g-firmware.bin $(ARCH)-uclibc/vmlinux.wrk
+endif
+ifeq ($(CONFIG_MERAKI),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/meraki-firmware.bin $(ARCH)-uclibc/lzma_vmlinus.meraki
+endif
+ifeq ($(CONFIG_DIR400),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/dir400-firmware.bin $(ARCH)-uclibc/vmlinux.dir400
+endif
+ifeq ($(CONFIG_DIR300),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/dir300-firmware.bin $(ARCH)-uclibc/vmlinux.dir300
+endif
+ifeq ($(CONFIG_WRT54G2),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/wrt54g2-firmware.bin $(ARCH)-uclibc/vmlinux.wrt54g2
+endif
+ifeq ($(CONFIG_RTG32),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/rtg32-firmware.bin $(ARCH)-uclibc/g32.bin
+endif
+ifeq ($(CONFIG_LS2),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/ls2-firmware.bin $(ARCH)-uclibc/vmlinux.ls2
+endif
+ifeq ($(CONFIG_MR3202A),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/mr3202a-firmware.bin $(ARCH)-uclibc/vmlinux.mr3202a
+endif
+ifeq ($(CONFIG_NP25G),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/np25g-firmware.bin $(ARCH)-uclibc/vmlinux.mr3202a
+endif
+ifeq ($(CONFIG_WPE53G),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/np25g-firmware.bin $(ARCH)-uclibc/vmlinux.wpe53g
+endif
+ifeq ($(CONFIG_MR3201A),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/mr3201a-firmware.bin $(ARCH)-uclibc/vmlinux.mr3201a
+endif
+ifeq ($(CONFIG_EOC5610),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/eoc5610-firmware.bin $(ARCH)-uclibc/vmlinux.eoc5610
+endif
+ifeq ($(CONFIG_SOLO51),y)
+	./tools/trx_n -m 80000000 -o $(ARCH)-uclibc/solo51-firmware.bin $(ARCH)-uclibc/vmlinux.solo51
+endif
+ifeq ($(CONFIG_GWMF54G2),y)
+	./tools/trx_n -m 100000000 -o $(ARCH)-uclibc/planex-firmware.bin $(ARCH)-uclibc/vmlinux.fonera
+endif
+ifeq ($(CONFIG_DLM101),y)
+	./tools/trx_n -m 100000000 -o $(ARCH)-uclibc/dlm101-firmware.bin $(ARCH)-uclibc/vmlinux.dlm101
+endif
+ifeq ($(CONFIG_FONERA2200),y)
+	./tools/trx_n -o $(ARCH)-uclibc/fonera-firmware.bin -m 100000000 $(ARCH)-uclibc/vmlinux.fonera
+else
+	./tools/trx_n -o $(ARCH)-uclibc/fonera-firmware.bin -m 100000000 $(ARCH)-uclibc/root.aligned $(ARCH)-uclibc/vmlinux.lzma 
+endif
+	cp -f tools/nvram $(ARCH)-uclibc 
+ifeq ($(CONFIG_LS2),y)
+	-tools/ubnt/src/mkfwimage -v LS2.ar2316.DD-WRT -o mips-uclibc/LS2.dd-wrt.bin -i tools/ubnt/ls2-ddwrt.txt
+endif
+ifeq ($(CONFIG_BS2),y)
+	-tools/ubnt/src/mkfwimage -v BS2.ar2316.DD-WRT -o mips-uclibc/BS2.dd-wrt.bin -i tools/ubnt/ls2-ddwrt.txt
+endif
+ifeq ($(CONFIG_PICO2),y)
+	-tools/ubnt/src/mkfwimage -v pS2.ar2316.DD-WRT -o mips-uclibc/pS2.dd-wrt.bin -i tools/ubnt/ps2-ddwrt.txt
+endif
+ifeq ($(CONFIG_PICO2HP),y)
+	-tools/ubnt/src/mkfwimage -v pS2.ar2316.DD-WRT -o mips-uclibc/pS2.dd-wrt.bin -i tools/ubnt/ps2-ddwrt.txt
+endif
+ifeq ($(CONFIG_MS2),y)
+	-tools/ubnt/src/mkfwimage -v MS2.ar2316.DD-WRT -o mips-uclibc/MS2.dd-wrt.bin -i tools/ubnt/ls2-ddwrt.txt
+endif
+ifeq ($(CONFIG_LC2),y)
+	-tools/ubnt/src/mkfwimage -v LC2.ar2316.DD-WRT -o mips-uclibc/LC2.dd-wrt.bin -i tools/ubnt/ls2-ddwrt.txt
+endif
+ifeq ($(CONFIG_BS2HP),y)
+	-tools/ubnt/src/mkfwimage -v BH2.ar2316.DD-WRT -o mips-uclibc/BH2.dd-wrt.bin -i tools/ubnt/ls2-ddwrt.txt
+endif
+ifeq ($(CONFIG_NS2),y)
+	-tools/ubnt/src/mkfwimage -v NS2.ar2316.DD-WRT -o mips-uclibc/NS2.dd-wrt.bin -i tools/ubnt/ls2-ddwrt.txt
+endif
+ifeq ($(CONFIG_PS2),y)
+	-tools/ubnt/src/mkfwimage -v PS2.ar2316.DD-WRT -o mips-uclibc/PS2.dd-wrt.bin -i tools/ubnt/ls2-ddwrt.txt
+endif
+ifeq ($(CONFIG_LS5),y)
+	-tools/ubnt/src/mkfwimage -v LS5.ar2313.DD-WRT -o mips-uclibc/LS5.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+	-tools/ubnt/src/mkfwimage -v WS5.ar2313.DD-WRT -o mips-uclibc/WS5.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+endif
+ifeq ($(CONFIG_MS5),y)
+	-tools/ubnt/src/mkfwimage -v MS5.ar2313.DD-WRT -o mips-uclibc/MS5.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+endif
+ifeq ($(CONFIG_PS5),y)
+	-tools/ubnt/src/mkfwimage -v PS5.ar2313.DD-WRT -o mips-uclibc/PS5.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+endif
+ifeq ($(CONFIG_NS5),y)
+	-tools/ubnt/src/mkfwimage -v NS5.ar2313.DD-WRT -o mips-uclibc/NS5.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+endif
+ifeq ($(CONFIG_NS3),y)
+	-tools/ubnt/src/mkfwimage -v NS3.ar2313.DD-WRT -o mips-uclibc/NS3.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+endif
+ifeq ($(CONFIG_BS5),y)
+	-tools/ubnt/src/mkfwimage -v BS5.ar2313.DD-WRT -o mips-uclibc/BS5.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+endif
+ifeq ($(CONFIG_PICO5),y)
+	-tools/ubnt/src/mkfwimage -v pS5.ar2313.DD-WRT -o mips-uclibc/pS5.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+endif
+ifeq ($(CONFIG_LC5),y)
+	-tools/ubnt/src/mkfwimage -v LC5.ar2313.DD-WRT -o mips-uclibc/LC5.dd-wrt.bin -i tools/ubnt/ls5-ddwrt.txt
+endif
+ifeq ($(CONFIG_NP25G),y)
+	-tools/compex/mkmylofw -B NP25G \
+		-p0x20000:0x3d0000:alp:0x80041000 \
+		-b0x20000:0x3d0000::$(ARCH)-uclibc/vmlinux.mr3202a \
+		$(ARCH)-uclibc/compex-firmware-np25g.bin
+endif
+ifeq ($(CONFIG_WPE53G),y)
+	-tools/compex/mkmylofw -B WPE53G \
+		-p0x20000:0x3d0000:alp:0x80041000 \
+		-b0x20000:0x3d0000::$(ARCH)-uclibc/vmlinux.wpe53g \
+		$(ARCH)-uclibc/compex-firmware-wpe53g.bin
+endif
+ifeq ($(CONFIG_RTG32),y)
+	dd if=$(ARCH)-uclibc/rt32_preloader.bin of=$(ARCH)-uclibc/rt32_preloader.align bs=65536 conv=sync
+	-tools/g32/mkfwimage -o mips-uclibc/RTG32.dd-wrt.bin -k mips-uclibc/rt32_preloader.align -r mips-uclibc/root.fs
+endif
+
+
+include rules/all.mk
+
+.PHONY: all clean distclean mrproper install package
+.PHONY: conf mconf oldconf kconf kmconf config menuconfig oldconfig
+.PHONY: dummy fixkc libnet libpcap
+
+
+

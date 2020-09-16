@@ -1,0 +1,210 @@
+#!/bin/bash
+
+# The olsr.org Optimized Link-State Routing daemon (olsrd)
+#
+# (c) by the OLSR project
+#
+# See our Git repository to find out who worked on this file
+# and thus is a copyright holder on it.
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+# * Neither the name of olsr.org, olsrd nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# Visit http://www.olsr.org for more information.
+#
+# If you find this software useful feel free to make a donation
+# to the project. For more information see the website or contact
+# the copyright holders.
+#
+
+set -e
+set -u
+
+configFileTmp=""
+function exitTrapHandler() {
+  local -i exitCode=${?}
+
+  if [ -n "$configFileTmp" ]; then
+    rm -f "$configFileTmp"
+  fi
+
+  if [[ ${exitCode} -ne 0 ]]; then
+    echo "Exiting with code ${exitCode}"
+  fi
+  exit ${exitCode}
+}
+
+trap exitTrapHandler EXIT
+
+
+script="$0"
+scriptDir="$(dirname "$script")"
+pushd "$scriptDir" &> /dev/null
+scriptDir="$(pwd)"
+popd &> /dev/null
+baseDir="$(dirname "$scriptDir")"
+
+olsrd="$baseDir/olsrd"
+
+arprefreshLib="$baseDir/lib/arprefresh/olsrd_arprefresh.so.0.1"
+arprefreshLibDir="$(dirname "$arprefreshLib")"
+dyngwLib="$baseDir/lib/dyn_gw/olsrd_dyn_gw.so.0.5"
+dyngwLibDir="$(dirname "$dyngwLib")"
+httpinfoLib="$baseDir/lib/httpinfo/olsrd_httpinfo.so.0.1"
+httpinfoLibDir="$(dirname "$httpinfoLib")"
+jsoninfoLib="$baseDir/lib/jsoninfo/olsrd_jsoninfo.so.1.1"
+jsoninfoLibDir="$(dirname "$jsoninfoLib")"
+nameserviceLib="$baseDir/lib/nameservice/olsrd_nameservice.so.0.4"
+nameserviceLibDir="$(dirname "$nameserviceLib")"
+p2pdinfoLib="$baseDir/lib/p2pd/olsrd_p2pd.so.0.1.0"
+p2pdinfoLibDir="$(dirname "$p2pdinfoLib")"
+txtinfoLib="$baseDir/lib/txtinfo/olsrd_txtinfo.so.1.1"
+txtinfoLibDir="$(dirname "$txtinfoLib")"
+
+
+# Check root
+if [ ! "$(whoami)" = "root" ]; then
+  echo "ERROR: must be root."
+  exit 1
+fi
+
+
+# Check nc
+set +e
+nc="$(which nc 2> /dev/null)"
+set -e
+if [ -z "$nc" ]; then
+  echo "ERROR: nc doesn't seem to be installed."
+  exit 1
+fi
+
+
+# Check compiled
+for i in "$olsrd" \
+         "$arprefreshLib" \
+         "$dyngwLib" \
+         "$httpinfoLib" \
+         "$jsoninfoLib" \
+         "$nameserviceLib" \
+         "$p2pdinfoLib" \
+         "$txtinfoLib"; do
+  if [ ! -r "$i" ]; then
+    echo "ERROR: $i is not readable."
+    exit 1
+  fi
+done
+
+
+# Check parameters
+if [ $# -ne 2 ]; then
+  echo "ERROR: specify network interface and configuration file."
+  exit 1
+fi
+
+nwif="$1"
+configFile="$2"
+
+# Check network interfaces
+set +e
+nwifGrep="$(cat /proc/net/dev | grep -E "^[[:space:]]*$nwif[[:space:]]*:[[:space:]]+.*\$")"
+set -e
+
+if [ -z "$nwifGrep" ]; then
+  echo "ERROR: network interface $nwif doesn't exist."
+  exit 1
+fi
+
+
+# Check configuration file
+if [ ! -r "$configFile" ]; then
+  echo "ERROR: configuration file $configFile is not readable."
+  exit 1
+fi
+
+configFileDir="$(dirname "$configFile")"
+pushd "$configFileDir" &> /dev/null
+configFileDir="$(pwd)"
+popd &> /dev/null
+configFile="$configFileDir/$(basename "$configFile")"
+
+
+# Generate adjusted configuration file
+regex="^([[:space:]]*[Ii][Nn][Tt][Ee][Rr][Ff][Aa][Cc][Ee][[:space:]]+)"
+configFileTmp="$(mktemp)"
+sed -r "s/$regex\"wlan0\"/\1\"$nwif\"/" \
+       "$configFile" \
+       > "$configFileTmp"
+
+
+echo "Stopping all olsrd instances"
+set +e
+killall "$(basename "$olsrd")"
+set -e
+
+
+echo "Starting $(basename "$olsrd")"
+export LD_LIBRARY_PATH="$arprefreshLibDir:$dyngwLibDir:$httpinfoLibDir:$jsoninfoLibDir:$nameserviceLibDir:$p2pdinfoLibDir:$txtinfoLibDir"
+"$olsrd" -f "$configFileTmp" -nofork & #> /dev/null &
+
+
+sleep 1
+echo -n "Sleeping a bit "
+for i in 3 2 1; do
+  echo -n "$i"
+  sleep 1
+done
+echo ""
+
+
+echo "Generating effective configuration file"
+echo "  $configFile.txt"
+set +e
+echo "/plain/olsrd.conf" | \
+  nc 127.0.0.1 56789 | \
+  tail -n +6 | \
+  sed -r \
+    -e "s/$regex\"$nwif\"/\1\"wlan0\"/" \
+    -e '/^[[:space:]]*PlParam[[:space:]]+"port"[[:space:]]+"56789"[[:space:]]*$/ d' \
+    -e 's/^[[:space:]]*MainIp[[:space:]]+.*$/MainIp 10.0.0.1/' \
+  > "$configFile.txt"
+chown --reference="$configFile" "$configFile.txt"
+set -e
+
+
+echo "Stopping all $(basename "$olsrd") instances"
+set +e
+killall "$(basename "$olsrd")"
+set -e
+
+
+rm -f "$configFileTmp"
+configFileTmp=""
+
+sleep 1
+echo ""

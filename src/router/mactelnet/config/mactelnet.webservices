@@ -1,0 +1,13 @@
+
+<fieldset>
+	<legend><% tran("service.mactelnetd_legend"); %></legend>
+	<div class="setting">
+		<div class="label"><% tran("service.mactelnetd"); %></div>
+		<input class="spaceradio" type="radio" name="mactelnetd_enable" value="1" <% nvc("mactelnetd_enable", "1"); %> onclick="show_layer_ext(this, 'idmactelnetd', true)" /><% tran("share.enable"); %>&nbsp;
+		<input class="spaceradio" type="radio" name="mactelnetd_enable" value="0" <% nvc("mactelnetd_enable", "0"); %> onclick="show_layer_ext(this, 'idmactelnetd', false)" /><% tran("share.disable"); %>
+	</div>
+	<div class="setting" id="idmactelnetd">
+		<div class="label"><% tran("share.passwd"); %></div>
+		<input maxlength="64" size="25" name="mactelnetd_passwd" type="password" autocomplete="new-password" value="d6nw5v1x2pc7st9m" />
+	</div>
+</fieldset><br />

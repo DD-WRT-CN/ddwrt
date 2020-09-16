@@ -1,0 +1,283 @@
+#!/bin/bash
+#
+# run test suite for mdadm
+mdadm=$PWD/mdadm
+targetdir="/var/tmp"
+logdir="$targetdir"
+config=/tmp/mdadm.conf
+testdir=$PWD/tests
+devlist=
+
+savelogs=0
+exitonerror=1
+prefix='[0-9][0-9]'
+
+# use loop devices by default if doesn't specify --dev
+DEVTYPE=loop
+INTEGRITY=yes
+LVM_VOLGROUP=mdtest
+
+# make sure to test local mdmon, not system one
+export MDADM_NO_SYSTEMCTL=1
+
+# assume md0, md1, md2 exist in /dev
+md0=/dev/md0
+md1=/dev/md1
+md2=/dev/md2
+mdp0=/dev/md_d0
+mdp1=/dev/md_d1
+
+die() {
+	echo -e "\n\tERROR: $* \n"
+	save_log fail
+	exit 2
+}
+
+ctrl_c() {
+	exitonerror=1
+}
+
+# mdadm always adds --quiet, and we want to see any unexpected messages
+mdadm() {
+	rm -f $targetdir/stderr
+	case $* in
+	*-S* )
+		udevadm settle
+		p=`cat /proc/sys/dev/raid/speed_limit_max`
+		echo 20000 > /proc/sys/dev/raid/speed_limit_max
+		;;
+	esac
+	case $* in
+	*-C* | *--create* | *-B* | *--build* )
+		# clear superblock every time once creating or
+		# building arrays, because it's always creating
+		# and building array many times in a test case.
+		for args in $*
+		do
+			[[ $args =~ "/dev/" ]] && {
+				[[ $args =~ "md" ]] ||
+					$mdadm --zero $args > /dev/null
+			}
+		done
+		$mdadm 2> $targetdir/stderr --quiet "$@" --auto=yes
+		;;
+	* )
+		$mdadm 2> $targetdir/stderr --quiet "$@"
+		;;
+	esac
+	rv=$?
+	case $* in
+	*-S* )
+		udevadm settle
+		echo $p > /proc/sys/dev/raid/speed_limit_max
+		;;
+	esac
+	cat >&2 $targetdir/stderr
+	return $rv
+}
+
+do_test() {
+	_script=$1
+	_basename=`basename $_script`
+	if [ -f "$_script" ]
+	then
+		rm -f $targetdir/stderr
+		# this might have been reset: restore the default.
+		echo 2000 > /proc/sys/dev/raid/speed_limit_max
+		do_clean
+		# source script in a subshell, so it has access to our
+		# namespace, but cannot change it.
+		echo -ne "$_script... "
+		if ( set -ex ; . $_script ) &> $targetdir/log
+		then
+			dmesg | grep -iq "error\|call trace\|segfault" &&
+				die "dmesg prints errors when testing $_basename!"
+			echo "succeeded"
+			_fail=0
+		else
+			save_log fail
+			_fail=1
+		fi
+		[ "$savelogs" == "1" ] &&
+			mv -f $targetdir/log $logdir/$_basename.log
+		[ "$_fail" == "1" -a "$exitonerror" == "1" ] && exit 1
+	fi
+}
+
+do_help() {
+	cat <<-EOF
+	Usage: $0 [options]
+	Example for disk mode: ./test --dev=disk --disks=/dev/sda{2..15}
+	Options:
+		--tests=test1,test2,...     Comma separated list of tests to run
+		--testdir=                  Specify testdir as tests|clustermd_tests
+		--raidtype=                 raid0|linear|raid1|raid456|raid10|ddf|imsm
+		--disable-multipath         Disable any tests involving multipath
+		--disable-integrity         Disable slow tests of RAID[56] consistency
+		--logdir=directory          Directory to save all logfiles in
+		--save-logs                 Usually use with --logdir together
+		--keep-going | --no-error   Don't stop on error, ie. run all tests
+		--dev=loop|lvm|ram|disk     Use loop devices (default), LVM, RAM or disk
+		--disks=                    Provide a bunch of physical devices for test
+		--volgroup=name             LVM volume group for LVM test
+		setup                       Setup test environment and exit
+		cleanup                     Cleanup test environment
+		prefix                      Run tests with <prefix>
+		--help | -h                 Print this usage
+	EOF
+}
+
+parse_args() {
+	for i in $*
+	do
+		case $i in
+		--testdir=* )
+			case ${i##*=} in
+			tests )
+				testdir=tests
+			;;
+			clustermd_tests )
+				testdir=clustermd_tests
+				CLUSTER_CONF="$PWD/$testdir/cluster_conf"
+			;;
+			* )
+				echo "Unknown argument: $i"
+				do_help
+				exit 1
+			;;
+			esac
+		;;
+		esac
+	done
+	[ -z "$testdir" ] && testdir=tests
+	. $testdir/func.sh
+	for i in $*
+	do
+		case $i in
+		[0-9][0-9] )
+			prefix=$i
+			;;
+		setup )
+			echo "mdadm test environment setup"
+			do_setup
+			trap 0
+			exit 0
+			;;
+		cleanup )
+			cleanup
+			exit 0
+			;;
+		--testdir=* )
+			;;
+		--tests=* )
+			TESTLIST=($(echo ${i##*=} | sed -e 's/,/ /g'))
+			;;
+		--raidtype=* )
+			case ${i##*=} in
+			raid0 )
+				TESTLIST=($(ls $testdir | grep "[0-9][0-9]r0\|raid0"))
+				;;
+			linear )
+				TESTLIST=($(ls $testdir | grep "linear"))
+				;;
+			raid1 )
+				TESTLIST=($(ls $testdir | grep "[0-9][0-9]r1\|raid1" | grep -vi "r10\|raid10"))
+				;;
+			raid456 )
+				TESTLIST=($(ls $testdir | grep "[0-9][0-9]r[4-6]\|raid[4-6]"))
+				;;
+			raid10 )
+				TESTLIST=($(ls $testdir | grep "[0-9][0-9]r10\|raid10"))
+				;;
+			ddf )
+				TESTLIST=($(ls $testdir | grep "[0-9][0-9]ddf"))
+				;;
+			imsm )
+				TESTLIST=($(ls $testdir | grep "[0-9][0-9]imsm"))
+				;;
+			* )
+				echo "Unknown argument: $i"
+				do_help
+				exit 1
+				;;
+			esac
+			;;
+		--logdir=* )
+			logdir="${i##*=}"
+			;;
+		--save-logs )
+			savelogs=1
+			;;
+		--keep-going | --no-error )
+			exitonerror=0
+			;;
+		--disable-multipath )
+			unset MULTIPATH
+			;;
+		--disable-integrity )
+			unset INTEGRITY
+			;;
+		--dev=* )
+			case ${i##*=} in
+			loop )
+				DEVTYPE=loop
+				;;
+			lvm )
+				DEVTYPE=lvm
+				;;
+			ram )
+				DEVTYPE=ram
+				;;
+			disk )
+				DEVTYPE=disk
+				;;
+			* )
+				echo "Unknown argument: $i"
+				do_help
+				exit 1
+				;;
+			esac
+			;;
+		--disks=* )
+			disks=(${disks[*]} ${i##*=})
+			;;
+		--volgroup=* )
+			LVM_VOLGROUP=`expr "x$i" : 'x[^=]*=\(.*\)'`
+			;;
+		--help | -h )
+			do_help
+			exit 0
+			;;
+		* )
+			echo " $0: Unknown argument: $i"
+			do_help
+			exit 1
+			;;
+		esac
+	done
+}
+
+main() {
+	do_setup
+
+	echo "Testing on linux-$(uname -r) kernel"
+	[ "$savelogs" == "1" ] &&
+		echo "Saving logs to $logdir"
+	if [ "x$TESTLIST" != "x" ]
+	then
+		for script in ${TESTLIST[@]}
+		do
+			do_test $testdir/$script
+		done
+	else
+		for script in $testdir/$prefix $testdir/$prefix*[^~]
+		do
+			do_test $script
+		done
+	fi
+
+	exit 0
+}
+
+parse_args $@
+main

@@ -1,0 +1,4156 @@
+0.9.7 -------------------------------------------------------------------
+
+Christoph Loesch (1):
+      interfaces: add 'silent' mode
+
+Ferry Huberts (52):
+      Update version after branch of v0.9.6
+      Merge branch 'release-0.9.6'
+      info: java: upgrade gradle wrapper
+      info: automatically detect whether the reply should have HTTP headers
+      Merge branch 'release-0.9.6'
+      Merge branch 'release-0.9.6'
+      info: java: gradle: upgrade wrapper
+      info: java: update workspace
+      info: java: update jackson bundles
+      info: java: gradle: upgrade wrapper
+      info: java: gradle: upgrade wrapper
+      pud: only check gpsd status; no clear of info on bad fix or invalid signal
+      link_set: fix typo in f8d4e24
+      Merge branch 'release-0.9.6'
+      Update version after release of v0.9.6.2
+      Merge branch 'release-0.9.6'
+      info: java: upgrade gradle wrapper
+      Merge pull request #28 from stspdotname/missing-olsr-random-include
+      Merge pull request #29 from stspdotname/detect-wifi-on-bsd
+      Merge pull request #30 from stspdotname/route-deletion-needs-netmask
+      Merge pull request #26 from neeels/segfault_cleanup
+      Merge pull request #25 from neeels/master
+      Merge pull request #34 from stspdotname/rtm-delete-flags
+      Merge pull request #36 from stspdotname/rtm-delete-flags-v6
+      Merge pull request #35 from stspdotname/icmp6-rediraccept
+      Merge pull request #31 from stspdotname/add-ipv6-routes-correctly
+      info: java: fix tests by letting mock bind to localhost
+      Merge pull request #37 from stspdotname/bcast-addr-len-and-type
+      Merge pull request #32 from stspdotname/fix-sendto-ipv4
+      info: java: upgrade workspace
+      info: java: upgrade gradle wrapper
+      info: java: upgrade gradle wrapper
+      info: java: use Java 1.8
+      hashing: fix implicit fall-through warning on gcc 7
+      all: link with -lm where <math.h> is included.
+      nameservice: fix potential null pointer dereference warnings on gcc 7
+      olsr_spf: fix potential null pointer dereference warnings on gcc 7
+      src: fix format truncation errors on gcc 7
+      process_routes: fix potential null pointer dereference warnings on gcc 7
+      info: java: upgrade gradle wrapper
+      info: fix the previous commit: windows doesn't support MSG_DONTWAIT
+      Merge pull request #49 from wiedi/osx-clock-10.12
+      info.java: remove date and hosts fields.
+      info: java: upgrade gradle wrapper
+      all: ensure timers are set to NULL after calling olsr_stop_timer
+      httpinfo: ensure timers are set to NULL after calling olsr_stop_timer
+      dyn_gw: fix GCC 8 compilation problems
+      secure: fix GCC 8 compilation problems
+      poprouting: format code
+      poprouting: fix memory leak in isCommand
+      Branch v0.9.7
+      Release v0.9.7
+
+Gabriel (1):
+      Poprouting plugin for OLSRd (#53)
+
+Henning Rogge (1):
+      info: do not block when sending data
+
+Neels Hofmeyr (2):
+      fix segfault when printing "You must be root"
+      fix: don't attempt to cleanup uninitialized multiGwTunnels
+
+Reiner Herrmann (2):
+      all: make sure all make filelists are sorted
+      all: remove build_host and build_date to enable reproducible building
+
+Sebastian Wiedenroth (1):
+      mach: clock_gettime and friends appeared in Mac OSX 10.12
+
+Stefan Sperling (9):
+      Add a missing include for olsr_random() on BSD.
+      Implement a simpler way of detecting wifi interfaces on BSD.
+      Fix route deletion on BSD.
+      Use correct RTM flags while deleting a route on BSD.
+      Do not toggle net.inet6.icmp6.rediraccept on OpenBSD.
+      Use correct RTM flags while deleting an IPv6 route on BSD.
+      Fix adding IPv6 routes on BSD.
+      Fix initialization of a struct sockaddr_in.
+      Fix olsr_sendto() for IPv4 on BSD.
+
+iwanovich (1):
+      routing: remove rt_entry.rt_best pointer when rt_path is deleted (#61)
+
+pocki80 (1):
+      correctly report silent mode on olsrd startup summary
+
+0.9.6.2 -------------------------------------------------------------------
+
+Ferry Huberts (2):
+      link_set: fix typo in f8d4e24
+      Release v0.9.6.2
+
+Henning Rogge (1):
+      Update version after release of v0.9.6.1
+
+0.9.6.1 -------------------------------------------------------------------
+
+Ferry Huberts (6):
+      changelog: fixup
+      info: java: upgrade gradle wrapper
+      info: automatically detect whether the reply should have HTTP headers
+      lq_packet: make the hello link order a define
+      hello reception: use link status ordering
+      hello reception: only remove UNSPEC duplicates
+
+Henning Rogge (2):
+      Update version after release of v0.9.6
+      Release v0.9.6.1
+
+Iwan G. Flameling (2):
+      lq_packet: do not report duplicate neighbours in HELLO messages
+      hello reception: remove duplicate neighbors
+
+0.9.6 -------------------------------------------------------------------
+
+* The versions of the following plugins have changed:
+  - jsoninfo    :   0.0 -->   1.1
+  - nameservice :   0.3 -->   0.4
+  - netjson     :   1.0 -->   1.1
+  - pud         : 2.0.0 --> 3.0.0 (including its extra libraries)
+  - txtinfo     :   0.1 -->   1.1
+
+* All info plugins (jsoninfo, netjson and txtinfo) now support a number of
+  request prefixes:
+  - /http : forces output WITH    http headers, temporarily overriding the
+            configured "httpheaders" value.
+  - /plain: forces output WITHOUT http headers, temporarily overriding the
+            configured "httpheaders" value.
+
+  These prefixes have to be at the start of the request string, can occur
+  only there, and can occur only once.
+
+Bastian Bittorf (1):
+      logging: show interface name during blocked socket error
+
+Ferry Huberts (79):
+      Update version after branch of v0.9.5
+      changelog: adjust to put notes on top
+      release: adjust script to create multiple tar files
+      Merge branch 'release-0.9.5'
+      mach: add wrapper for clock_gettime
+      sgw: fix interface monitor for single-sgw mode
+      Merge branch 'release-0.9.5'
+      txtinfo: do not use http headers by default
+      info: fix json Content-Type header
+      Merge branch 'release-0.9.5'
+      main: improve EXECINFO include handling a bit
+      Merge branch 'release-0.9.5'
+      main: blacklist UCLIBC for OLSR_HAVE_EXECINFO_H
+      Merge branch 'release-0.9.5'
+      info: java: upgrade gradle wrapper
+      info: ensure the request is initially empty
+      info: rework HTTP request detection and request sanitation
+      info: send everything on empty requests
+      info: drain the request when there are too many requests in flight
+      info: trivial comment fix
+      info: trival debug output fix
+      info: improve readability of the 'empty request' check
+      info: protect stripEOLs against invalid input and zero length
+      info: protect skipMultipleSlashes against invalid input and zero length
+      info: protect skipLeadingWhitespace against invalid input and zero length
+      info: protect stripTrailingSlashes against invalid input and zero length
+      info: protect cutAtFirstEOL against invalid input and zero length
+      info: rename stripEOLs to stripTrailingWhitespace
+      info: be explicit about adding headers
+      info: fix a comment and add a comment
+      info: read the request as early as possible
+      info: sanitise the request right after it's been received
+      info: introduce command prefixes '/http' and '/plain'
+      conf: clear allocated default config before filling it.
+      conf: ensure the correct configuration file is stored in the configuration
+      conf: calculate the checksum over the effective configuration
+      main: save argc and argv for later use
+      jsoninfo: always output the configuration checksum
+      jsoninfo: add cli arguments to the config object
+      info: fix levels of a few debug messages
+      info: move a comment
+      info: add a comment about the size of the receive buffer
+      info: fix drain_request to not block
+      info: allow a small delay between connection accept and request arrival
+      info: do not block when receiving the request
+      info: return 'REQUEST TIMEOUT' when receiving the request did not work
+      info: release changed java OSGi bundles
+      info: add sanitation of the configuration
+      info: add request timeout configuration parameter
+      changelog: add a note about the '/http' and '/plain' request prefixes
+      info: update java dependency bundles
+      doc: upgrade doxygen configuration
+      doc: minor adjustment of the makefile
+      doc: fix warnings
+      doc: move pdf generation into new doc-pdf make target
+      gui: clean-ups
+      make: remove -Wmissing-include-dirs
+      files: get rid of net-tools usage
+      files: update configuration generation script
+      Merge pull request #12 from booo/sighup-interval
+      Merge pull request #14 from bittorf/master
+      cfgparser: use correct SHA256_DIGEST_LENGTH
+      cfgparser: pull in openssl sha256 code to avoid linking to it
+      cfgparser: use superfasthash for the configuration checksum
+      logging: work around bogus Coverity warning
+      Merge pull request #16 from SvenRoederer/rename_sighup-interval
+      Merge pull request #18 from SvenRoederer/olsr-nameservice-version
+      nameservice: fix plugin versions
+      nameservice: fix typos of filewrite-interval plugin parameter
+      pud: bump version
+      jsoninfo: bump version
+      netjson: bump version
+      txtinfo: bump version
+      changelog: add a remark about updated plugin versions
+      lq_packet: change link status ordering in hello messages
+      Branch v0.9.6
+      changelog: minor layout fixes
+      release: minor improvements to the release script
+      release: insert changelog just before the marker of the previous release
+
+Henning Rogge (2):
+      Update version after release of v0.9.5
+      Release v0.9.6
+
+Philipp Borgers (1):
+      nameservice: add new sighup-interval parameter
+
+Sebastian Wiedenroth (1):
+      fix timing issues on systems where RAND_MAX is not INT32_MAX
+
+Sven Roederer (2):
+      nameservice: rename parameter "sighup_interval" to "filewrite_interval"
+      nameservice: bump version to 0.4
+
+Thorsten Maerz (1):
+      make: strip CC
+
+0.9.5 -------------------------------------------------------------------
+
+Note: The txtinfo and jsoninfo plugins were 'merged' to use a common
+      codebase for receiving requests and dispatching replies. Also,
+      these plugins were subjected to review and fixes. As a result:
+      - request handling has become much stricter, e.g. a txtinfo
+        request '/links' will no longer work since the correct request is
+        (and has always been) '/lin'.
+      - some fixes change the format and/or content of txtinfo and/or
+        jsoninfo output. An example is the txtinfo output of the request
+        '/mid' when 'vtime' is enabled on txtinfo; this has been broken
+        since the end of 2009 (c555a44).
+      - invalid requests will return HTTP error status code
+        "Not Found" (404) when HTTP headers are enabled, and report
+        an error in the output when they are not enabled.
+      - requests without output will return HTTP error status code
+        "No Content" (204) when HTTP headers are enabled, and report
+        an error in the output when they are not enabled.
+
+      It is VERY strongly advised to check your scripts and applications
+      interfacing with olsrd txtinfo and/or jsoninfo before switching
+      to this version of olsrd.
+
+
+Ferry Huberts (824):
+      Update version after branch of v0.9.0
+      Merge branch 'release-0.9.0'
+      neighbors: signal link changes when deleting a neighbor
+      Merge branch 'release-0.6.8'
+      Merge branch 'release-0.9.0'
+      conf: lock_file is derived config.
+      jsoninfo: fix a crash when there are no gateways
+      txtinfo: fix a crash when there are no gateways
+      Merge branch 'release-0.9.0'
+      Merge branch 'release-0.9.0'
+      Merge branch 'release-0.9.0'
+      files: regenerate the generated default full configuration
+      Fixup CHANGELOG file
+      Merge branch 'release-0.6.8'
+      Merge branch 'release-0.9.0'
+      jsoninfo: fix a Coverity warning
+      txtinfo: similar fix as the previous commit
+      make: add NOSTRIP option
+      files: minor improvement to config file generation script
+      sgw: add SmartGatewayMaxCostMaxEtx configuration setting
+      jsoninfo: fix a Coverity warning
+      txtinfo: similar fix as the previous commit
+      Merge branch 'release-0.9.0'
+      files: regenerate the generated default full configuration
+      files: minor improvement to config file generation script
+      sgw: add SmartGatewayMaxCostMaxEtx configuration setting
+      Merge branch 'release-0.9.0'
+      egressFile: use a define for the line length
+      pud: clear the cached timestamp when the position file can't be read
+      pud: increase the resolution of the cached timestamp of the position file
+      pud: minor fix in the function reading the position file
+      pud: cache the correct timestamp
+      sgwdynspeed: clear the cached timestamp when the speed file can't be read
+      sgwdynspeed: increase the resolution of the cached timestamp
+      sgwdynspeed: properly close the speed file
+      sgwdynspeed: cache the correct timestamp
+      sgw: cache timestamp of egress file earlier
+      sgw: cache the correct timestamp
+      sgw: remove unneeded check against 0 for cached timestamp
+      sgw: properly close the egress file
+      sgw: do not clear egress data in the read race
+      sgw: properly open and stat the egress file
+      Merge branch 'release-0.9.0'
+      sgwdynspeed: let the out block close the file
+      sgw: fix EOL stripping of the egress file
+      Merge branch 'release-0.9.0'
+      quagga: zero-out the extra allocated buffer size
+      conf: clean up interface names on config file read failure
+      cookie: fix loop invariant assert and exit on cookie exhaustion
+      quagga: zero-out the extra allocated buffer size
+      quagga: restore socket status on error paths in zclient_read function
+      Merge branch 'release-0.9.0'
+      sgw: do not program routes on interfaces that are not up
+      sgw: policy script: fix error reports when too many arguments
+      sgw: policy script: fix some comparisons
+      sgw: policy script: move some declarations
+      sgw: policy script: minor improvement
+      sgw: policy script: fix cosmetic rebase  issue of the previous commit
+      cfg: minor fixup to printing of SmartGatewayPolicyRoutingScript
+      dyn_gw: fix a mistake in 36111ca
+      cfg: fix printing of a few <not set> settings
+      sgw: add SmartGatewayInstanceId setting
+      sgw: policy script: add the instance id to the script
+      sgw: policy script: log invocations and add cleanup mode
+      sgw: invoke the cleanup mode of the policy script on start and stop
+      jsoninfo: also output SmartGatewayInstanceId
+      olsr_exit: protect against a NULL olsr_cnf
+      olsr_exit: protect against a NULL message
+      olsr_exit: also flush stderr on exit
+      olsr_exit: clarify why the explicit exit is needed
+      olsr: make sure olsr_cnf is initialised
+      mdns: update a comment about exit
+      p2pd: update a comment about exit
+      dyngw: call olsr_exit() instead of exit()
+      httpinfo: call olsr_exit() instead of exit()
+      pgraph: call olsr_exit() instead of exit()
+      secure: call olsr_exit() instead of exit()
+      linux: call olsr_exit() instead of exit()
+      unix: call olsr_exit() instead of exit()
+      win32: call olsr_exit() instead of exit()
+      olsr: call olsr_exit() instead of exit()
+      plugin_loader: call olsr_exit() instead of exit()
+      quagga: clean up invocation of olsr_exit
+      build_msg: clean up invocation of olsr_exit
+      cookie: clean up invocation of olsr_exit
+      interfaces: clean up invocation of olsr_exit
+      lq_plugin: clean up invocation of olsr_exit
+      main: clean up invocation of olsr_exit
+      olsr: clean up invocation of olsr_exit
+      parser: clean up invocation of olsr_exit
+      quagga: clean up olsr_exit messages
+      linux: clean up olsr_exit messages
+      ipc_frontend: clean up olsr_exit messages
+      main: clean up olsr_exit messages
+      httpinfo: remove unused copyright_string
+      conf: remove unused copyright_string
+      main: remove unused copyright_string
+      main: remove pointless type size asserts
+      main: make sure all variables are initialised
+      main: move some initialisation to the beginning of main
+      main: always store argv
+      random: remove pointless olsr_init_random, only invoked in main
+      conf: fix determining the lock file, mirror what main does
+      main: no need to re-determine lock_file; already setup by set_derived_cnf
+      main: use olsr_cnf->lock_file directly
+      lock_file: move olsrd_get_default_lockfile into its own file
+      main: move olsr_create_lock_file into its own file
+      lock_file: add olsr_remove_lock_file function
+      main: remove the lock file in olsr_shutdown
+      main: move printing of version into a function
+      main: move loading the config into the loadConfig function
+      main: minor improvements to loadConfig
+      main: initialise timers after processing the configuration
+      main: process olsrd options in a block
+      main: minor improvements
+      conf: remove an unneeded printf
+      conf: move loadConfig function here from main
+      pid: move pid file handling into its own file
+      main: move lock file creation into the lock_file file
+      main: move conf_file_name variable into cfgparser
+      main: limit the scope of 2 variables to where they are needed
+      main: invoke olsr_exit at the end of main
+      main: minor update
+      main: initialise IPC a bit earlier
+      main: call olsr_exit when writing the PID file fails
+      main: minor update
+      link_set: make sure link_changes is initialised
+      main: minor update
+      main: call olsr_exit in olsr_reconfigure
+      main: track the heartbeat timer
+      main: stop the heartbeat timer during shutdown
+      pid_file: add removePidFile function
+      log: add olsr_closelog function
+      main: close the log in olsr_shutdown
+      main: stop the scheduler in olsr_shutdown
+      main: move CLI related function into their own file
+      main: move some functions around
+      lock_file: explicitly ignore failure of file removal
+      conf: avoid memory leaks during parsing
+      conf: make sure debug_handle is initialised
+      conf: ensure all config fields are explicitly initialised
+      conf: add ip_prefix_list_clear function
+      conf: olsrd_free_cnf: set pointers back to NULL after freeing
+      conf: olsrd_free_cnf: refactor a bit to use the lists directly
+      conf: olsrd_free_cnf: reorder a bit
+      conf: olsrd_free_cnf: free everything
+      conf: do not leak the configuration when freeing it
+      conf: initialise sgw uplink & downlink before setting them
+      main: open syslog right at the start
+      main: minor update
+      sgw: only select an olsr or egress interface when it is up
+      jsoninfo: sgw field in /sgw response is not an array
+      jsoninfo: sgw: simplify prefix output
+      jsoninfo: sgw: show tableNr, ruleNr and bypassRuleNr too
+      jsoninfo: sgw: show entries without tc too
+      jsoninfo: sgw: minor simplification reducing memory usage
+      txtinfo: sgw: show entries without tc too
+      txtinfo: sgw: line-up to jsoninfo
+      txtinfo: sgw: do not access uninitialised memory
+      txtinfo: sgw: print the prefix length for IPv6
+      txtinfo: format code
+      txtinfo: use the same c-basic-offset: 2 as jsoninfo
+      txtinfo: simplify an ifdef
+      txtinfo: simplify some string comparisons
+      txtinfo: simplify some send_what checks
+      txtinfo: use a define for the plugin name
+      txtinfo: rename some functions
+      txtinfo: use defines for some variables
+      txtinfo: use a define to rename TXTINFO_ALLOW_LOCALHOST
+      txtinfo: rename some SIW_x flags
+      txtinfo: move ipc_print_mid function up a bit
+      txtinfo: move ipc_print_gateways function up a bit
+      txtinfo: move ipc_print_version function up a bit
+      txtinfo: rename txtinfo_write_data function
+      txtinfo: use the plugin name in a malloc call
+      txtinfo: re-order the sent information
+      txtinfo: simplify some comparisons
+      txtinfo: add httpheaders configuration parameter
+      txtinfo: http headers must use \r\n line endings
+      txtinfo: use HTTP/1.1
+      txtinfo: use a bigger (2 CPU pages) initial buffer
+      txtinfo: renumber SIW_x defines and put them in 'groups'
+      txtinfo: the configuration is a special case
+      txtinfo: send everything on an unknown option
+      txtinfo: some more formatting
+      txtinfo: remove superfluous forward declarations
+      txtinfo: expand SIW_RUNTIME_ALL to include all runtime information
+      txtinfo: remove personal copyrights, just check the git log
+      jsoninfo: use a define for the plugin name
+      jsoninfo: use defines for some variables
+      jsoninfo: use a define to rename TXTINFO_ALLOW_LOCALHOST
+      jsoninfo: use the set_plugin_boolean function
+      jsoninfo: initialise outbuffer_count
+      jsoninfo: update some comments
+      jsoninfo: move some functions around
+      jsoninfo: use the plugin name in a malloc call
+      jsoninfo: use a smaller (2 CPU pages) initial buffer
+      jsoninfo: limit the number of in-flight connection to 3, like txtinfo
+      jsoninfo: rename a function
+      jsoninfo: more formatting
+      jsoninfo: fix content type of http headers for /olsr.conf
+      jsoninfo: remove personal copyrights, just check the git log
+      jsoninfo: move some variables around
+      jsoninfo: move json support functions into their own file
+      txtinfo: fixup the Content-Type http header
+      jsoninfo: ensure date in http header is in GMT, as advertised
+      jsoninfo: fixup the Server http header
+      jsoninfo: fixup the Connection http header
+      jsoninfo: fixup the Content-Type http header
+      jsoninfo: fixup the Content-Length http header
+      txtinfo: remove a pointless assert
+      txtinfo: also send the (UTF-8) charset in the content type
+      txtinfo: avoid a memcpy: just move the abuf.buf pointer and clear abuf
+      jsoninfo: refactor generation of the headers
+      jsoninfo: also send the (UTF-8) charset in the content type
+      jsoninfo: avoid a memcpy: just move the abuf.buf pointer and clear abuf
+      jsoninfo: send http headers by default
+      txtinfo: bring over proper http header support from jsoninfo
+      olsr_exit: use EXIT_SUCCESS or EXIT_FAILURE exclusively
+      olsr_exit: fix some exit codes
+      exit: use EXIT_SUCCESS or EXIT_FAILURE exclusively
+      exit: fix some exit codes
+      txtinfo: undo output re-ordering of 4563faa
+      jsoninfo: use the same order as txtinfo
+      jsoninfo: remove an unused define
+      src: add some forgotten includes
+      txtinfo: use the same 'c-basic-offset: 2' as jsoninfo
+      txtinfo: treat the olsrd configuration differently
+      txtinfo: catch '/all' earlier when determining the action
+      txtinfo: send the information in the runtime and startup groups for '/all'
+      txtinfo: '/ver' and '/neighbours' are specials when determining the action
+      txtinfo: add (unsupported) commands '/config' and '/plugins'
+      txtinfo: add /runtime and /startup commands
+      jsoninfo: INADDR_LOOPBACK is in host format and the socket address is not
+      jsoninfo: fix PLUGIN_NAME that is reported on plugin init
+      jsoninfo: initialise uuidfile as well
+      jsoninfo: use standard set_plugin_string function for uuidfile parameter
+      jsoninfo: reorder some includes
+      jsoninfo: fix some indents
+      jsoninfo: add Freifunk neighbours special case, like txtinfo
+      txtinfo: move http header related functions into common code
+      jsoninfo: move http header related functions into common code
+      txtinfo: move determining the action into a separate function
+      jsoninfo: move determining the action into a separate function
+      txtinfo: add plugin_init hook
+      jsoninfo: add plugin_init hook
+      txtinfo: move ipc_print_* functions into a 'printers' unit
+      jsoninfo: move ipc_print_* functions into a 'printers' unit
+      txtinfo: use a table of function pointers in send_info
+      jsoninfo: use a table of function pointers in send_info
+      txtinfo: move SIW_x defines into common code
+      jsoninfo: move SIW_x defines into common code
+      txtinfo: wrap the outbuffer in a struct for easier usage
+      jsoninfo: wrap the outbuffer in a struct for easier usage
+      jsoninfo: only need to reset entry number for json output
+      txtinfo: determine the mime type via the functions table
+      jsoninfo: determine the mime type via the functions table
+      txtinfo: put the plugin init hook in the functions table
+      jsoninfo: put the plugin init hook in the functions table
+      txtinfo: put command parsing in the functions table
+      jsoninfo: put command parsing in the functions table
+      txtinfo: put output start/end in the functions table
+      jsoninfo: put output start/end in the functions table
+      txtinfo: convert INFO_ALLOW_LOCALHOST define into a plugin parameter
+      jsoninfo: convert INFO_ALLOW_LOCALHOST define into a plugin parameter
+      txtinfo: convert ACTIVATE_VTIME_TXTINFO into a plugin parameter
+      txtinfo: wrap generic info plugin configuration in a struct
+      jsoninfo: wrap generic info plugin configuration in a struct
+      info: merge jsoninfo and txtinfo common code
+      Makefile: add pseudo plugin info
+      txtinfo: move code from olsr_txtinfo into olsr_plugin
+      jsoninfo: move code from olsr_jsoninfo into olsr_plugin
+      info: code formatting
+      info: rename some http header function parameters
+      info: rename type printer_functions_t to info_plugin_functions_t
+      info: rename variable printer_functions to functions
+      txtinfo: rename variable printer_functions to functions
+      jsoninfo: rename variable printer_functions to functions
+      info: rename type outbuffer_t to info_plugin_outbuffer_t
+      info: do not export info_plugin_outbuffer_t, only used internally
+      info: rename header files recursive include guards
+      info: rename a http header function
+      info: update copyrights
+      jsoninfo: rename info_plugin_config to config
+      txtinfo: rename info_plugin_config to config
+      info: rename a function parameter
+      info: rename info_plugin_config to config
+      info: rename PLUGIN_NAME to name
+      info: rename a function
+      info: add some asserts
+      info: remove some comments
+      info: ensure all variables are correctly initialised and cleaned up
+      info: use a define for the info_plugin_config_t plugin parameters
+      jsoninfo: rename 'printers' unit
+      txtinfo: rename 'printers' unit
+      info: split out neighbors and 2hop printer functions
+      info: rename a function prototype
+      info: minor formatting fix
+      info: there can only be a single command, optimise determine_action
+      info: write_data: exit early if there is nothing to send
+      info: write_data: do not add invalid sockets to the FD set
+      info: write_data: add a comment
+      info: write_data: properly clean up an output buffer
+      info: write_data: do not consider an invalid socket for send
+      info: write_data: use a safer 'close the socket' condition
+      info: write_data: do not move buffers around
+      info: ipc_action: rename 2 variables
+      info: ipc_action: move inet_ntop out of condition blocks
+      info: ipc_action: only use addr in debug builds
+      info: ipc_action: minor simplification
+      info: ipc_action: merge 2 if statements
+      info: ipc_action: make the IPv6 if statement like the IPv4 one
+      info: ipc_action: use a static sink buffer
+      info: ipc_action: use a safer 'oversize' comparison
+      info: ipc_action: minor fix
+      info: plugin_ipc_init: rename 2 variables
+      info: plugin_ipc_init: 'unelse' an else branch, the if already returns
+      info: plugin_ipc_init: close the ipc_socket on the error paths
+      info: plugin_ipc_init: fix a perror message
+      info: plugin_ipc_init: merge 2 if statements
+      info: http headers: add some asserts
+      info: check against the correct __linux__ define
+      txtinfo: rename header files recursive include guards
+      jsoninfo: rename header files recursive include guards
+      txtinfo: remove some unused includes
+      jsoninfo: remove some unused includes
+      info: add a function to initialise the config
+      txtinfo: use the function to initialise the config
+      jsoninfo: use the function to initialise the config
+      jsoninfo: helpers: minor simplification of abuf_json_new_indent
+      jsoninfo: helpers: firm up asserts on currentjsondepth
+      jsoninfo: helpers: use abuf_json_insert_comma
+      jsoninfo: helpers: output floats in full precision
+      jsoninfo: helpers: fix output format for int/long
+      jsoninfo: helpers: use an actual bool as parameter for abuf_json_boolean
+      jsoninfo: helpers: get_string_from_file ensures '\0' in the first byte
+      jsoninfo: helpers: use sizeof() for buffers
+      jsoninfo: helpers: use a double as parameter for abuf_json_float
+      jsoninfo: helpers: use sizeof() for uuid size
+      txtinfo: define the vtime extern in the proper place
+      jsoninfo: define the uuidfile extern in the proper place
+      info: minor reordering in send_info to reflect SIW_x order
+      info: simplify use of the functions table
+      txtinfo: simplify setup of the functions table
+      jsoninfo: simplify setup of the functions table
+      info: simplify use of the functions table further
+      info: simplify determine_action
+      info: update README
+      txtinfo: update README
+      jsoninfo: update README
+      info: remove unused nompr field from the configuration
+      txtinfo: minor improvements to /sgw printing
+      jsoninfo: helpers: add abuf_json_ip_address
+      jsoninfo: use the new ip address helper in /sgw printing
+      jsoninfo: minor improvement to /sgw printing
+      lq plugins: ensure string termination in lq_print_cost functions
+      jsoninfo: minor field reordering for /sgw
+      jsoninfo: add 'selectable' field to /sgw
+      jsoninfo: refactor /gateways
+      jsoninfo: move duplicated 'selectable' code into a function
+      txtinfo: simplify some code for /gat
+      txtinfo: minor formatting in /gat
+      txtinfo: also print gateways without a tc in /gat
+      txtinfo: do not use tabs in the /gat table, use fixed widths
+      txtinfo: minor scope change of 2 variable in /gat
+      jsoninfo: only show gateways of the request IP version in /gateways
+      jsoninfo: neighbors/2hop: show more information
+      files: clarify why jsoninfo is in the example configuration files
+      make: support building with clang (on Linux)
+      all: fixes resulting from building with clang
+      txtinfo: use strcmp instead of strstr
+      jsoninfo: use strcmp instead of strstr
+      jsoninfo: review of /hna
+      txtinfo: review of /hna
+      info: strip EOLs from the command
+      CHANGELOG: add a note about txtinfo and jsoninfo being merged
+      cookie: split assert to see which part actually triggers the assert
+      info: do not try to interpret the request when it is too large
+      info: fix processing of command per HTTP request
+      main: add & enable a new SEGV handler (Linux only)
+      Add a safety net in the segfault handler
+      ifnet: remove unused function set_flag
+      linux: netlink_process_link: simplify NULL comparisons and add some braces
+      linux: netlink_process_link: always determine the interface name
+      linux: netlink_process_link: always determine the oif
+      linux: netlink_process_link: simplify a comparison
+      linux: netlink_process_link: compute up status only once
+      linux: netlink_process_link: simplify an if/else
+      ifnet: add getInterfaceLinkState function
+      all: use the getInterfaceLinkState function
+      Fix 2 Coverity warnings
+      ifnet: ensure string termination
+      pud: nmealib: be less strict about satellite elevation
+      txtinfo: review /lin
+      txtinfo: review /nei and /2ho
+      txtinfo: review /hna
+      txtinfo: add forgotten 2hop  in function table
+      jsoninfo: add forgotten 2hop  in function table
+      jsoninfo: protect abuf_json_ip_address against a NULL IP address
+      jsoninfo: protect against a possible null-deref in ipc_print_neighbors
+      jsoninfo: also show the hops for /sgw, like for /gateways
+      jsoninfo: also show local HNAs, like txtinfo does
+      jsoninfo: review /links and show more information
+      jsoninfo: extract printing a gateway to a function
+      info: minor update to the README
+      info: fix send result error check in write_data
+      info: do not send buffers of zero length, wget can't handle that
+      info: introduce and use ARRAY_SIZE define
+      info: simplify send_info function
+      jsoninfo: simplify isCommand function
+      jsoninfo / sgw: isGwSelectable function is common, use it as such
+      jsoninfo: minor improvements
+      jsoninfo: be a bit more explicit in determine_mime_type
+      txtinfo: minor fixes to the README
+      txtinfo: simplify isCommand function
+      txinfo: fix 2-hop output
+      txtinfo: avoid a potential null deref in 2-hop
+      txtinfo: simplify printing links
+      txtinfo: avoid a potential null deref in links
+      txtinfo: simplify printing routes
+      txtinfo: avoid a potential null deref in routes
+      txtinfo: simplify printing topology
+      txtinfo: simplify printing HNAs
+      txtinfo: simplify and fix printing MIDs
+      txtinfo: clarify that using /gat and /sgw on non-Linux is an error
+      txtinfo: simplify gateways
+      txtinfo: simplify sgw
+      txtinfo: add an empty line after the version, like all other tables
+      txtinfo: simplify interfaces
+      changelog: update the warning about txtinfo/jsoninfo
+      main: musl does not support execinfo.h (the backtrace functions)
+      make: preserve debugging info when NOSTRIP is set
+      info: requests that are too large must set s to < 0
+      info: also handle empty requests
+      info: rename an HTTP status define
+      info: requesting / now is equivalent to /all
+      info: prepare for more HTTP status codes
+      info: add function to the function table to output an error
+      info: respond with "not found" (404) on invalid commands
+      info: respond with "no content" (204) on empty output
+      txtinfo: /config & /plugins are not implemented: return "not found" (404)
+      changelog: update for info/jsoninfo/txtinfo changes
+      make: add more recognised formats to the gcc-warnings script
+      make: need to load the OS specific makefile before evaluating WARNINGS
+      make: remove conditionals in WARNINGS section, no longer needed
+      make: sort warnings flags and make that section a bit easier to read
+      unix: fix GCC 6 warnings
+      link_set: fix GCC 6 warnings
+      sgw: fix GCC 6 warnings
+      parser: fix GCC 6 warnings
+      bmf: fix GCC 6 warnings
+      mdns: fix GCC 6 warnings
+      p2pd: fix GCC 6 warnings
+      pud: fix GCC 6 warnings
+      quagga: fix GCC 6 warnings
+      make: add new GCC 6 warning flags
+      scheduler: fix a typo
+      scheduler: mark timers for removal and only remove them in a cleanup walk
+      main: ensure all timers are stopped in shutdown
+      cfgparser: remove some unreachable code
+      scheduler: mark timers for removal and only remove them in a cleanup walk
+      main: ensure all timers are stopped in shutdown
+      scheduler: fix olsr_flush_timers to not hang
+      main: print the received signal name instead of the signal number
+      main: cleanup the gateways earlier on shutdown
+      scheduler: fix olsr_flush_timers to not hang
+      main: cleanup the gateways earlier on shutdown
+      txtinfo: output an error on unknown status codes too
+      txtinfo: move a function
+      jsoninfo: output an error on unknown status codes too
+      jsoninfo: re-arrange some imports
+      jsoninfo: all neighbour entries now have twoHopNeighborCount
+      jsoninfo: add hysteresis to /links
+      jsoninfo: add etx to /routes
+      jsoninfo: improve /topology, show more information
+      jsoninfo: improve /hna
+      info: add a comment about why info_plugin_outbuffer_t is there
+      info: try to send the response immediately
+      info: speed up sending pending responses
+      info: check for retry after trying to send
+      jsoninfo: remove some dead code
+      txtinfo: check INFO_HTTP_OK upon entry of the function
+      main: add noreturn attribute on olsr_segv_handler
+      make: improve clang support
+      make: do not add -Wcast-qual on Windows
+      make: move -Werror flag into the normal list of warnings
+      make: fix compiler flags probing
+      gui: fix a few clang warnings
+      jsoninfo: improve /mid and add validityTime of mid entry itself
+      jsoninfo: improve printing a gateway entry, and add expiry/cleanup timers
+      jsoninfo: improve the ipc_print_gateways_ipvx function
+      jsoninfo: improve the skip condition in ipc_print_gateways_ipvx
+      builddata: generate more build information
+      jsoninfo: show more information in /version
+      config: always lower-case plugin parameter names
+      bmf: ignore case on the BmfMechanism plugin parameter value
+      jsoninfo: make abuf_json_int take a long long value
+      jsoninfo: simplify /plugins
+      jsoninfo: fix a windows compile error
+      scheduler: fix a typo
+      scheduler: do not stop timers that are not running
+      scheduler: make olsr_flush_timers more robust
+      main: do not allow nested shutdown
+      scheduler: fix a typo
+      scheduler: do not stop timers that are not running
+      scheduler: make olsr_flush_timers more robust
+      jsoninfo: minor improvement to /2hop
+      jsoninfo: helpers: move a static string declaration
+      jsoninfo: helpers: add asserts
+      jsoninfo: helpers: output an empty string when the string is null
+      jsoninfo: helpers: account for NaN and INF in float printing
+      jsoninfo: add some comments
+      jsoninfo: simplify output_error by using an abuf
+      jsoninfo: minor improvements
+      jsoninfo: put printing a hna entry into a function and use it
+      jsoninfo: improve and update /config
+      jsoninfo: use the abuf_json_ip_address helper
+      jsoninfo: use print_link_quality_multipliers_array_entry in /interfaces
+      jsoninfo: add print_interface_config function and use it
+      jsoninfo: improve /interfaces
+      jsoninfo: do not show interface /sys/class/net/data in /interfaces
+      jsoninfo: move some static functions around
+      info: strip trailing slashes from the command
+      info: skip multiple leading slashes on the command
+      info: re-introduce composite commands
+      jsoninfo: add some asserts
+      jsoninfo: protect against nulll-deref in print_interface_config
+      jsoninfo: protect against out-of-bounds accesses of TXT array
+      jsoninfo: in /plugins list plugin parameters as array entries
+      jsoninfo: in /plugins show parameters as name/value
+      jsoninfo: simplify /mid output
+      jsoninfo: in /plugins list plugin parameters as map entries
+      jsoninfo: allow key to be NULL when printing an IP address
+      jsoninfo: print the 2-hops neighbors as a simple list of IP addresses
+      jsoninfo: minor simplification in /2hop
+      info: create more space for more info commands
+      jsoninfo: add a function to directly convert an IP address
+      jsoninfo: in /interfaces show 'state' text as 'up' boolean
+      jsoninfo: in /interfaces use the new IP address helper function
+      jsoninfo: remove an obsolete comment
+      jsoninfo: in /interfaces show message times like validity times
+      jsoninfo: allow key to be NULL when printing a string
+      jsoninfo: improve /config
+      jsoninfo: in /config rename sgw weight section to costsCalculation
+      jsoninfo: remove a derived field from the /config output
+      jsoninfo: fix a typo in /config
+      sgw: fix a mask in the sgw status file
+      Revert "sgw: fix a mask in the sgw status file"
+      sgw: update a comment
+      info: move json helpers here from jsoninfo
+      info: add abuf_json_prefix json helper
+      info: minor layout improvements
+      info: move iterating over a table of siw/function entries into a function
+      info: rename json helpers files
+      sgw: add isEgressSelected function
+      jsoninfo: also show egress information in /sgw
+      jsoninfo: do not null-deref prefix in abuf_json_prefix
+      jsoninfo: in /sgw separate prefixes and their lengths
+      make: improve jsoninfo and txtinfo dependencies on info
+      sgw: do not show unused tunnels in the status file
+      sgw: remove some dead code left over in the previous commit
+      info: minor layout improvements
+      info: use AUTOBUFCHUNK instead of hard-coding it
+      info: fix a type
+      info: move some type delcarations up in a header file
+      info: make the INFO_PLUGIN_CONFIG_PLUGIN_PARAMETERS a bit safer
+      info: make SIW_ENTRIES accessible from other functions
+      plugin util: make set_plugin_boolean actually set a bool
+      plugin util: add set_plugin_long function
+      abuf: add abuf_concat function
+      cfgfile: cache the generated configuration file
+      scheduler: export the olsr_times function
+      info: add support for caching and use it
+      info: minor fix
+      info: reflect that the SIW defines are 64 bit wide
+      info: completely switch of caching for timeouts <= 0
+      info: lazily initialise the cache
+      sgw: remove struct costs_weights and max_cost_etx_max from the costs API
+      spf: tc->path_cost is a route cost, fix level 2 OLSR_PRINTF messages
+      spf: safer checking against LINK_COST_BROKEN and ROUTE_COST_BROKEN
+      routing table: safer checking against LINK_COST_BROKEN & ROUTE_COST_BROKEN
+      pud: safer checking against LINK_COST_BROKEN and ROUTE_COST_BROKEN
+      sgw: safer checking against LINK_COST_BROKEN and ROUTE_COST_BROKEN
+      lq plugins: safer checking against LINK_COST_BROKEN and ROUTE_COST_BROKEN
+      lq plugins: explicit unsigned for LINK_COST_BROKEN and ROUTE_COST_BROKEN
+      fpm: add fpmtod function
+      lq plugins: add get_cost_scaled function
+      lq plugins: make the print_cost_float functions behave the same
+      lq plugins: remove print_cost, use get_cost_scaled in generic function
+      lq: add get_linkcost_scaled function
+      lq: minor optimisation
+      main: initialise sgw system after the tables
+      bmf: fix currEtx type and link/route confusion
+      sgw: show the route costs text in log messages
+      sgw: add get_gwcost_scaled and get_gwcost_text functions
+      sgw: show the scaled route cost in the program status file
+      sgw: show the scaled gw cost in the program status file
+      httpinfo: show the scaled route cost in the sgw pane
+      httpinfo: show the scaled gw cost in the sgw pane
+      txtinfo: show the scaled route cost in the sgw output
+      txtinfo: show the scaled gw cost in the sgw output
+      jsoninfo: show scaled route/link cost in
+         gateways|sgw|links|routes|topology
+      jsoninfo: show the scaled gw cost in gateways|sgw
+      sgw: simplify get_gwcost_scaled
+      info: make defines for SIW_* constants a bit clearer
+      info: add the define SIW_EVERYTHING
+      info: fix send_what for empty requests
+      info: stop evaluating send_what when all information has been processed
+      info: only try to match supported commands
+      arprefresh: show Git SHA in plugin constructor
+      bmf: use PLUGIN_NAME_SHORT in logs
+      bmf: do no show version in plugin constructor
+      bmf: remove PLUGIN_AUTHOR, Git shows who worked on it
+      bmf: plugin name like other plugins and minor layout change
+      bmf: show Git SHA in plugin constructor
+      bmf: do not show copyright in constructor, Git shows who has copyright
+      dot_draw: remove PLUGIN_AUTHOR, Git shows who worked on it
+      dot_draw: do no show version in plugin constructor
+      dot_draw: show Git SHA in plugin constructor
+      dyn_gw: remove PLUGIN_AUTHOR, Git shows who worked on it
+      dyn_gw: show Git SHA and no version in plugin constructor
+      dyn_gw_plain: show Git SHA and no author in plugin constructor
+      httpinfo: remove PLUGIN_AUTHOR, Git shows who worked on it
+      httpinfo: show Git SHA and no version and no author in plugin constructor
+      jsoninfo: remove PLUGIN_AUTHOR, Git shows who worked on it
+      jsoninfo: show Git SHA and no version in plugin constructor
+      mdns: remove PLUGIN_AUTHOR, Git shows who worked on it
+      mdns: show Git SHA and no version and no copyright in plugin constructor
+      mini: cleanup
+      nameservice: remove PLUGIN_AUTHOR, Git shows who worked on it
+      nameservice: show Git SHA and no version in plugin constructor
+      p2pd: show Git SHA and no version in plugin constructor
+      pgraph: remove PLUGIN_AUTHOR, Git shows who worked on it
+      pgraph: show Git SHA and no version in plugin constructor
+      pud: use Git SHA from builddata
+      quagga: remove PLUGIN_AUTHOR, Git shows who worked on it
+      quagga: show plugin name and Git SHA in plugin constructor
+      sgwdynspeed: use Git SHA from builddata
+      secure: remove PLUGIN_AUTHOR, Git shows who worked on it
+      secure: show Git SHA and no version in plugin constructor
+      txtinfo: remove PLUGIN_AUTHOR, Git shows who worked on it
+      txtinfo: show Git SHA and no version in plugin constructor
+      watchdog: show plugin name and Git SHA in plugin constructor
+      jsoninfo: simplify setup of plugin functions
+      txtinfo: simplify setup of plugin functions
+      all: ensure all files have the same license header
+      Remove list-excludes
+      all: avoid includes with relative paths whenever possible
+      info: be more paranoid when handling received data
+      info: fix mistake in previous commit
+      quagga: fixup include files
+      quagga: use AUTOBUFCHUNK as allocation unit
+      info: do not include INFO_HTTP_VERSION in httpStatusToReply return
+      info: add INFO_HTTP_REQUEST_ENTITY_TOO_LARGE http code
+      info: add INFO_HTTP_INTERNAL_SERVER_ERROR http code
+      info: add INFO_HTTP_FORBIDDEN http code
+      info: add INFO_HTTP_SERVICE_UNAVAILABLE http code
+      jsoninfo: use httpStatusToReply in output_error
+      txtinfo: use httpStatusToReply in output_error
+      info: refactor ipc_action to be much clearer and safer
+      info: add netjson commands
+      netjson: add plugin
+      info: use a session struct in the JSON helpers
+      netjson: various fixes
+      all: allocate autobuf memory in AUTOBUFCHUNK sized chunks
+      httpinfo: reduce memory usage
+      info: start with a single AUTOBUFCHUNK sized chunk of memory
+      autobuf: work around a warning
+      autobuf: simplify abuf_vappendf
+      android: minor improvements to the Makefile and README
+      info: fail info_plugin_init when plugin_ipc_init fails
+      link_set: fix a crash: use the entry name in a printf
+      olsr: add olsr_realloc function
+      quagga: refactor zclient_read to be much more readable and safer
+      quagga: improve zparse function a bit
+      bmf: use the new olsr_realloc function
+      mdns: use the new olsr_realloc function
+      p2pd: use the new olsr_realloc function
+      quagga: use the new olsr_realloc function
+      scheduler: use the monotonic clock
+      spf: use the monotonic clock in profiling code
+      scheduler: fix Debian compilation problem
+      make: need to link with -lrt on Debian for clock_gettime
+      make: only link to -lrt on Linux
+      openwrt: fixup the git repository link to point to GitHub
+      make: add defines for leak and undefined sanitize compiler warnings
+      all: ensure unsigned numbers are used in shifts
+      all: use the INLINE define
+      all: move definitions of INLINE into compiler.h
+      config: fix memory leaks on the shutdown path
+      dyn_gw: fix memory leaks on the shutdown path
+      sgw: fix memory leaks on the shutdown path
+      make: continue running when a sanitizer reports an error
+      info: increase the number of in-flight replies to 8
+      info: fix a use-after-free for incomplete immediate sends
+      info: fix detection of whether the reply was fully sent
+      info: fix outbuffer slot determination
+      info: fix an assert
+      info: make a bit of code more defensive
+      info: saved_count is used as 'this is the first reply', so rename it
+      info: send 'service unavailable' when there are too many replies in-flight
+      netjson: clear allocated memory before setting fields in it
+      netjson: do not duplicate nodes when adding a mid
+      netjson: improve node_self detection for cleanup
+      netjson: fix NetworkGraph output
+      info: add 'pretty' parameter to jsoninfo and netjson modules
+      info: only set the 'name' const once
+      info: make cache_timeout_generic more robust
+      info: better initialisation of the cache structures
+      info: ensure all cache structures are always initialised
+      avl: protect against NULL pointers
+      interfaces: protect against a NULL pointer
+      main: separate shutdown and cleanup up gateways
+      egress: clear a variable after freeing it
+      sgw: do not iterate over NULL gw entries in OLSR_FOR_ALL_GATEWAY_ENTRIES
+      sgw: do not iterate over NULL gw entries in OLSR_FOR_ALL_GWS
+      sgw: gw NULL check no longer needed when using OLSR_FOR_ALL_GWS
+      info: add some asserts
+      info: disable caching for now, it somehow causes memory corruption
+      sgw: harden isGwSelectable function
+      Revert "autobuf: simplify abuf_vappendf"
+      Revert "info: disable caching for now, it somehow causes memory
+         corruption"
+      autobuf: make 2 functions more robust
+      sgw: use iptables '-w' option
+      sgw: preserve egress interface ordering in iptables rules
+      sgw: preserve sgw tunnel ordering in iptables rules
+      sgw: optimise iptables rule ordering
+      linux: merge 2 functions
+      linux: export os_ip_tunnel function
+      sgw: remove any left-over sgw tunnels during startup and shutdown
+      sgw: add a policy rule for the server-end tunnel
+      sgw: egress interface routes must also be programmed on interface up/down
+      sgw: egress interface routes must always be present when interface is up
+      sgw: track whether network/gateway are required per egress interfaces
+      sgw: fix egress route programming
+      jsoninfo: output require(Network|Gateway) status for egress interfaces
+      sgw: adjust egress to include requireNetwork and requireGateway settings
+      sgw: fix use of uninitialised value
+      info: fix cache age calculation
+      quagga: fix some clang alignment warnings
+      pud: only update the timestamp if the position is invalid and not updated
+      pud: do not report uplink send errors, they're not really relevant
+      pud: write the position to an output file when so configured
+      pud: remove satellite info from the position output file
+      pud: fixup of the README
+      ipcalc: protect prefix_to_netmask against invalid input
+      cfgparser: simplify Makefile a bit
+      Move strscat/cpy to a file of their own and clean them up
+      defs: remove an unused include
+      common: fix file headers
+      common: fix an include file guard
+      common: code formatting
+      common: add a comment
+      common: more asserts
+      common: make an exit condition in strscat more readable
+      common: remove some comments on asserts
+      common: make the paranoid check exit a bit friendlier
+      ipcalc: protect prefix_to_netmask against invalid input
+      cfgparser: simplify Makefile a bit
+      common: move strscat/cpy to a file of their own
+      common: add comments to strscat/cpy functions
+      common: strscat/cpy are simple wrappers around the same function
+      common: add some asserts to strscat/cpy
+      common: rename a variable in strscat/cpy
+      common: let the compiler decide how to place variables in strscat/cpy
+      common: do not invoke _internal_strscpy in strscat when not enough space
+      common: rename a variable in strscat/cpy
+      common: be paranoid about incoming parameters in strscat/cpy
+      common: refactor _internal_strscpy in strscat/cpy
+      autobuf: just use memcpy instead of strcpy
+      quagga: improve some strscy() calls
+      linux: improve some strscy() calls
+      lq_plugin: do not confuse malloc size with name size
+      Merge branch 'fixes-pulled-apart' into fixes
+      autobuf: format code
+      abuf: no need to set buf[0] to '\0', calloc already did that
+      abuf: use a define for the maximum size
+      README-Olsr-Extensions: add the -w option to the iptables examples
+      Merge branch 'release-0.9.0'
+      jsoninfo: always output the PID
+      nmealib: fix an extern C
+      nmealib: make nmea_INFO_is_present an INLINE function
+      nmealib: add some *_to_string helper functions
+      build: get rid of HTTPINFO_PUD define
+      httpinfo: use the normal nmea_INFO_is_present function
+      httpinfo: use new nmealib *_to_string helper functions
+      jsoninfo: allow all 'type' helpers without a key
+      nmealib: fix a warning
+      jsoninfo: be a bit more lenient in the helpers w.r.t. NULL values
+      info: add support for the pud plugin position
+      jsoninfo: add support for the pud plugin position
+      build: add -Wmissing-include-path
+      build: fix GCC 6 warning about EAGAIN and EWOULDBLOCK being equal
+      autobuf: let's limit the maximum size to 16MB
+      pud: update nmealib to 3.0.0
+      pud: nmealib: minor update
+      pud: nmealib now sets year and month correctly
+      pud: further adjustments for new nmealib
+      jsoninfo: nmealib now sets year and month correctly
+      jsoninfo: further adjustments for new nmealib
+      httpinfo: nmealib now sets year and month correctly
+      httpinfo: further adjustments for new nmealib
+      jsoninfo: fix mistakes introduced in 0db233f
+      pud: minor layout improvement
+      pud: minor layout fix
+      pud: move to stationary on undetermined moving state
+      pud: force a state change to moving when 'no info received' changes
+      pud: split a function
+      pud: add gpsd related configuration parameters
+      pud: timers: add gpsd fetch timer functions
+      pud: use gpsd fetch timer
+      pud: add gpsd functions
+      pud: hook up gpsd timer
+      pud: remove rx path
+      pud: update documentation
+      pud: make sure to actually count inUse satellites (on older gpsd)
+      pud: fix extracting position information from gpsd
+      pud: remove the instance of the nmea parser, no longer used
+      info: integrate java OSGi bundles
+      info: release java OSGi bundles
+      Merge pull request #2 from kakru/fix-shadow-error-in-pud
+      ohs_cmd: avoid compiler warning
+      release: fix the release script's git repository check
+      Branch v0.9.5
+
+Henning Rogge (15):
+      Handle interface broadcast/multicast address zero
+      Handle interface broadcast/multicast address zero
+      Release v0.6.8.1
+      Update version after release of v0.6.8.1
+      Update version after release of v0.9.0.3
+      Configuration file cleanup
+      Merge branch 'master' of git://olsr.org/olsrd
+      Modify .gitignore file to keep full default example
+      Change README Git on Github
+      Don't use strcpy, we don't need checks there anyways.
+      Allow for a "soft fail" in non-debug builds
+      Fix some strscy() calls or make them more readable
+      Buffer for quagga was too long (1 byte)
+      Fix cfgparser makefile
+      Release v0.9.5
+
+Karol Kruzelecki (1):
+      pud: fix of 'time' shadowing a global declaration (that causes a
+         compilation error on older Ubuntu)
+
+0.9.0.3 -------------------------------------------------------------------
+
+Alex Dunn (1):
+      Makefile.osx: create .dylibs
+
+Ferry Huberts (1):
+      Fix CHANGELOG
+
+Henning Rogge (3):
+      Update version after release of v0.9.0.2
+      Handle interface broadcast/multicast address zero
+      Release v0.9.0.3
+
+0.9.0.2 -------------------------------------------------------------------
+
+Ferry Huberts (4):
+      conf: lock_file is derived config.
+      jsoninfo: fix a crash when there are no gateways
+      txtinfo: fix a crash when there are no gateways
+      release: fix release script
+
+Henning Rogge (2):
+      Update version after release of v0.9.0.1
+      Release v0.9.0.2
+
+0.9.0.1 -------------------------------------------------------------------
+
+Ferry Huberts (3):
+      neighbors: signal link changes when deleting a neighbor
+      jsoninfo: do not output smart-gateway info when not enabled.
+      txtinfo: jsoninfo: do not output smart-gateway info when not enabled.
+
+Henning Rogge (2):
+      Update version after release of v0.9.0
+      Release v0.9.0.1
+
+0.9.0 -------------------------------------------------------------------
+
+Daniel Golle (4):
+      plugins: fix build with musl
+      plugins: fix build on some glibc systems
+      plugins: use previous definition of struct udphdr on Android
+      plugins: fix precompiled syntax
+
+Ferry Huberts (98):
+      build: uberclean must also remove builddata.txt
+      build: add some pud targets
+      Rename 'struct interface' to 'struct interface_olsr'
+      Merge branch 'release-0.6.8'
+      pud: wireformat-java: improve java detection
+      pud: wireformat-java: improve java detection
+      sgw: ensure a bandwidth of 1 does not alias onto 0 when serialising
+      sgw: minor improvement
+      sgw: gwContainer can't be null here
+      dyn_gw: fix a Coverity warning
+      pud: nmealib: fix a Coverity warning
+      pud: nmealib: fix a Coverity warning
+      httpinfo: fix a Coverity warning
+      parser: fix a Coverity warning
+      quagga: minor readability fixes
+      olsr_random: introduce better random functions
+      main: replace random() by our own function
+      unix: replace random() by our own function
+      bsd: replace random() by our own function
+      win32: replace random() by our own function
+      pud: nmealib: replace random() by our own function
+      secure: replace random() by our own function
+      contrib: fix the build
+      contrib: replace random() by our own function
+      olsr_switch: replace random() by our own function
+      olsr_random: need to include time.h
+      pud: nmealib: align nmea_random to olsrd _random
+      pud: nmealib: doc: disable generation of the PDF; pdflatex somehow fails
+      pud: nmealib: doc: upgrade doxygen configuration file
+      sgw: egress file: use full time resolution on Linux
+      sgw: egress: Android is not Linux
+      jsoninfo: formatting
+      jsoninfo: some comparison simplifications
+      jsoninfo: clearer distinction between JSON and non-JSON blocks
+      jsoninfo: more comparison simplifications
+      jsoninfo: refactor outputting JSON
+      sgw: fix a shadowing warning
+      jsoninfo: formatting fixup
+      jsoninfo: systemTime and timeSinceStartup can be first
+      jsoninfo: minor fixup
+      jsoninfo: the IP address for a neighbour can also be an IPv6 address
+      jsoninfo: add version, 2hop and sgw. now in sync with txtinfo
+      arprefresh: update the readme
+      dyngw: update the readme
+      dyngw_plain: update the readme
+      httpinfo: update the readme
+      jsoninfo: update the readme
+      secure: update the readme
+      txtinfo: update the readme
+      pud: move the config sample into the readme
+      ipcalc: fix a double slash for IPv6 in olsr_ip_prefix_to_string
+      cfg: make sure lockfile has a default as specified in the cfg file
+      cfgfile_gen: whitespace and typo fixes
+      cfgfile_gen: better LinkQualityMult examples
+      cfgfile_gen: make sure to print IPv6Src as an IPv6 prefix
+      cfgfile_gen: fix default for RtProto
+      cfgfile_gen: add some comments to the generated configuration file
+      cfgfile_gen: print comments when the are no ipc_nets
+      cfgfile_gen: improve printing of HNAs
+      cfgfile_gen: improve printing of MainIp
+      cfgfile_gen: improve printing of SmartGatewayPrefix
+      cfgfile_gen: improve printing of SmartGatewayEgressFile
+      cfgfile_gen: update comments file SmartGatewayEgressFilePeriod
+      cfgfile_gen: improve printing of SmartGatewayEgressInterfaces
+      cfgfile_gen: improve printing of SmartGatewayPolicyRoutingScript
+      cfgfile_gen: improve printing of UseNiit
+      cfgfile_gen: improve printing of routing tables
+      cfgfile_gen: improve printing of routing table priorities
+      files: remove olsrd.conf.default.lq-fisheye
+      files: minor improvements to the FunkFeuer configuration files
+      files: minor improvements to the commotion configuration file
+      files: rename the generated configuration files
+      files: add configurations files corresponding to generated (txt) files
+      files: add a README, explaining generation of effective config files
+      files: remove lq and rfc effective config files
+      files: add a script to generate an effective configuration file
+      files: update the default effective configuration file to current state
+      mantissa: fix a typo in a comment
+      mantissa: add a function to query the minimum interval
+      sgw: fill HNA header in the same order as the fields in the packet
+      sgw: extract appending a sgw HNA into its own function
+      sgw: olsr_modifiy_inetgw_netmask can choose between normal and zero bw
+      jsoninfo: validity times are in 'me' format, convert them to msec first
+      sgw: fix a typo in an assert
+      sgw: sgw HNAs are not considered normal HNAs during processing
+      sgw: implement HNA expiry
+      sgw: update the status file when a sgw HNA is removed (multi-sgw mode
+         only)
+      ifnet: also store the HNA validity time in msec
+      sgw: do not write uplink/downlink speed directly
+      sgw: immediately remove sgw HNAs with zero bandwidth
+      sgw: send sgw HNAs with zero bandwidth after local gw has gone away
+      sgw: do not send zero bandwidth sgw HNAs by default
+      pud: doc: update the documentation
+      release: stricter matching of release tags
+      autobuf: fix warning in Windows release builds
+      Merge branch 'release-0.6.7'
+      Merge branch 'release-0.6.8'
+      Branch v0.9.0
+
+Henning Rogge (7):
+      Update version after release of v0.6.8
+      Update version after release of v0.6.8
+      tc: properly initialise the path_costs field in a new tc
+      tc: properly initialise the path_costs field in a new tc
+      keep pushing data through dotdraw plugin
+      Restrict maxmimum message size (not packet size) to IPv6 minimal MTU.
+      Release v0.9.0
+
+Sebastian Kürten (2):
+      Added simple hard-coded whitelist
+      Revert "Added simple hard-coded whitelist"
+
+Teco Boot (1):
+      arprefresh: README adjusted for plugin name
+
+0.6.8.1 -------------------------------------------------------------------
+
+Ferry Huberts (4):
+      pud: wireformat-java: improve java detection
+      release: stricter matching of release tags
+      autobuf: fix warning in Windows release builds
+      neighbors: signal link changes when deleting a neighbor
+
+Henning Rogge (4):
+      Update version after release of v0.6.8
+      tc: properly initialise the path_costs field in a new tc
+      Handle interface broadcast/multicast address zero
+      Release v0.6.8.1
+
+0.6.8 -------------------------------------------------------------------
+
+Ferry Huberts (81):
+      linux: increase the netlink buffer size
+      linux: fix using tables >= 256
+      linux: fix type of af_family
+      linux: do not try to set routes with negative metric
+      linux: add 'flags' parameter to olsr_new_netlink_route function
+      linux: add 'scope' parameter to olsr_new_netlink_route function
+      linux: make it possible to add/remove blackhole routes
+      linux: export the olsr_new_netlink_route function
+      Update version after branch of v0.6.7
+      android: use the machine specific NDK instead of always the 32bit variant
+      Merge branch 'linux-routes.v1'
+      android: fix build on 32 bit platform (see 0295e11)
+      linux: olsr_if_isup: fix return code in error path
+      conf parser: fix a warning
+      Merge branch 'release-0.6.7'
+      linux: fix a typo
+      sgw: move add/remove of ifchange handler to better place
+      sgw: export multi_gateway_mode method
+      sgw: make sure gw->ipv6 is always set for a new gateway
+      sgw: cost calculation can now directly account for interface up/down
+         status
+      config parser: minor improvement for SmartGatewayEgressInterfaces
+      pud: fix strto* result checking for out-of-range situations
+      sgwdynspeed: fix strto* result checking for out-of-range situations
+      Merge branch 'release-0.6.7'
+      Merge branch 'release-0.6.7'
+      release: fix up the CHANGELOG
+      Merge branch 'release-0.6.7'
+      sgw: fix deserialize_gw_speed
+      txtinfo: fix formatting in ipc_print_sgw
+      sgw: move 'struct sgw_egress_if' type into a separate include file
+      sgw: store table & rule numbers in the sgw_egress_if structure
+      sgw: add egress file reader settings
+      sgw: add egress file reader
+      sgw: track the interface index of an egress interface
+      sgw: track the up status of an egress interface
+      sgw: use the smartgw_tunnel_monitor to track up/down of egress interfaces
+      sgw: introduce function to process multi-sgw changes
+      sgw: determine best exit link in doRoutesMultiGw
+      sgw: determine best overall link in doRoutesMultiGw
+      sgw: add SmartGatewayStatusFile setting
+      sgw: add the smart gateway status file writer
+      sgw: add reportNewGateway function
+      sgw: program best overall link routes
+      sgw: program best egress link route
+      sgw: program egress link routes
+      sgwdynspeed: only allow the plugin in single-sgw mode
+      sgw: fix default path costs for egress interfaces
+      sgw: initialise the egress interfaces earlier
+      sgw: lazily determine the sgw costs weights
+      sgw: show all sgw tunnels in the output file instead of only the active
+         one
+      sgw: reset cached egress file timestamp on file access errors
+      sgw: do not prematurely exit doRoutesMultiGw
+      Merge branch 'msgw'
+      sgw: do not make the egress types available only on linux
+      sgw: initialise the egress best routes differently
+      sgw: remove an unused variable
+      sgw: unshadow a variable
+      sgw: change the cached timestamp
+      build: make TOPDIR an absolute path
+      sgw: android has no getline(), implement it
+      android: bump the NDK compiler version
+      android: fixup regex makefile
+      sgw: fix android build
+      pud: duplicate android regex trick from nameservice
+      sgw: always clear egress settings when this egress file is not readable
+      Revert "sgw: always clear egress settings when this egress file is not
+         readable"
+      sgw: always clear egress settings when this egress file is not readable
+      sgw: refresh the advertised speed when the best overall link changes
+      sgw: when there is no best overall link advertise 0 bandwidth
+      sgw: only advertise egress speeds
+      sgw: refactor egress file change detection
+      sgw: uplink and downlink fields can be 9 chars wide in the output file
+      sgw: tune the status file for IPv4, making it a bit more compact
+      sgw: use MAX_SMARTGW_SPEED instead of hard-coding it
+      sgw: fix cost calculation for advertised speeds greater or equal than MAX
+      sgw: the costs are signed numbers
+      sgw: react to path cost changes on all active gateways
+      txtinfo: fix output of /sgw command
+      build: uberclean must also remove builddata.txt
+      build: add some pud targets
+      Rename 'struct interface' to 'struct interface_olsr'
+
+Henning Rogge (6):
+      Update version after release of v0.6.7.1
+      Only use IPV6_TCLASS and IPV6_V6ONLY when defined
+      Merge branch 'master' of git://olsr.org/olsrd
+      Prevent memory leak when setting up new interface
+      Fix bug of former commit
+      Release v0.6.8
+
+Nico Geyso (1):
+      dyn gw plugin - add PingCmd parameter
+
+0.6.7.1 -------------------------------------------------------------------
+
+Ferry Huberts (6):
+      android: use the machine specific NDK instead of always the 32bit variant
+      android: fix build on 32 bit platform (see 0295e11)
+      plugins: add a comment to clarify strange behaviour
+      txtinfo: duplicate code in branch
+      txtinfo: ensure null termination of string buffer
+      jsoninfo: fix indentation
+
+Henning Rogge (2):
+      Update version after release of v0.6.7
+      Release v0.6.7.1
+
+Nico Geyso (2):
+      jsoninfo: set_plugin_boolean stores into an int
+      txtinfo: set_plugin_boolean stores into an int
+
+0.6.7 -------------------------------------------------------------------
+
+Note: In this release the configuration files have been moved from /etc into
+      /etc/olsrd.
+
+Note: In this release the pud plugin was upgraded to version 2.0.0.
+      This is because of a breaking change in its wire format. If you have
+      deployed the pud plugin on your mesh then you should update all nodes
+      to the new pud plugin at the same time since there is no interoperability
+      between the old version and the new version.
+
+Alessio Caiazza (4):
+      Hotfix for very long http headers also for jsoninfo
+      Hotfix for very long http headers also for jsoninfo
+      jsoninfo: HTTP headers with CORS (if requested)
+      jsoninfo: HTTP headers with CORS (if requested)
+
+Bernhard Marker (2):
+      added json plugin to openwrt build Makefile
+      json openwrt Makefile update
+
+Charlie Root (1):
+      Small fixes to allow compilation with OpenBSD
+
+David Dahlberg (4):
+      Adjusted OpenBSD installation paths
+      An rc.d file for OpenBSD
+      Remove linux-isms from Makefile
+      Install openbsd/olsrd.rcd to /etc/rc.d/olsrd.
+
+Ferry Huberts (170):
+      release: use olsrd-version prefix for files in the tarballs
+      Update version after branch of v0.6.6
+      Remove mercurial ignore file; we use git
+      build: ignore builddata.c when hashing sources
+      Remove mercurial ignore file; we use git
+      build: ignore builddata.c when hashing sources
+      Revert "Update version after release of v0.6.5.3"
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.6'
+      release: fix the list of generated files
+      release: update some comments
+      release: refactor the checkVersionIncrementing function
+      release: do not update the version on master when it's already higher
+      release: only report that master changed when it was actually changed
+      release: fix the list of generated files
+      release: update some comments
+      release: refactor the checkVersionIncrementing function
+      release: do not update the version on master when it's already higher
+      release: only report that master changed when it was actually changed
+      release: checkVersionIncrementing: optionally allow equal versions
+      release: also check against the Makefile version when branching
+      release: checkVersionIncrementing: optionally allow equal versions
+      release: also check against the Makefile version when branching
+      Merge branch 'release-0.6.4'
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.6'
+      txtinfo: prevent buffer overflow
+      Merge branch 'release-0.6.6'
+      pud: wireformat-java: Makefile: also clean up the generated headers
+      pud: wireformat: java: rename Git-SHA1 manifest header to Git-SHA
+      pud: wireformat: java: also add a Git-Descriptor manifest header
+      pud: nmealib: _nmea_parse_time not parsing hsec when given "hhmmss" format
+      pud: nmealib: _nmea_parse_time not parsing hsec when given "hhmmss" format
+      quagga: add some parentheses
+      httpinfo: add smart gateway information tab
+      txtinfo: add sgw command
+      cfgfile: don't hard-code defaults in texts
+      txtinfo: mention the /sgw command in the README
+      Makefile: add cfgparser_install and cfgparser_clean targets
+      linux: add -rdynamic to linker options for debug builds
+      linux: fix 'add -rdynamic to linker options for debug builds'
+      build: really _ignore_ builddata.c when hashing sources
+      build: only print the md5 hash in hash_source.sh
+      Makefile: fix builddata when building from tarball
+      build: really _ignore_ builddata.c when hashing sources
+      build: only print the md5 hash in hash_source.sh
+      Makefile: fix builddata when building from tarball
+      build: only re-generate src/builddata.c when needed
+      cfgfile: no more magic numbers for RtTable* defaults
+      sgw: move cost calculation into it own unit
+      sgw: minor comment fixup
+      make: fixup bashisms in hash_source.sh
+      Move the configuration files into /etc/olsrd/
+      pud: install configuration files under ETCDIR
+      sgwdynspeed: install configuration files under ETCDIR
+      build: hash_source.sh: specify the mktemp template
+      pud: fix readIPAddress function
+      pud: fix readIPAddress function
+      httpinfo: center the header row of the smart gateway tables
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.6'
+      Fix #34: Description of "timeout" parameter in "nameservice" plugin...
+      pud: remove getNodeId, rename getNodeIdWithLength to getNodeId
+      pud: firm up setupNodeIdBinaryAndValidate
+      pud: merge nodeIdType and nodeId parameters into nodeId parameter
+      pud: remove some strlen's in nettools
+      pud: remove a strlen in the DNS name handling of the wire format.
+      pud: make wireformat constants unsigned
+      pud: clarify the URN number
+      pud: add MIP OID nodeId type
+      pud: add an assert to silence a Coverity false positive
+      pud: specify conversion base in readULL
+      pud: don't copy memory we're not allowed to access
+      pud: specify where to store the result in
+         intSetupNodeIdBinaryDoubleLongLong
+      pud: fix intSetupNodeIdBinaryDoubleLongLong for short values
+      pud: add UUID nodeId type
+      httpinfo: rename a function
+      pud: make sure to only use accessor functions in the 'present' nmea field
+      httpinfo: also show the present field on the nmea info
+      Merge branch 'release-0.6.6'
+      pud: fix java detection in the wireformat java bindings (again)
+      pud: fix java detection in the wireformat java bindings (again)
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.6'
+      pud: do the same fix as in the previous commit, now for i386
+      pud: do the same fix as in the previous commit, now for i386
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.6'
+      Make sure to save/restore errno in signal handlers
+      Make sure to save/restore errno in signal handlers
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.6'
+      main: olsr_create_lock_file: fix return value check on 'open' call
+      main: add some extra braces
+      main: olsr_create_lock_file: fix return value check on 'open' call
+      pud: use the nmea present field in the wireformat
+      pud: fix readIPAddress function
+      pud: fix readIPAddress function
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.6'
+      tok: improve the nmea_calc_crc function a bit
+      tok: improve the nmea_calc_crc function a bit
+      neighbor table: fix crash in olsr_print_neighbor_table on MinGW
+      neighbor table: fix crash in olsr_print_neighbor_table on MinGW
+      win32: accomodate old and new mingw setups
+      mingw: fix Ubuntu 13.10 / Debian Wheezy mingw mess
+      p2pd: add UseTTLDecrement configuration setting
+      httpinfo: also show the path costs in the SmartGateway table
+      txtinfo: also show the path costs in the SmartGateway table
+      gw: make SmartGatewayDividerEtx a 32 bit number
+      doc: add a gnuplot file to show the smart gateway cost calculation
+      Fix some eclipse warnings
+      p2pd: recompute the IPv4 header checksum after adjusting the TTL
+      sgwdynspeed: ignore unknown options
+      sgw: adjust policy routing script a bit
+      sgw: rename a variable in parsing of sgw_egress_if
+      sgw: preserve order of declared SmartGatewayEgressInterfaces
+      sgwdynspeed: avoid spamming the log with 'unknown option' messages
+      sgw: fix the policy routing script
+      sgwdynspeed: allow string values and empty values in the speed file
+      sgwdynspeed: fgets includes EOLs in the read string, strip them off
+      sgwdynspeed: do not go outside of the string when stripping EOLs
+      sgwdynspeed: rename 2 variables
+      sgwdynspeed: ignore everything we don't understand when reading the file
+      sgwdynspeed: make the EOL stripping much faster
+      sgwdynspeed: remove some dead code
+      gw: remove commands in comments concerning the policy routing script
+      gw: fix the 'ip' delete argument in the policy routing script
+      gw: simplify overlap checking code
+      gw: Add endif comments
+      gw: fix gateway takedown calculation
+      gw: fix a typo
+      gw: move path_cost into the gateway struct, ensure it's always up-to-date
+      gw: add SmartGatewayMarkOffsetServerTunnel configuration parameter
+      gw: fix null pointer dereferences in cost calculation
+      gw: fix a minor copy/paste typo
+      gw: when a node advertises maximum bandwidth then only consider path costs
+      README-Olsr-Extensions: Fix some typos
+      pud: update  nmealib samples Makefile
+      sgw: rework policy rules setup
+      sgwdynspeed: rename a function parameter to avoid a compiler warning
+      common: add an extra check in autobuf_enlarge to avoid a compiler warning
+      pud: update nmealib to 2.0.0
+      pud: nmealib: Fix a typo in Tobias's surname
+      txtinfo: make the sgw output better machine parseable
+      pud: nmealib: include latest fixes
+      pud: nmealib: fix isInvalidNMEACharacter function
+      p2pd: fix recomputeIPv4HeaderChecksum function
+      Revert "Use strscpy instead of strcpy"
+      pud: nmealib: fix return value of nmea_parser_init
+      pud: disable distribution of position updates over OLSR when olsrTtl is 0
+      Fix strange coding in the 'long headers' fix
+      Fix strange coding in the 'long headers' fix
+      httpinfo: the position timestamp month is zero based
+      Merge tag 'v0.6.5.6'
+      Merge tag 'v0.6.6.2'
+      Revert "Fix for win32 compiling with i686-w64-mingw32-gcc on ubuntu"
+      pud: nmealib: NMEA String Length Override Support
+      Fix a signed/unsigned warning
+      gw: change the costs type to signed 64bits
+      build: gui: do not overwrite the LDFLAGS but append to it
+      build: add address santizer, compile with SANITIZE_ADDRESS=1
+      p2pd: fir compile warning, initialise ipHeader
+      gui: fix 'warning: multiple common of ...' warnings
+      conf: ensure the egress interface names have a valid length
+      README: improve the smart gateway text a bit
+      sgw: multi-sgw mode is only supported on IPv4
+      CHANGELOG: add a note about the configuration files
+      Merge remote-tracking branch 'olsr/openbsd'
+      Branch v0.6.7
+
+Hans-Christoph Steiner (3):
+      purge ancient debian/ folder, people should use the current files
+      add instructions for building Debian package from canonical sources
+      clarify instructions for http:// downloading of debian/ folder
+
+Henning Rogge (32):
+      Fix multicast join for IPv6
+      Release v0.6.5.3
+      Update version after release of v0.6.5.3
+      Update version after release of v0.6.5.3
+      Release v0.6.5.4
+      Update version after release of v0.6.5.4
+      Fix segfault in cfgparser standalone executable
+      Fix build break for MinGW compilation on Fedora 19.
+      Fix build break for MinGW compilation on Fedora 19.
+      Release v0.6.5.5
+      Update version after release of v0.6.5.5
+      Ignore IFF_RUNNING when checking if an interface is up or down.
+      use inet_pton instead of inet_aton
+      win32: do not add -Wcast-qual to compiler warning flags
+      Fix processing error for fragmented hellos
+      Fix some spelling mistakes
+      Merge branch 'master' of http://olsr.org/git/olsrd
+      Fix processing error for fragmented hellos
+      Fix some spelling mistakes
+      Try to delete and retry for BSD ipv4 too
+      Use strscpy instead of strcpy
+      Smooth LQ calculation if link suddenly breaks.
+      Clean before compile when using Openwrt olsrd-stable-git makefile
+      Fix copypaste error
+      Hotfix for very long http headers
+      Fix stupid mistake, don't know why gcc didn't complained locally
+      Hotfix for much too long http headers
+      Release v0.6.5.6
+      Make link debug output source a bit more readable
+      Add LQ/NLQ/ETX to neighbor table debug output
+      Add boolean ipv6only parameter to txtinfo and jsoninfo
+      Release v0.6.7
+
+Manuel Munz (1):
+      Fix jsoninfo again after a regression which was introduced with
+
+Markus Kittenberger (1):
+      fix: TXTINFO_ALLOW_LOCALHOST - add missing ntohl()
+
+Patrick Grimm (2):
+      jsoninfo: only listen on IPv6 when running under IPv6
+      txtinfo: only listen on IPv6 when running under IPv6
+
+Ronald in 't Velt (2):
+      Fix setsockopt for setting Traffic Class in IPv6
+      Fix setsockopt for setting Traffic Class in IPv6
+
+Saverio Proto (2):
+      txtinfo: update README file
+      Missing patch of header files for "Add boolean ipv6only parameter to
+         txtinfo and jsoninfo"
+
+Scott Kidder (2):
+      jsoninfo: ensure output is wrapped in curly braces.
+      jsoninfo: ensure output is wrapped in curly braces.
+
+Teco Boot (2):
+      Added LINUX_NL80211 readme file
+      Support for FIB metric configuration, other than 2
+
+Yury Popov (1):
+      Fix for win32 compiling with i686-w64-mingw32-gcc on ubuntu
+
+0.6.6.2 -------------------------------------------------------------------
+
+Alessio Caiazza (2):
+      Hotfix for very long http headers also for jsoninfo
+      jsoninfo: HTTP headers with CORS (if requested)
+
+Ferry Huberts (8):
+      pud: fix java detection in the wireformat java bindings (again)
+      pud: do the same fix as in the previous commit, now for i386
+      Make sure to save/restore errno in signal handlers
+      main: olsr_create_lock_file: fix return value check on 'open' call
+      pud: fix readIPAddress function
+      tok: improve the nmea_calc_crc function a bit
+      neighbor table: fix crash in olsr_print_neighbor_table on MinGW
+      Fix strange coding in the 'long headers' fix
+
+Henning Rogge (5):
+      Update version after release of v0.6.6.1
+      Fix processing error for fragmented hellos
+      Fix some spelling mistakes
+      Hotfix for much too long http headers
+      Release v0.6.6.2
+
+0.6.6.1 -------------------------------------------------------------------
+
+Henning Rogge (2):
+      Update version after release of v0.6.6
+      Release v0.6.6.1
+
+Manuel Munz (1):
+      Fix jsoninfo again after a regression which was introduced with
+
+0.6.6 -------------------------------------------------------------------
+
+Bastian Bittorf (3):
+      [hotfix] plugin: httpinfo: in case of an unrecoverable error ("could not
+         initialize HTTP socket") exit for returnvalue != 0
+      plugin: dot_draw: readme: make it clear, that it only opens an
+         IPv4-socket, so a 'telnet ::1 2004' is not possible
+      plugin: dot_draw: readme: replaced a b0rken link
+
+Ferry Huberts (146):
+      Update version after branch of v0.6.5
+      gateway: store current gateway(s) in a struct
+      gateway: lazily allocate the current gateway structs
+      gateway: add path_cost to 'set gateway' interface
+      gateway: add interface to get the gateway costs
+      gateway: simplify by using the new costs interface
+      gateway: add gateway_list.{c,h}
+      gateway: keep track of the active gateways in a list
+      Merge branch 'release-0.6.5'
+      pud: java make target is dependent on library make target
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.5'
+      json_info: only output smart gateway info on Linux
+      kernel_route: olsr_os_inetgw_tunnel_route can now take the table
+      gateway: let the gateway code determine the tunnel name
+      gateway: remove the worst gateway before adding new one
+      gateway: add SmartGatewayUseCount configuration parameter
+      gateway: use SmartGatewayUseCount setting the the gateway lists
+      gateway: add SmartGatewayEgressInterfaces configuration parameter
+      gateway: add SmartGatewayMarkOffset{Egress,Tunnels} configuration
+         parameters
+      gateway: add SmartGatewayPolicyRoutingScript configuration parameter
+      gateway: initialise a set of fixed tunnel names in/for multi-gateway mode
+      gateway: initialise the egress interface names in/for multi-gateway mode
+      gateway: use fixed tunnel names in/for multi-gateway mode
+      gateway: setup and clear table specific default routes in/for
+         multi-gateway mode
+      gateway: setup/cleanup multi-gateway mode during startup/shutdown of olsrd
+      gateway: introduce and use MULTI_GW_MODE define
+      gateway: enable multi-gateway mode
+      gateway: convert some defines into inline functions
+      kernel_route: olsr_os_inetgw_tunnel_route now needs the table explicitly
+      Merge branch 'multigw'
+      gateway: remove 2 superfluous asserts
+      gateway: add an assert to prevent an 'unused' warning
+      gateway: also adjust the IPv6 gateway list in olsr_update_gateway_entry
+      gateway: fix policy script permissions checking
+      gateway: the gateway policy script really is a bash script
+      gateway: minor indentation fixes in the gateway script
+      gateway: fix copy/paste mistake in setting up the egress rules
+      gateway: remove policy rules before adding them
+      gateway: ignore errors in remove-before-add rule removals
+      Revert "linux: name is required to be non-null in
+         olsr_os_cleanup_iptunnel"
+      gateway: do not show (bogus) errors
+      gateway: cleanup the server tunnel later
+      cfgparser: add SmartGatewayAlwaysRemoveServerTunnel configuration
+         parameter
+      gateway: use SmartGatewayAlwaysRemoveServerTunnel configuration parameter
+      gateway: fix a revert problem
+      gateway: use tnl_(4|6) tunnel names instead of tnl(4|6)_
+      gateway: properly set the egress interface names
+      json_info: do not loop forever on smart gateway egress interfaces
+      pud: the best uplink gateway is the same as the current (smart) gateway
+      pud: there is no hard dependency on smart gateway
+      pud: only forward downlinked messages when the smart gateway system is
+         enabled
+      pud: update documentation about smart gateway changes
+      gateway: fix 2 small typos in a comment
+      Revert "pud: the best uplink gateway is the same as the current (smart)
+         gateway"
+      pud: minor update resulting from the previous revert
+      pud: minor update to getBestUplinkGateway
+      gateway: minor improvement to get_unused_iptunnel_name
+      gateway: update some comments
+      gateway: remove 2 unneeded asserts
+      gateway: use standard macro to loop over the gateway tree in
+         olsr_cleanup_gateways
+      gateway: fix 'eligible' conditions in gw_default_choose_gateway
+      gateway: minor speed improvement in gw_default_choose_gateway
+      android: fix the path of the tunnel node in the /dev tree
+      pud: use the proper __ANDROID__ define
+      gateway: allow advertisement of zero bandwidth
+      gateway: add some comments
+      gateway: also set (update) the gateway when costs have changed
+      gateway: find_interfaceName only works in multi-gateway mode
+      gateway: simplify gw_default_calc_threshold
+      gateway: improve comments of gw_default_weigh_costs a bit
+      gateway: rename some variables to make it more readable
+      gateway: fix stable count dampening in gw_default_timer
+      gateway: do not use bitwise operators for logic conditions
+      gateway: reverse semantics of two variables
+      gateway: always select a new gateway when threshold != 0
+      main: add -pidfile command line option
+      main: fix pidfile compilation on windows
+      Merge branch 'release-0.6.5'
+      make: enable 32/64 bit cross compilation
+      pud: pull in nmealib v1.0.4
+      gateway: remove some 'unused' code from sgw script
+      make: fix typos in 'enable 32/64 bit cross compilation' commit
+      pud: enable 32/64 bit cross compilation for the java build
+      make: ifdef fixups
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.5'
+      Merge branch 'release-0.6.5'
+      pud: detect the java include directory
+      dyn_gw: remove bogus include
+      make: fix a type in the Linux SUBDIRS assignment
+      make: add dyn_gw, mdns and p2pd to the Android SUBDIRS
+      pud: update nmealib 32/64 cross compilation
+      Revert "pud: update nmealib 32/64 cross compilation"
+      main: fix 2 minor warnings for win64 build on debian squeeze
+      make: only install sgw related files when sgw is supported
+      mdns: fix container_of pointer arith
+      mdns: don't use non-standard ushot type
+      mdns: fix three alignment warnings
+      mdns: supported on Android
+      p2pd: supported on Android
+      make: ensure win32 install respects DESTDIR
+      Merge branch 'release-0.6.5'
+      gateway: work around kernel IPIP module initialisation bug
+      gateway: fix overlap in success/fail IPIP tunnel init
+      doc: make the documentation generation commands a bit more verbose
+      pud: detect the java include directory
+      pud: better detection of java jdk
+      pud: better detection of java jdk
+      gateway: work around kernel IPIP module initialisation bug
+      Merge branch 'release-0.6.5'
+      PUD: nmealib: fix parsing of date in GPRMC
+      pud: nmealib: fixup the previous commit
+      main: use /dev/urandom by default
+      main: use /dev/urandom by default
+      pud: set local loopback for multicast tx
+      pud: set local loopback for multicast tx
+      Merge branch 'release-0.6.5'
+      arprefresh: fix some spelling
+      arprefresh: document the BPF program to make it readable
+      arprefresh: use the ARRAYSIZE macro
+      arprefresh: remove a comment
+      arprefresh: do not process IPv6 packets when in IPv4 mode
+      arprefresh: add a note about VLANs and IPv6
+      remove pthread usage as much as possible
+      Branch v0.6.6
+      Remove mercurial ignore file; we use git
+      build: ignore builddata.c when hashing sources
+      build: move build data into its own include file
+      gateway: always deal with 64bit scaled path costs
+      gateway: introduce and use removeGatewayFromList function
+      gateway: add SmartGatewayTakeDownPercentage configuration parameter
+      gateway: proactively take down 'expensive' gateways
+      release: fix the list of generated files
+      release: update some comments
+      release: refactor the checkVersionIncrementing function
+      release: do not update the version on master when it's already higher
+      release: only report that master changed when it was actually changed
+      release: checkVersionIncrementing: optionally allow equal versions
+      release: also check against the Makefile version when branching
+      txtinfo: prevent buffer overflow
+      pud: nmealib: _nmea_parse_time not parsing hsec when given "hhmmss" format
+      build: really _ignore_ builddata.c when hashing sources
+      build: only print the md5 hash in hash_source.sh
+      Makefile: fix builddata when building from tarball
+      pud: fix readIPAddress function
+
+Hans-Christoph Steiner (3):
+      GNU/Linux: add service profile for 'ufw' firewall package
+      update Commotion example olsrd.conf to represent current project state
+      dyn_gw/dyn_gw_plain require /proc, remove from default build on non-Linux
+
+Henning Rogge (7):
+      Fixed debug output of Scheduler polling interval
+      Fix multicast join for IPv6
+      Merge branch 'master' of http://olsr.org/git/olsrd
+      Update version after release of v0.6.5.2
+      Update version after release of v0.6.5.2
+      Fix build break for MinGW compilation on Fedora 19.
+      Release v0.6.6
+
+Ronald in 't Velt (1):
+      Fix setsockopt for setting Traffic Class in IPv6
+
+Saverio Proto (3):
+      main: fix the check on inet_pton return value because it returns 1 on
+         success.
+      mDNS: remove from Makefile PTHREAD useless dependency
+      txtinfo: update README file
+
+Scott Kidder (1):
+      jsoninfo: ensure output is wrapped in curly braces.
+
+Vasilis Tsiligiannis (1):
+      olsrd-quagga: Fix memory leak when adding and deleting routes
+
+equinox (1):
+      quagga plugin routes additional
+
+0.6.5.6 -------------------------------------------------------------------
+
+Alessio Caiazza (2):
+      Hotfix for very long http headers also for jsoninfo
+      jsoninfo: HTTP headers with CORS (if requested)
+
+Ferry Huberts (8):
+      pud: fix java detection in the wireformat java bindings (again)
+      pud: do the same fix as in the previous commit, now for i386
+      Make sure to save/restore errno in signal handlers
+      main: olsr_create_lock_file: fix return value check on 'open' call
+      pud: fix readIPAddress function
+      tok: improve the nmea_calc_crc function a bit
+      neighbor table: fix crash in olsr_print_neighbor_table on MinGW
+      Fix strange coding in the 'long headers' fix
+
+Henning Rogge (5):
+      Update version after release of v0.6.5.5
+      Fix processing error for fragmented hellos
+      Fix some spelling mistakes
+      Hotfix for much too long http headers
+      Release v0.6.5.6
+
+0.6.5.5 -------------------------------------------------------------------
+
+Ferry Huberts (4):
+      build: really _ignore_ builddata.c when hashing sources
+      build: only print the md5 hash in hash_source.sh
+      Makefile: fix builddata when building from tarball
+      pud: fix readIPAddress function
+
+Henning Rogge (3):
+      Update version after release of v0.6.5.4
+      Fix build break for MinGW compilation on Fedora 19.
+      Release v0.6.5.5
+
+Scott Kidder (1):
+      jsoninfo: ensure output is wrapped in curly braces.
+
+0.6.5.4 -------------------------------------------------------------------
+
+Ferry Huberts (11):
+      Remove mercurial ignore file; we use git
+      build: ignore builddata.c when hashing sources
+      release: fix the list of generated files
+      release: update some comments
+      release: refactor the checkVersionIncrementing function
+      release: do not update the version on master when it's already higher
+      release: only report that master changed when it was actually changed
+      release: checkVersionIncrementing: optionally allow equal versions
+      release: also check against the Makefile version when branching
+      txtinfo: prevent buffer overflow
+      pud: nmealib: _nmea_parse_time not parsing hsec when given "hhmmss" format
+
+Henning Rogge (2):
+      Update version after release of v0.6.5.3
+      Release v0.6.5.4
+
+0.6.5.3 -------------------------------------------------------------------
+
+Ferry Huberts (5):
+      pud: detect the java include directory
+      pud: better detection of java jdk
+      gateway: work around kernel IPIP module initialisation bug
+      main: use /dev/urandom by default
+      pud: set local loopback for multicast tx
+
+Henning Rogge (2):
+      Update version after release of v0.6.5.2
+      Release v0.6.5.3
+
+Ronald in 't Velt (1):
+      Fix setsockopt for setting Traffic Class in IPv6
+
+0.6.5.2 -------------------------------------------------------------------
+
+Henning Rogge (2):
+      Update version after release of v0.6.5.1
+      Release v0.6.5.2
+
+Saverio Proto (1):
+      main: fix the check on inet_pton return value because it returns 1 on
+         success.
+
+Vasilis Tsiligiannis (1):
+      olsrd-quagga: Fix memory leak when adding and deleting routes
+
+0.6.5.1 -------------------------------------------------------------------
+
+Ferry Huberts (1):
+      release: use olsrd-version prefix for files in the tarballs
+
+Henning Rogge (2):
+      Update version after release of v0.6.5
+      Release v0.6.5.1
+
+0.6.5 -------------------------------------------------------------------
+
+Aaron Kaplan (1):
+      chose the proper #define in order to take the right #include
+
+Alessandro (4):
+      mDNS: Implemented Host Filtering for ipv4 and ipv6, writing in the config
+         file which hosts to ignore. The mDNS packets from the ignored hosts
+         will be ignored and not propagated in the network
+      mDNS: Updated README file for mDNS plugin
+      mDNS: Reworked logic of router Election. The election is now handled on
+         interface basis, because the router could have one interface where it
+         needs to be master and another interface where it needs to be
+         disabled. There was a logical bug in the earlier implementation.
+      mDNS: BUGFIX, mDNS plugin, hello message of router election not sent if
+         debug = 0
+
+Alessandro Gnagni (3):
+      mDNS: Fixing loops for mDNS packets when mDNS plugin is misconfigured
+      mDNS: review of Alessandro Gnagni patch, inserted a config value to
+         enable or disable TTL check and change, default is enabled.
+      mDNS: Implemented router election mechansim to have only 1 active mDNS
+         OLSR router in 1 LAN
+
+Andreas Tonnesen (1):
+      x86_64 patch from Bernd
+
+Bernd Petrovitsch (1):
+      * added -Wbad-function-cast
+
+Ferry Huberts (219):
+      gateway: clarify header with extra comments and ordering
+      gateway: reorder functions to reflect order in header
+      gateway: formatting
+      gateway: remove 'unused' v{4,6}gw_choosen_external
+      gateway: add asserts to validate gw_handler
+      gateway: clear gw_handler during cleanup
+      gateway: add init and cleanup hooks for gateway plugins
+      gateway: rename hooks
+      gateway: add comments to struct olsr_gw_handler function prototypes
+      gateway: inline olsr_find_gateway_entry function
+      gateway: inline olsr_trigger_inetgw_selection function
+      gateway: rename a function
+      gateway: simplify a condition
+      gateway: push an if condition into its nested if's
+      gateway: merge 2 code blocks
+      gateway: the gateway to set must be in the gateway tree
+      gateway: the gateway to set must either be an IPv4 or IPv6 gateway or
+         both
+      gateway: prevent 2 NULL dereferences
+      gateway: merge 2 code blocks
+      pud: force pending buffer out if not enough space for our message
+      pud: include nmealib v1.0.3
+      http_info: pud satellites in use are now green, not in use are red
+      ifdef: fix some include ifdefs
+      update comments on all ifdefs
+      olsrd_plugin: remove #if 1
+      gateway: rename 2 variables
+      remove most '#if 0' blocks
+      gateway: merge the olsr_get_ipv{4,6}_inet_gateway functions
+      mdns: fix compilation warnings
+      mdns: fix a compilation warning / copy-paste error
+      bsd: fixup comment
+      improve VERBOSE handling
+      common: fix varargs cleanup
+      pud: fix resource leak
+      pud: fix socket error
+      pud: fix socket error
+      pud: fix position file stat/use race
+      pud: fix getBestUplinkGateway
+      pud: nmealib: fix copy/paste error
+      pud: nmealib: fix buffer overrun
+      pud: nmealib: fix buffer overrun
+      pud: nmealib: fix invalid format string conversion
+      add a COVERITY instructions text file
+      pud: nmealib: fix invalid format string conversion
+      pud: nmealib: fix invalid format string conversion
+      pud: fix closing fd
+      pud: fix checking of downlink message IP version
+      sgwdynspeed: fix resource leak and file stat/use race
+      bmf: explicitly cast fgetc result into a char
+      bmf: do not close an 'error' socket return value
+      bmf: do not dereference NULL pointer
+      httpinfo: do not close an 'error' socket return value
+      httpdinfo: fix resource leak
+      secure: can only work for IPv4, so assert on it
+      secure: do not hard-code a sizeof()
+      secure: decrease a (stack allocated) buffer size
+      secure: use sizeof() of the fields being copied
+      secure: decrease a (stack allocated) buffer size
+      secure: initialise rrmsg correctly
+      secure: can only work for IPv4, so assert on it
+      secure: do not hard-code a sizeof()
+      secure: decrease a (stack allocated) buffer size
+      secure: use sizeof() of the fields being copied
+      secure: decrease a (stack allocated) buffer size
+      secure: initialise crmsg correctly
+      secure: can only work for IPv4, so assert on it
+      secure: do not hard-code a sizeof()
+      secure: decrease a (stack allocated) buffer size
+      secure: initialise cmsg correctly
+      nameservice: fix a resource leak
+      nameservice: fix wrong size argument
+      nameservice: check return value of fcntl
+      nameservice: do not close an fd that is not open
+      nameservice: remove some dead code
+      jsoninfo: fix a resource leak
+      jsoninfo: make sure that uuid is null-terminated
+      jsoninfo: remove some dead code
+      jsoninfo: remove pointless compare
+      mdns: suppress a Coverity warning
+      mdns: remove some dead code
+      mdns: do not close an fd that is not open
+      mdns: do not close an fd that is not open
+      mdns: check return value of inet_pton
+      mdns: check return value of sendto
+      p2pd: do not close an fd that is not open
+      p2pd: do not close an fd that is not open
+      p2pd: remove some dead code
+      bmf: do not close an fd that is not open
+      pud: remove some dead code
+      quagga: explicitly ignore return value of fcntl
+      tas: fix a memory leak
+      txtinfo: remove some dead code
+      main: fix an Out-of-bounds access
+      cfgparser: fix some memory leaks
+      cfgparser: fix a copy/paste error and resulting memory leak
+      cfgparser: fix dereference before assert
+      linux: apm: fix retry opening of apm proc file
+      olsr_switch: fix a memory leak
+      lq: make sure that info_head != NULL
+      lq: make sure last_ip != NULL
+      android: fix type punning warning
+      pud: fix alignment warning
+      gateway: initialise the handler before setting up the tunnel
+      gateway: cleanup: free the allocated memory cookie
+      gateway: ensure cleanup uses the reverse order of init
+      gateway: minor simplification in olsr_delete_gateway_entry
+      gateway: allow immediate removal of a gateway entry
+      gateway: split olsr_delete_gateway_entry
+      gateway: walk the gateway tree to properly cleanup
+      linux: sanitise ACPI battery data
+      defs: fix strscpy null pointer dereference
+      tas: lua: official source code for 5.0.2
+      tas: lua: run gnu-indent.sh script
+      cleanup, 1. step (to get some local changes away):
+      * added -Wcast-qual: this killed lots of unnecessary type-casts
+      Fix sytax errs and line break quirks for gnu-indent
+      ARM alignment warnings fixed
+      Patch ALIGN_NOWARN_ARM macro for better priority handling.
+      use the POSIX standard '__linux__' macro instead of 'linux'
+      tas: lua: run gnu-indent.sh script
+      tas: lua: sync up to official source code with fixes
+      Merge branch 'lua-official-502'
+      cookie: an array already is a pointer
+      cookie: add an assert
+      Revert "httpdinfo: fix resource leak"
+      httpinfo: add a comment about why the client socket is not closed
+      gateway: minor optimisation
+      gateway: improve cleanup
+      gateway: rename gw_mem_cookie to gateway_entry_mem_cookie
+      gateway: add a define for the tunnel name
+      gateway: stub out olsr_print_gateway_entries on #ifdef NODEBUG
+      duplicate_set: stub out olsr_print_duplicate_table on #ifdef NODEBUG
+      link_set: stub out olsr_print_link_set on #ifdef NODEBUG
+      mpr_set: stub out olsr_print_mpr_set on #ifdef NODEBUG
+      routing_table: stub out olsr_print_routing_table on #ifdef NODEBUG
+      tc_set: stub out olsr_print_tc_table on #ifdef NODEBUG
+      two_hop_neighbor_table: stub out olsr_print_two_hop_neighbor_table on
+         #ifdef NODEBUG
+      hna_set: stub out olsr_print_hna_set on #ifndef NODEBUG
+      hna_set: stub out olsr_print_hna_set on #ifdef NODEBUG and fix
+      neighbor_table: stub out olsr_print_neighbor_table on #ifndef NODEBUG
+      neighbor_table: stub out olsr_print_neighbor_table on #ifdef NODEBUG and
+         fix
+      use INET_ADDRSTRLEN and INET6_ADDRSTRLEN instead of magic constants
+      gateway: only remove a tunnel when there is one
+      gateway: rename a variable
+      gateway: minor improvement in NULL comparisons
+      hna_set: olsr_ip_prefix_to_string outputs a wider string
+      gateway: refactor olsr_set_inet_gateway
+      Merge tag 'v0.6.4'
+      win32: use #ifdef _WIN32
+      Makefile: fixup some forgotten make command prefixes
+      Makefile: add gui target
+      Makefile: always pass VERBOSE to the make command
+      gui: linux: minor Makefile fixup
+      gui: linux: clean and install are phony targets
+      gui: linux: add VERBOSE handling
+      gui: linux: fix some 'may be used uninitialized' compiler warnings
+      gui: linux: use toplevel make options
+      gui: linux: fix some 'noreturn' compiler warnings
+      gui: linux: fix some 'discards const qualifier' compiler warnings
+      gui: linux: fix some 'old-style function definition' compiler warnings
+      gui: linux: fix 'too few arguments to function ipc_connect' compiler
+         warning
+      gui: linux: fix a 'mixed declarations and code' compiler warning
+      gui: linux: fix some 'unused parameter' compiler warnings
+      Revert "gui: linux: fix some 'may be used uninitialized' compiler
+         warnings"
+      gui: linux: fix some 'may be used uninitialized' compiler warnings
+      gui: linux: fix some 'shadow' compiler warnings
+      gui: linux: fix inccorrect sizeof()
+      gui: linux: fix string buffer overflow
+      gui: linux: fix string buffer overflow
+      gui: linux: fix the string buffer overflow better
+      gateway: simplify stopping the cleanup timer
+      tas: remove plugin
+      main: do not seed the random number generator with the process id
+      win32: remove unused getpid() function
+      hna_set: explicitly cast to (time_t *) in calls to localtime()
+      neighbor_table: explicitly cast to (time_t *) in calls to localtime()
+      main: improve random number generator seed
+      bmf: do the minimum length check earlier
+      changelog: update to current state
+      print_packet: fix wrong use of sizeof()
+      main: remove -dispin and -dispout command line options
+      main: add release script
+      Update version after release of v0.6.4
+      Changelog: remove 0.6.5 preliminary changelog
+      Merge branch 'release-0.6.4'
+      bmf: check minimumLength against buffer size
+      sgwdynspeed: put plugin config in olsrd.conf.sample
+      pud: put plugin config in olsrd.conf.sample
+      cookie: raise the number of cookies
+      pud: enable dynamic polling of the position file
+      gateway: only check smart gateway configuration on linux
+      linux: put #ifdef __linux__ around code
+      doc: add doxygen documentation generation
+      doc: fix common documentation tags
+      doc: fix linux specific documentation tags
+      doc: fix unix specific documentation tags
+      doc: fix bsd specific documentation tags
+      doc: fix win32 specific documentation tags
+      doc: do not generate documentation for gui code
+      release: move the stringTrim function up a bit
+      release: make gitIsGitDirectory do the correct thing
+      release: fix usage of literal dot in regular expressions
+      release: move into the base directory earlier
+      release: convert some code into checkIsOlsrdGitCheckout function
+      release: convert some code into checkGitSigningKeyIsConfigured function
+      release: convert some code into getPrevRelTag function
+      release: the script can now also create a release branch
+      Merge branch 'release-0.6.4' into mmmm
+      Branch v0.6.5
+      pud: change java include path to generic java include path
+      pud: java make target is dependent on library make target
+      doc: clean up the latex directory if empty
+      Revert "linux: name is required to be non-null in
+         olsr_os_cleanup_iptunnel"
+      gateway: fix a revert problem
+      android: fix the path of the tunnel node in the /dev tree
+      gateway: fix stable count dampening in gw_default_timer
+      gateway: always select a new gateway when threshold != 0
+      main: add -pidfile command line option
+      main: fix pidfile compilation on windows
+
+Frank de Brabander (4):
+      New feature: support for Linux NL802.11 wireless link information in cost
+         calculation.
+      Merge branch with new lq plugin for NL80211 support
+      Incorporate fix by Ferry Hubert for float to double promotion
+      Fix optional compilation of the nl80211 lq plugin
+
+Hans-Christoph Steiner (9):
+      use the POSIX standard '__linux__' macro instead of 'linux'
+      use the Microsoft standard '_WIN32' macro instead of the self-defined
+         'WIN32'
+      olsrd-adhoc-setup: use static BSSID by default to assoc. with the right
+         mesh
+      olsrd-adhoc-setup: configure NetworkManager to be nice when adhoc is
+         manually setup
+      fix misspelling: 'adress' --> 'address'
+      fixed misspelling: usefull -> useful
+      add gcc hardening flags to linux-gtk GUI
+      android: update to use gcc 4.6, available starting with NDK r8
+      android: gcc 4.6 comes with NDK r8b and is not in NDK r8
+
+Henning Rogge (29):
+      Pud: Do not use the variable name strlen.
+      Fix buffer overflow in mdns plugin
+      Add -Werror=format-security
+      Add VERBOSE flag to makefile to display full gcc commands
+      Fix slightly insulting error message.
+      Moved regex library to a makefile of its own to solve the issues with
+         compiler warnings.
+      fix control flow if kill() command fails to end program
+      fix wrong sizeof() parameter
+      Convert allocated memory into temporary variable
+      Protect against stupid data from ACPI
+      Close socket if bind() fails.
+      Merge branch 'master' of http://olsr.org/git/olsrd
+      Use strscpy instead of strncpy.
+      Check inet_pton return value
+      Close file descriptor if error happens
+      Fix scanf() format vulnerabilities
+      Fix command line parsing macro
+      Fail in IPC initializationis always fatal.
+      fail of non-blocking netlink socket is not fatal
+      Declare olsr_exit() as noreturn
+      Interface will always be found.
+      no hostroute possible in this if() branch
+      reset link timer if not set
+      Remove dead codepath
+      Cleanup error handling in ipc_init()
+      Remove unnecessary asserts
+      Make sure calculated header length does not skip over buffer
+      Fix multicast join for IPv6
+      Release v0.6.5
+
+Saverio Proto (12):
+      mDNS: Skeleton code for new host filter feature in mDNS plugin
+      mDNS: Upgrading the container_of.h that was backported from src/common in
+         master
+      mDNS: Fix most of the warnings from the compiler
+      mDNS: Update checksum field of the IPv4 Header after altering TTL
+      mDNS: trivial debug print fix and code readibility improvement
+      mDNS: Change version of mdns plugin to 1.0.1 after GSoC 2012 work by
+         Alessandro Gnagni
+      mDNS: init ListOfFilteredHosts in the proper place and not at every
+         received packet
+      mDNS: trivial, removed TODO from code for something that was implemented
+      mDNS: better debug support for filtered hosts feature
+      mDNS: Fixed typo in README
+      Revert "mDNS: init ListOfFilteredHosts in the proper place and not at
+         every received packet"
+      Merge remote-tracking branch 'origin/mDNS-plugin-GSoC-2012'
+
+0.6.4 --------------------------------------------------------------------
+
+Bugfix and plugin release 0.6.4
+- Update of Smartgateway system
+- small updates to several plugins
+- lots of updates for PUD plugin
+
+0.6.3 --------------------------------------------------------------------
+
+Bugfix and plugin release 0.6.3
+
+- PUD plugin (position update plugin)
+- JSONinfo plugin
+- sgwdynspeed plugin (select dynamic smart gateway based on gw speed)
+- Update on Quagga plugin (for new Quagga)
+- Fixes for Androids
+- Some fixes for GTK and Win32 gui
+- Lots of core fixes to support new compiler warnings
+
+0.6.2 --------------------------------------------------------------------
+
+Bugfix release for 0.6.1
+
+- Compatibility for Linux kernel 3.x
+- Lots of small fixes
+- reworked makefile output
+- updates for some plugins
+- repair for Smartgateway feature
+
+Read GIT changelog at http://olsr.org/git to see a complete history.
+
+0.6.1 --------------------------------------------------------------------
+
+Bugfix release for 0.6.0
+
+Markus Kittenberger <Markus.Kittenberger@gmx.at>
+- Major bugfix for the neighbor table when a neighbor gets a new main IP.
+- add /interface command to txtinfo, allow multiple commands per request
+
+Henning Rogge <henning.rogge@fkie.fraunhofer.de>
+- wait up to four seconds for aquiring the OLSRd lock. This helps to
+  shutdown OLSRd with a script and restart it at once (kill <pid> is
+  asynchrone, and kill -w is not available in busybox)
+- add md5 has of all source/headers into version string
+
+Mitar<mitar@tnode.com>
+- lot's of small changes for Android. Slowly Android gets a fully
+  supported platform for OLSRd.
+
+and a lot more small bugfixes. Read GIT changelog at http://olsr.org/git
+to see a complete history.
+
+0.6.0 --------------------------------------------------------------------
+
+Change in version number system. No more -rcX for release candidates and
+-rX for bugfix releases. In future bugfix releases or updates of plugins
+will increase the third digit of the version string while feature releases
+will increase the first and/or the second one.
+
+Markus Kittenberger <Markus.Kittenberger@gmx.at>
+Henning Rogge <henning.rogge@fkie.fraunhofer.de>
+- added NIIT kernel module support for sending IPv4 traffic over
+  IPv6 mesh networks. See README-Olsr-Extensions for more information.
+- added SmartGateway support. OLSRd can now automatically build
+  IPIP tunnels towards the gateway to prevent gateway flapping.
+  See README-Olsr-Extensions for more information.
+- complete rewrite of linux netlink routing code. New code should be
+  more understandable and easier to debug/improve.
+
+Teco Boots <teco@inf-net.nl>
+- new dyngw plugin. More flexible and more features.
+- new p2pd plugin (generalized mdns plugin)
+
+Vasilis Tsiligiannis <b_tsiligiannis@silverton.gr>
+- new version of quagga plugin (with IPv6 support !)
+
+Sven-Ola Tuecke <sven-ola@gmx.de>
+- fixes for improved uClibc support
+- fixes for better linux kernel 2.4 support
+
+Saverio Proto <zioproto@gmail.com>
+- new mdns plugin. (backport from master branch)
+
+Eric Tromps <erik_tromp@hotmail.com>
+- new version of bmf plugin. NO pthreads are necessary anymore
+
+and a lot more small bugfixes. Read GIT changelog at http://olsr.org/git
+to see a complete history.
+
+0.5.6-r8 ---------------------------------------------------------------------
+
+Alina Friedrichsen <x-alina@gmx.net>
+- patch for using deticated output socket for OLSR packages. This allows
+  to set the src-ip of OLSR packages, which is useful for interfaces
+  with multiple IPs
+
+Bruce Ford <fordbr@gmail.com>
+- fixes for compiling olsrd for win32
+
+Henning Rogge <henning.rogge@fkie.fraunhofer.de>
+- fix for memoryleak during MID processing
+- patch series for "network logoff" of OLSRd, other nodes now get
+  notified if an OLSR node switch down to remove it from their database.
+- cleanup of naming conventions for settings src/dst-ips of OLSR-packets
+  for ipv4/6. See example config files. 
+- patch to ignore HNA4 for IPv6 and HNA6 for IPv4
+
+Markus Kittenberger <Markus.Kittenberger@gmx.at>
+- patch series for MID handling cleanup
+- compiletime switch for txtinfo to always allow localhost access
+- add "InterfaceDefaults" section to config files to allow setting values
+  which are shared by all interfaces but can be overwritten in specific
+  config file settings
+- patch series to allow OLSRd handle multiple config files
+  (multiple "-f <cfgfile>" options)
+
+0.5.6 ---------------------------------------------------------------------
+
+PATCHES and BUGFIXES from Henning Rogge <rogge@fgan.de>
+- Bugfix for fragmented TC sequence numbers
+- eliminate second timer for edge garbage collection (aka border code).
+- fix SPF bug
+- fix for jitter calculation
+- refactor linkset code
+- add netsimpcap, a network simulation device
+- parser refactoring
+- fix for possible overflow in fpm plugin
+- prevent Originator-IP from changing during runtime
+- fix several compiler warnings
+- fix hanging TC entry from lost onehop neighbor
+- fix drop package with same seqno in etx_ff
+- fix segfault in parsing HNA package with bad netmask
+- fix avl_comparator for route_paths
+- fix alignment problem in packet buffers
+- fix: segfault in neighbor/neighbor-2 table
+- fix: lqmult default parsing
+- HACK: MinTCVTime parameter hack for Berlin FF network...
+  feel free to ask on the mailing list.
+- add Watchdog plugin
+- add explicit runtime lock for OLSR.
+- remove lq-hysteresis for tc on the receiver side.
+- enhance protection against malformed packages to prevent
+  OLSR parsing uninitialized data. Thank you Markus and Keks for the LONG
+  debugging session
+- block tc-redundancy 0/1, it doesn't work with the current dijkstra code
+- convert httpinfo/txtinfo/dotdraw to nonblocking and autobuf to
+  prevent blocking outgoing connections
+- fix some bugs with lq-mult
+- fix bug in duplicate set sequencenumber handling
+- add Debian/KFreeBSD support (Thanks to Holger Levsen and friends for help)
+- fix segfault in 'interface lost' monitor
+- add LQ hysteresis to etx-ff metric
+
+PATCH from Markus Kittenberger <Markus.Kittenberger@gmx.at>:
+- txtinfo plugin: add more http options
+- allow configuration of OLSR UDP port
+- allow configuration of proto Tag for Routes (RtProto)
+- add fallback policy rule (priority 65536) if RtTable is used,
+    to ensure that routes can be added to this table
+- resolve many error conditions while adding routes to the linux kernel
+    (Warning this will also delete any conflicting routes made by other routing daemons or admins)
+- interface modes mesh (default) and ether (no retransmit of olsr-messages back into a broadcastdomain)
+- fix olsr_times() to handle different OS implementations (Linux, BSD, OS X)
+- fix several compiler warnings
+- fix olsr_times() to handle different OS implementations (Linux, BSD, OS X)
+- create policy rule later during startup
+- send MID also with one interface, if its ip different from originator-id
+- linux rtnetlink code cleanup
+- workaround: generate routes to single hop neighbours on the fly when inserting routes via them
+    (active only with fib_metric=flat)
+- testing: insert routes with source-ip set to originator ip
+- testing: syslog numbering (e.g. useful to detect lost syslog messages when using remote-syslog)
+- testing: custom library path (default /usr/testlib)
+Testing features must be activated in olsr_cfg.h before compiling olsrd.
+This features are used to run a test network in Vienna parallel to the existing
+OLSR network.
+- more RT-Netlink cleanups and fixes
+- backport of timejump patch from TIP
+- Add detection for vanishing interfaces to Linux netlink code
+- fix incorret route sorting on new neighbours. use only delete and add/change avl tree,
+  instead of 3 trees
+- learn neighbours interface alias address from received hellos
+
+PATCHES from Hannes Gredler <hannes@gredler.at>:
+- add small valgrind howto
+- remove the per tc_edge timer
+- add some basic infrastructure for cookies
+  cookies are used to track usage of timer and memory resources
+- add a lightweight memory manager to reduce malloc() churn.
+- eliminate data field from avl_node and list_node and
+  replace this via inline recasts
+- add indentation dotfile for future code cleanup
+- refactor the timer implementation, get rid of timeout functions
+  all manipulations done in constant time.
+- use calloc rather than malloc for lazy callers
+- log RIB add/del transactions only if there is an actual route change
+- fix to to always insert a HNA Net when receiving a HNA refresh
+- fix delete all routes if the last IP address is gone
+- reduce TC vtime jitter from 25% down to 5%
+
+PATCHES and BUGFIXES from Sven-Ola Tuecke <sven-ola@gmx.de>:
+- add a fixed-point math implementation, which saves
+  a great deal of CPU on embedded devices
+- fix for Link quality dijkstra limit
+- nameservice plugin supports mac addresses
+- fix fork/restart code
+- fix olsr_times() to handle different OS implementations (Linux, BSD, OS X)
+- fix several compiler warnings
+- fix olsr_times() to handle different OS implementations (Linux, BSD, OS X)
+- add makefile support for google android
+- fix default olsrd.conf examples
+
+PATCHES and BUGFIXES from Aaron Kaplan <aaron@lo-res.org>:
+- fix openbsd warnings / compile errors about sprintf strcpy
+- fix string overflow in dyn_gw plugin
+- fix string overflow in pgraph plugin
+- fix openbsd/osx coompile errors
+
+BUGFIX by Peter Tarjan <peter.tarjan@birdtelecom.hu>:
+- Do not remember LQ information UNSPEC_LINK neighbors in Hellos.
+- ignore UNSPEC link for linktype if there is an ASYM/LOST/SYM Link in the
+  same Hello message
+- ignore UNSPEC_LINKS during MPR lookup
+- broken MID route handling: we also check the data structures for routing,
+  even if a MID entry exists.
+
+BUGFIX by John Hay <jhay@meraka.org.za>:
+- FIX: IPv6 MTU in BSD
+- Another BSD ipv6 Patch by John Hay
+- fixes for 64 Bit FreeBSD
+- fixes for NetBSD
+
+
+BUGFIX from Erik Tromp <erik_tromp@hotmail.com>:
+- update in bmf due to new flags field in tc_edge_entry
+
+PATCH from Clemens Hopfer <datacop@inode.at>:
+- dot_draw plugin: close the connection after graph output.
+
+PATCH from Joe Gio <joezgio@gmail.com>:
+- track if AC power is connected/disconnected
+
+PATCH from Hagen Paul Pfeifer <hagen@jauu.net>:
+- import jenkins hash for good hash calculations
+
+PATCH from Andres Ambrois <andresambrois@gmail.com>:
+- nameservice plugin: add parameters for SIGHUPing other daemons, or calling scripts
+
+BUGFIX by Benny Tops <b.tops@mindef.nl>:
+- fix wrong order of drop_tc checkt in olsr_input_tc
+
+Felix (OpenWRT NBD):
+- fix bison problem for OpenWRT
+
+Sebastian Harl:
+- add LISTEN parameter for httpinfo/txtinfo/dotdraw
+
+0.5.5 ---------------------------------------------------------------------
+
+BUGFIX from Andreas Jacobs <andjac@kawo1.rwth-aachen.de>:
+- calculate correct sleeptime
+
+BUGFIX from Dario Borriello <dario_bodj@hotmail.com>:
+- do not update LQ if not configured
+
+BUGFIX from Jo-Philipp Wich <freifunk@wwsnet.net:
+- fix olsr_ip_to_string() buffer quirk
+- fix txtinfo format quirks in HNA table
+- name-service plugin - write MID entries to hosts file
+- avoid infinite loop in the message parser
+
+PATCH by John Hay <jhay@meraka.org.za>:
+- compile clean on FreeBSD
+- bugfix: do not account for IP headers when building MID6 messages
+
+PATCHES from Henning Rogge <rogge@fgan.de>:
+- join LQ and non-LQ Hello execution paths
+
+PATCHES from otti <otti@wirdorange.org>:
+- rttable-default: configures a new policy routing table for the default route
+
+BUGFIXES and PATCHES by Sven-Ola Tuecke <mail2news@commando.de>:
+- Windows Vista: add interface metric to SPF computed metric
+- lqtc-seqno: Optimize check for old seqno numbers in LQTC messages
+- lqnatthresh: maintain an advantage for the current (NAT) inet gw
+- fisheye-startup: Changed to MAX_TTL for the first 32 LQTCs
+- Added and removed files necessary for win32 compile
+- Fix for hg: do not remove anything in .hg with 'make uberclean'
+- 104-olsrd-verysmallfix
+- 105-fix-lq-buffer-quirks
+- 106-fix-seqnocheck
+- 110-bmf-v152
+- 121-olsrd-fib-metric-approx
+- 133-fix-lqneigh
+- 136-optimize-invalidip-check
+- 138-optimize-message-generation
+
+BUGFIX from Lorenz Shori <lorenz.schori@gmx.ch>:
+- Mac OSX compile fixes
+
+BUGFIXES and PATCHES by Hannes Gredler <hannes@gredler.at>
+- fix not deleted tc entry.
+- avoid setting routes with an invalid/impossible netmask.
+- refactoring of TC parsing to kill another pile of malloc()/free()s
+  saving (again) code and especially run.time performance.
+- RIB Refactoring, Part 2:
+  - avoid the periodical rib-tree insertion
+  - add a FOR_ALL_HNA_RT_ENTRIES() macro for the snmp folks
+    (or any parties who want to walk HNA entries).
+  - add an olsr_cnf option 'flat_fib_metrics' which defaults to TRUE.
+- fix broken prefix insertion (regression of the RIB refactoring)
+- squelsh compiler warnings on Mac OSX
+
+PATCH by John Hay <jhay@meraka.org.za>:
+- also printout our own HNAs in the dotdraw plugin.
+
+PATCH by Patrick McCarty <mccartyp@gmail.com>:
+- fixed compile errors in the BSD port
+
+PATCHES by Sven-Ola Tuecke <mail2news@commando.de>:
+- 102-olsrd-cvs-fixes.patch: use different buffers in the same printf()
+- 103-olsrd-rt-exportroute-cleanup.patch: avoid a malloc()ed list of functions
+- 132-save-the-fish.patch: really save the fish and avoid to forward invalid
+  messages from older olsrd versions
+- 135-georss-map-for-nameservice.patch: fixes and extensions for the namesaervice plugin
+- 138-olsrd-fixdotdraw.patch: fix the dot_draw plugin
+(all to be found on http://download-master.berlin.freifunk.net/sven-ola/nylon/packages/olsrd/files/)
+- Replaced "which" with a /bin/sh script snippet
+
+PATCHES and CLEANUPS by Bernd Petrovitsch <bernd@firmix.at>
+- Jens Nachtigall <nachtigall@web.de> suggested (and reminded) to use
+  olsrd.conf.default.lq as the default installed one.
+  It makes much more sense as - to the best of my(bernd's) knowledge - all
+  larger networks uses the LQ extensions. And new customers should better
+  be pushed in that direction.
+- with the help of Patrick McCarty <mccartyp@gmail.com>, we got olsr to build
+  on OpenBSD again:
+  * OpenBSD'd `sed` is pretty conservative and doesn't understand 's|re|sub|'.
+    So we fall back to the old 's/re/sub/' and quote all '/' and '.' correctly
+    (which was the main reason to use '|').
+    And while I'm at it: Remove the useless $(CCACHE) from the $(CC) for
+    dependency generation and beautify (read: "$(strip)") $(CPPFLAGS).
+  * OpenBSD needs an explicit "#include <sys/types.h>" before
+    "#include <netinet/in.h>".
+- fixed lib/secure/src/md5.h: This was broken as it had
+  "typedef unsigned long int UINT4;". "unsigned long int" is 8 bytes on x86_64.
+  We are using now the standardized types from <inttypes.h>.
+- fixed warnings and improved lib/secure/src/md5.c:
+  * we are using memcpy() and memset() instead of the open-coded loops as
+    suggested 
+  * const'ified
+  * added function prototypes for static functions
+  * moved static functions to the top so that their declaration is before
+    their use to allow gcc to inline if only used once.
+  It remains ugly - God knows why there are that so many useless
+  type-casts.
+- Some minor and trivial cleanup: Added two functions to calculate the ETX
+  value from a struct tc_edge_entry and a struct link_entry, respectively.
+  And use them everywhere.
+- added http://meshcube.org/nylon/utils/olsr-topology-view.pl into
+  lib/httpinfo/misc as suggested by Jens Nachtigall <nachtigall@web.de>
+- Killed "struct olsrd_config *cnf" in src/cfgparser/olsrd_conf.h and replaced
+  it's usage with "olsr_cnf" from src/defs.h.
+  Serious cleanup: olsrd_get_default_cnf() does no longer initialize the global
+  "cnf" variable" but uses a local one which is returned as before. And
+  olsrd_parse_cnf() does no longer return the global variable it is working on.
+- Merged "struct hna4_entry" and "struct hna6_entry" into
+  "struct local_hna_entry" (as "struct hna_entry" is a different thing)
+  Both have almost the same data (IP address + netmask/prefix) so we use
+  the quite new "struct olsr_ip_prefix" to store it.
+  Also merged the "hna4" and "hna6" pointer in "struct olsr_config" -
+  look at the global "olsr_cnf->ip_version".
+- added a olsr_ip_prefix_to_string() function
+- .h file cleanup: def.h does not longer include net_olsr.h because it 
+  doesn't needs it.
+- more type safety: the macros COPY_IP() and COMP_IP are gone and replaced
+  with "=" or similar "normal" C operations. There are also now the inline
+  functions ip4cmp() and ip4equal() to work on "struct in_addr", ip6cmp()
+  and ip6equal() to work on "struct in6_addr" and ipcmp() and ip6equal()
+  to work on "union olsr_ip_addr".
+  Most (or even more precise: almost all) uses of COPY_IP() and COMP_IP()
+  are in "if (olsr_cnf->ip_version) { ... } else { ... }" anyway to
+  there is no reson to copy an IPv4 address effectively with
+  "memcpy(&dst, &src, 4)" or compare with memcmp(&a, &b, 4)" wher the
+  always "4" is stored in a variable inhibiting compiler optimization.
+  There is also the deprecated function genipcopy() mimicking the old
+  typeless COPY_IP() macro for the last few places where a cleanup is
+  needed anyways.
+  There also lots of old macros left over (commented out of course) until
+  we are confident that everything works. And then I will kill them too.
+- Fixed the misleading definition of "v4" in "struct olsr_ip_addr" fom
+  "olsr_u32_t" (in network-byteorder!) to "struct in_addr". Lots of
+  temporary variables to call inet_ntoa()/inet_ptoa() vanished .....
+- We have now ip4_to_string(), ip6_to_string() and olsr_ip_to_string()
+  to print a "struct in_addr", "struct in6_addr" and "union olsr_ip_addr"
+  into a string buffer.
+- cleanup: olsr_ip_to_string() and similar non-reentrant functions now must
+  get a target buffer. To ease that, there is the "struct ipaddr_str"
+  which is large enough for all of them (read: for an IPv6 address). This
+  also removes the cyclic buffer there.
+  All of these function return a "const char *" which can be directly used
+  for printf(3) and friends.
+- const'ified more functions
+- converted the source to UTF-8.
+- "struct sig_msg" uses an olsr_u8_t for a byte array (and not "char")
+- force the few inline function to always be inlined.
+- #ifdef the body of the olsr_print_hna_set() and olsr_print_neighbor_table()
+  if nothing is done
+- declare "int_addr", "int_netmask" and "int_broadaddr" in "struct interface"
+  as "struct sockaddr_in" since it is that what we actually want there (and
+  it is similar to the IPv6 code).
+- updated the olsrd.conf.default.lq-fisheye to the Debian-deliverd version
+  after recent discussions olsr-dev@olsr.org
+- use "inline_avl_comp_ipv4()" in "avl_comp_ipv4()"
+- clean up the routes on more signals. Basically we want to do this on all
+  signals which terminate the program.
+- killed a superflous global buffer in src/main.c
+- made inline functions from avl_walk_{first,last,next,prev} and created
+  "const" versions of it. inline_avl_comp_ipv4() is now also an inline function
+  (and not a macro)
+- created a typedef's for various function pointers - much easier to read.
+- cleanup: compare tree->comp (adn other pointers)) to NULL (and not 0)
+- killed superflous "return"s at the end of void functions
+- const'ified more parameters in many more functions in the .h and
+  .c files
+- init-functions with constant or ignored return values are "void"
+- created a typedef fro the callback in "struct export_route_entry"
+  and using it!
+- moved the initialization of the {add,chg,del}_kernel_list variables
+  into process_routes.c. So they are now "static" there.
+- olsr_export_{add,del}_route{,6} are now static in process_routes.c
+  since they are not used elsewhere.
+- olsr_addroute_add_function() and olsr_deldroute_add_function() were
+  almost identical - made one function out of it.
+  Same for olsr_addroute_del_function() and olsr_deldroute_del_function().
+- fixed the sort order in avl_comp_ipv4_prefix(): We compare now the IPv4
+  values in host byte order (and not network byte order). So the route
+  list in the e.g. httpinfo plugin is now nicely sorted.
+- fixed and improved the `gcc-warnings` script:
+  * support older gcc's (as on Debian/Sarge) as they have slightly different
+    error messages
+  * removed superflous lines
+  * replaced the call of `sed` with shell built-in features fixing syntax
+    errors on Debian/Sarge
+  * set all locale-relevant variables to "C" (just to be sure)
+- consolidated ip{4,6,}{cmp,equal}: all are nwo inline functions using only
+  the minimal necessary operations. Thanks to Hannes Gredler
+  <hannes@gedler.at> and Sven-Ola Tuecke <mail2news@commando.de> for pointing
+  that out and suggesting the `inline`, respectively.
+  use ip{4,}cmp in lq_avl.[ch] to resue the code. inline_avl_comp_ipv4
+  is superflous now (and replaced by ip4cmp) and use the global MIN and MAX
+  macro instead of AVLMIN and AVLMAX
+- killed netmasks from the IPv4 part of the code and use the prefixlen there
+  (similar to thte IPv6 part). Manymore details on
+  http://lists.olsr.org/pipermail/olsr-dev/2007-November/001464.html
+- removed the superflous "open_ipc" field from the "struct olsrd_config" as
+  it contains only the equivalent of "olsr_cnf->debug_level > 1".
+- inspired by Sven-Ola Tuecke: avoid a bash'ism (i.e. "OPTS="${OPTS//$opt}") in
+  gcc-warnings and ld-warnings. But we do not replace it with `sed` (since it
+  costs a fork(2) and an exec(3)) but also with shell code which doesn't use
+  any external program.
+- added configuration file support for "flat fib metrics".
+
+0.5.4 ---------------------------------------------------------------------
+
+QUAGGA by Immo 'FaUl' Wehrenberg <immo.olsr@do.bundessicherheitsministerium.de>
+- updated to svn version 33
+
+BMF PLUGIN  by Erik Tromp <erik_tromp@hotmail.com>
+- updated to 1.5.1
+- updated to latest plugin interfaces changes and killed warnings (by Bernd
+  Petrovitsch <bernd@firmix.at>)
+
+PATCH by Hannes Gredler <hannes@gredler.at> which rewrites the route handling.
+To quote him:
+----  snip  ----
+change list:
+- get rid of separate routing tables for HNA and per-node routes, everything is
+  now unified in an AVL routing tree (&routingtree)
+
+- introduce walking macros (OLSR_FOR_ALL_RT_ENTRIES()) that hide the internal
+  structure of the RIB for making life of the plugin authors easier.
+
+- get rid of different SPF implementations for LQ and non-LQ code paths. a
+  non-LQ edge is simply substituted with a cost of 1.0
+
+- get rid of host masks - a new data type olsr_prefix is introduced which is
+  basically an ip address plus a prefix length.
+
+  do not install the metric in the kernel FIB - for the kernel its pointless
+  if the route gets installed with a metric of N or M.
+
+  we do not need to update the kernel FIB if we have hop count only changes
+  (for example if there is a reroute action further downstream)
+
+  the only things which triggers a kernel FIB route update is a next hop
+  change (a next hop is neighboring gateway router plus an interface).
+
+  all OLSR routes are installed with a metric of 2
+
+- separate between rt_entry and rt_path - the former is a route installed in the
+  kernel with an next hop. the latter is a candidate for best path selection
+  after SPF calculation has been done. in the rt_entry we keep a pointer to the
+  best_path and also to the next hop that was installed in the kernel FIB.
+
+  we always keep all originator of a route, if a route originator goes away we
+  can easy recompute the best path for the route.
+
+  the next hop in the rt_entry gets only updated upon a successful route_add
+  call - that way we always remember what next hop to delete.
+
+  stray routes should be history now.
+
+- tweak the linked list toolkit to operate on circular lists.
+
+- get rid of malloc calls for building the kernel update list. the list node is
+  now embedded in the rt_entry.
+
+- introduce three queues (add/chg/del) for kernel updates.
+
+- for neighbor route dependency tracking the neighbor routes are queued first or
+  last (depending on which queue you work on)
+
+- rework all the plugins which directly manipulate rt entries.
+
+- rework the plugins that read from the routing table (most notably nameserver,
+  httpinfo and quagga plugin)
+
+- lots of comments that explains the intentions and purpose of this code-piece.
+
+non RT related stuff:
+- use a list rather than a tree for storing the post-SPF results, which further
+  improves the raw-SPF runtime.
+
+- add display of SPF runtime (masked behind #ifdef SPF_PROFILING)
+
+- http://gredler.at/download/olsrd/neighbor_routes3.diff: This updates the own
+  IP address (read: the main address) after changes (e.g. on
+  `ifup wlan0; sleep 1; ifdown wlan0`) and kills the
+  olsr_fill_routing_table_with_neighbors() function.
+----  snip  ----
+And Sven-Ola Tuecke <mail2news@commando.de> fixed an instability issue on interface
+up/down operations (see 102-olsrd-rt-refactoring-fixes.patch below) and a missing
+initialization.
+
+PATCH by Hannes Gredler <hannes@gredler.at> which "consolidates
+the link-state database and the spf-calculation in order
+to calculate routes more efficiently".
+To quote him (more):
+----  snip  ----
+- use the link-state (tc) database for SPF calculations rather than
+  replicating the notion of vertices and edges for a SPF run.
+  this heavily reduces malloc() calls and shrinks the total CPU
+  load of the route calculation path between 60%-80%.
+----  snip  ----
+
+PATCHES by Sven-Ola Tuecke <mail2news@commando.de> to be found on from
+http://download-master.berlin.freifunk.net/sven-ola/nylon/packages/olsrd/files/
+- 102-olsrd-rt-refactoring-fixes.patch
+  Because you changed a lot of basics: It's time to handle a general
+  flaw in the routing system. Plase take a look at chk_if_changed(). This
+  will free() any "struct interface" pointer without warning at any time.
+  This is why it's possile to SEGV olsrd with a simple "ifdown xxx".
+  The patch replaces the (maybe) invalid pointer with an index reference
+  "iif_index". You can always ask the OS for a name. Please note, that I do
+  not have a working BSD toolchain, so I've placed an #error in the IPv6
+  BSD-part where the author/porter has started to hack something funny.
+
+- 110-olsrd-double-wlancard-neigh-hack.patch:
+  This is a hack for Nodes having to wifi cards with the same channel,
+  bssid, IP-Range etc. If two nodes can see each other by means of two
+  possible links (here: two wifi cards with equal config), a bug is  triggered
+  with the Neigh-is-SYM detections. This small little hack prevents this.
+
+- 112-olsrd-nameservice-fixemptyname.patch:
+  This is an addon to my lat/lon stuff which will prevent olsrd from
+  running (oops?) if no hostname is given and the nameservice plugin
+  is loaded.
+
+- 113-olsrd-dyngwplain-pluginvers5.patch:
+  This updates the dyngwplain plugin to the new Plugin Iface
+
+- 140-olsrd-arprefreshed.patch:
+  This is a new one. Opens a packet socket and listen to UDP(698), extract
+  the sender MAC and refreshes the ARP cache whith that. Should speedup
+  especially in cases, if you initially try to use a longer routing path which
+  normally triggers a "ARP-Lookup-Chain".
+- 106-olsrd-nameserviceparams.patch:
+  This patch converts more plugins to the new interface version.
+- 104-olsrd-policy-routing.patch
+  Reworked this one to discard GPL helper functions. Also checked IPv6 and
+  re-included the IPC hookup. The patch adds a "RtTable [number]" for
+  /etc/olsrd.conf which is simply the Linux
+  policy routing table to use. Defaults to 254 (== main).
+  This patch was modified/clenaed up by <bernd@firmix.at> to use "#if"
+  instead of "#ifdef" as it's more robust against typos.
+- 110-olsrd-fixpacketprint.patch, 112-olsrd-nameservice-fixemptyname.patch,
+  113-olsrd-txtinfo-fixhttpget.patch, 114-olsrd-timeoutlimit.patch,
+  115-olsrd-nameserviceparamfix.patch and
+  116-olsrd-fix-pluginparam-addons.patch fixing the compilation warning
+  on 64bit and lots of other improvements.
+- "Save the fish" patch: Avoid forwarding of packets with too low TTL. This
+  kills lots of packet forwarding storms.
+  NB: The oneliner was applied by hand by BP and formatted to look (in BPs O)
+  more readable.
+
+PATCH by Arnd Hannemann <hannemann@i4.informatik.rwth-aachen.de>
+olsr_makefile_make_use_of_exename.patch
+- This patch makes sure that the EXENAME variable of Makefile.inc is used
+  in Makefile.
+
+PATCHES by John Hay <jhay@meraka.org.za>
+- update to new FreeBSD WLAN API
+- do not require /bin/bash, use /bin/sh
+- Fixed alignment so that olsrd runs on FreeBSD/arm
+- allow more interface in an IPv6 subnet on FreeBSD
+- use PREFIX and DESTDIR as all the other Makefile.$OS also for FreeBSD
+- make txtinfo plugin work with IPv6
+
+PATCH by Andreas Jacobs <jacobs@i4.informatik.rwth-aachen.de>
+- fix the loss link quality calculation for "windows size % 4 != 0"
+
+PATCH by Acinonyx <acinonyxs@yahoo.gr>
+- Bug fix: include $(TOPDIR)/Makefile.inc at the begin in the Quagga plugin
+
+PATCH by David Cornejo <dcornejo@gmail.com>
+- fixed an "+=" of an uninitialized variable (detected with/by the
+  scan.coverty.com).
+
+BUG reported by Aaron Kaplan <aaron@lo-res.org>
+- BSD-xargs doesn't know "-r".
+
+PATCHES and CLEANUPS by Bernd Petrovitsch <bernd@firmix.at>
+- Made a function from the ME_TO_DOUBLE() macro (in src/mantissa.h).
+  This saves code throughout the code even on i386 and will even more
+  on architectures without floating point units and "-msoft-float".
+- And the mathemathics in src/mantissa.h is reformulated to minimize
+  floating point operations to save CPU power - especially on embedded
+  devices.
+- I rewrote the half of src/lq_packet.[ch] which deals with incoming
+  packets. This was triggered with performance output of gcc produced
+  by Sven-Ola Tuecke at CCCamp07.
+  This kills *lots* of (more than) superflous malloc()s and the same
+  number of (free()s). And it also kills some code and copying around of
+  data.
+- Make it compile without warning with flex-2.5.33 (to be found on Fedora 7
+  and Gentoo in Sep-2007) again.
+
+- converted the dyn_gw plugin to plugin interface version 5 (which leaves
+  the quagga plugion as the last with the old one).
+- paving the way to activate -Wshadow, much more to do
+- const-ify parameters here and there
+- use NULL for pointers (and not "0")
+- Killed "extern" declarations in (not generated) .c files
+
+- Based on a patch by Gianni Costanzi <gianni.costanzi@gmail.com> (so credits
+  and thanks have to go there):
+  added OS_CFLAG_PTHREAD Makefile variable since gcc (on Linux) requests this
+  in the manual page.
+  Changes/additions:
+  - I added definitions to all OS-specific Makefile.$OS with the value similar
+    to the value in OS_LIB_PTHREAD (either empty or "-pthread").
+  - The variable is added to CPPFLAGS (and not CFLAGS) since CPPFLAGS is used
+    for all cpp and gcc calls (and gcc's man page indicates that it sets
+    variables for both of them).
+
+0.5.3 ---------------------------------------------------------------------
+
+URGENT BUG FIX
+Ignacio García Pérez <iggarpe@terra.es> found a serious bug in the dot-draw
+plugin and identified it's source.
+
+BUG FIX
+The bmf plugin wanted to kill a not-started thread and this causes a segmentation
+violation. This happens if the old plugin interface support is not compiled in
+and one uses - or more asccurate: wants to use - the bmf plugin which uses that
+ATM. Thanks to Cedric Krier <ced@ced.homedns.org> for reporting this.
+
+DEPENDENCIES FIXED
+The dependencies (*.d files) are now properly generated and used. And they also
+dependen on the Makefile in the current directory and the Makefile.inc so that
+changes there also lead to new compilation.
+Remember: We support "ccache" so install it to save lot of meaningless recompiles
+if nothing (as seen by the real C compiler, i.e. after the C preprocessor) has
+changed.
+
+BUILD FIX
+Linux/IA64 and Linux/HPPA also need "-fPIC".
+
+CLEANUPS
+- olsr_switch does no longer generate warnings
+- olsr_switch is also built with "build_all" and cleaned with "uberclean"
+- More "const" all over the place.
+- More "static" for local functions and variables.
+- Killed an unnecessary "static" variable.
+
+0.5.2 ---------------------------------------------------------------------
+
+URGENT BUG FIX
+Sven-Ola Tuecke found a serious bug of the class "show stopper" and sent a patch.
+
+PLUGIN CLEANUP
+Plugins handle parameters quite individually (case-sensitive vs case-insensitive,
+different parsing functions for the same values, etc.). Plugin Interface version 5
+now exports a table of { parameter-name, parsing-function, addr-of-storage } and
+it's size. Common functions should be shared.
+
+0.5.1 ---------------------------------------------------------------------
+
+MISC
+Upgrade to olsr-bmf 1.5 from Erik Tromp <erik_tromp@hotmail.com>
+
+latitude/longitude support is now in the nameservice plugin done by
+Sven-Ola Tuecke <mail2news@commando.de>
+
+added the spf refactoring patch from  Hannes Gredler <hannes@gredler.at> which
+saves a noteworthy amount of CPU time. To quote him:
+----  snip  ----
+1. use of an AVL tree as a min-heap implementation
+
+   as a means for efficient sorting.
+   (the etx metric is used as the key in the candidate tree)
+
+2. next-hop propagation
+
+   rather than tracking the previous node in olsr_relax()
+   i have changed that model and pre-populate all one-hop neighbors
+   with their own IP address as 'next-hop' and pull that
+   pointer up once new paths are explored.
+
+   as a result no walker for counting hops and extracting next-hops
+   is required - it turns out at this is slighly more efficient
+   than the existing behaviour (even with the cache applied).
+----  snip  ----
+
+CLEANUPS
+* moved a only locally needed hack from "union olsr_ip_addr" into the only place
+  where it is needed in hashing.c
+
+0.5.0 ---------------------------------------------------------------------
+
+APPLIED PATCHES FROM FREIFUNK-FIRMWARE
+libsmake, dyngwplain, nameservices+services, tzxtinfo, quagga, quagga-routehandler,
+optimize, fixes from Eric Tromp and Sven-Ola Tuecke, CPU-optimize, secure key, HNA-IP
+
+CLEANUPS
+removed hardcoded limit on the number of interfaces (at least in the Unix part)
+made Makefile targets much more consistent
+
+MISC
+put Bmf-1.3 plugin into it
+
+FreeBSD IPv6 SUPPORT
+
+Patch from John Hay applied.
+
+BUGFIXES
+
+0.4.10 --------------------------------------------------------------------
+
+OLSR NETWORK SIMULATOR
+
+An application called olsr_switch(sorry for the nameclash with the win32
+GUI) has been added. If olsrd is ran using the -hint option it can now
+connect to olsr_switch and be part of a virtual network. This means
+that multiple instances can be ran at the same host! The olsr_switch
+application allows the user to define link variables on all viritual
+links in the network, creating all possible topologies. Read more in
+the readme file.
+
+EXPERIMENTAL FISH EYE ALGORITHM
+
+An experimental algorithm for TTL settings on TC messages has
+been added. Read more in the corresponding README file.
+
+OPENBSD SUPPORT
+
+olsrd now also compiles on OpenBSD systems. Thanks a lot to Holger
+Mauermann for the patches!
+
+BUILDSYSTEM REWRITE
+
+Bruno has rewritten the make system. OS detection is now done
+automagically and the general design is much improved.
+
+IP ADDRESS VALIDATION
+
+Olsrd now maintains a set of IP addresses that is considered
+invalid. Checks against this set is done on all received
+OLSR packets announced originator addresses. The dataset can
+be updated dynamically.
+
+PLUGIN INTERFACE
+
+Updated interface version to 3 and added more noticeable warning
+for version missmatch.
+
+MATH LIB DEPENDENCY
+
+The dependency on the math lib came from the use of pow(3) in the
+mantissa/exponent calculation. The calls to pow in this long forgotten
+code, was very unnessecarry. The pow calls are replaced with bitwise
+shifts and -lm is no longer needed.
+
+ICMP REDIRECTS ON LINUX
+
+On Linux systems "0" is now also written to the all/send_redirects
+procfile and not only the pr. interface ones. Hopefully this resolves
+problems reported with systems still sending ICMP redirects.
+
+BUGFIXES
+
+- Fixed init of IPv6 addrtype variable. It used to be uninitialized,
+  causing it to default to site-local and have some weird side-effects.
+- Fixed crash when changing IPv6 address at run-time
+- Fixed a bug that prevented setting willingness 0 in the configfile
+- Fixed bad handling of missing command line arguments
+- Did various updates to prevent assertion when a neighbor
+  has changed IP and sends HELLO before its olsrd precess has detected
+  the change.
+- Fixed return value check on times(2) calls in the scheduler
+- Fixed bug(s) that could cause crash when an interface was brought
+  down while olsrd was running.
+- Removed the silent (read: unchecked) hard limit of 16 interfaces.
+- Compiles now cleanly on 64bit (e.g. x86_64).
+
+0.4.9 ---------------------------------------------------------------------
+
+OPTIMIZATIONS
+
+The MID database is now also indexed by alias addresses. this makes
+look-ups of main addresses based on alias addresses _much_ faster.
+The mid_lookup_main_addr function alone has gone from >30% of the
+total CPU time used by olsrd to <1%.
+PLUGIN DEVELOPERS: datatypes for MID entries has been changed.
+
+Routing table calculation in the LQ case now uses balanced binary
+trees instead of linked lists, which makes look-ups much faster.
+
+The debug output function olsr_printf() is not used by olsrd
+internals any more. Instead the macro OLSR_PRINTF is to be used.
+This macro does debug level testing _before_ doing any function
+calls(both printf itself and parameters to printf). This is a much
+more optimized way of doing debug output. In addition olsrd can
+be built without any debug output code if doing 'make NODEBUG=1'.
+
+TIMEOUT OF DATASETS
+
+Validity times for dataset entries are now set using the clock_t type
+(used to be struct timeval). This data is now fetched from the times(2)
+function instead of gettimeofday(2). This prevents possible problems
+if the system time is changed.
+PLUGIN DEVELOPERS: Note that datatypes for close to all dataset entries
+(link, neighbor, mid, hna, tc etc.) has been changed!!
+
+CONFIGURATION FILE
+
+Multiple interfaces can now use the same interface configuration block.
+Example:
+Interface "if0" "if1" "if2"
+{
+	.....
+}
+
+Interface configurations now also support the "Weight" directive. When
+olsrd finds multiple links to a neighbor it will choose the link
+going via the interface with the lowest weight. Olsrd normally
+sets this weight dynamically based on interface characteristics,
+but if the user wishes to set a fixed weight in a interface(or
+a group of interfaces), this directive is now available.
+
+Moreover, interface configurations now support the "LinkQualityMult"
+directive. It takes an IP address and a multiplier as arguments.
+
+Example:
+
+Interface "if0"
+{
+  [...]
+
+  LinkQualityMult 192.168.0.1 0.7
+  LinkQualityMult default 0.5
+
+  [...]
+}
+
+The idea is to make certain links via the configured interface
+artificially worse or better than they really are. The first parameter
+specifies the IP address of a neighbour interface. The second
+parameter is the multiplier to be applied to the link to the specified
+neighbour interface.
+
+After we have derived the link quality from the packet loss among the
+packets received from the specified neighbour interface, we multiply
+the link quality by the given multiplier. So, the multiplier changes
+the LQ value that we use when determining the ETX, which is 1 / (LQ *
+NLQ).
+
+If "default" is given as the IP address then the multiplier applies to
+all links via the configured interface. Note, however, that olsrd only
+assigns one multiplier to each link. It does so in the following way.
+
+* If there is a "LinkQualityMult" line that matches the IP address of
+  the link's neighbour interface, then use the multiplier in this
+  line.
+
+* If there isn't any matching line, then look for a "default" line. If
+  there is a "default" line, then use the multiplier in this "default"
+  line.
+
+* Otherwise use 1.0, i.e. do not modify the LQ value at all.
+
+Hence, a line with an IP address has priority over a "default" line.
+
+In the above example, the LQ value of the link between the local
+interface if0 and the neighbour interface 192.168.0.1 would be
+multiplied by 0.7. All other links between the local interface if0 and
+a neighbour interface would be multiplied by 0.5.
+
+IPV6 SOCKETS
+
+The socket option IPV6_V6ONLY is now set on IPv6 sockets in linux.
+This means that olsrd will no longer receive IPv4 traffic when
+running in IPv6 mode.
+This should enable users to actually run one olsrd instance using
+IPv6 and one using IPv4 at the same time :)
+
+PLUGINS
+
+The httpinfo, dyn_gw and dot_draw plugins now all include olsrd
+headerfiles directly. A plugin should define OLSR_PLUGIN before
+including olsrd headers. Doing things this way removed the
+redundant datatype definitions that has so often caused trouble
+when things has been updated in olsrd.
+
+NETBSD SUPPORT
+
+olsrd now also compiles on NetBSD systems. Use 'make OS=nbsd' to
+build. This port is not very well tested and feedback is greatly
+appreciated.
+
+EXPERIMENTAL MULTI-INTERFACE CODE FOR FREEBSD
+
+Experimental code using libnet can be compiled in allowing multiple
+interfaces to be used in FreeBSD.  You enable this by compiling using
+OS=fbsd-ll.  You must have libnet-devel installed for this to work
+(/usr/ports/net/libnet-devel).
+
+OTHER UPDATES
+
+- WLAN devices are now detected in FreeBSD
+- First specified interfaces IP is used as main address.
+- Broadcastflag is not checked on interface if fixed broadcast is
+  set in config.
+- Removed Linux link layer code as this was not really in use.
+- Added -nofork command line option
+
+BUGFIXES
+
+- Link sensing now works according to announced vtime from
+  neighbors. Previously links going symmetric->asymmetric
+  were not necessarily detected until the holding time expired.
+- A bug in route addition/removal that could lead to routes
+  using GWs being added before the actual route to the GW
+  was set up, has been fixed.
+- A bug in the interface selection in route calculation has been
+  fixed. New routes are no longer added prior to deleting old ones,
+  since this caused trouble.
+- A bug in the IPv6 multicast address configuration has been fixed.
+  This caused olsrd not to work with global IPv6 addresses.
+- A bug in the IPv6 prefix-from IPaddr function has been fixed. This
+  bug caused HNA prefixes to always be calculated to 0.
+- If a 2-hop neighbor is also a 1-hop neighbor, a bug made olsrd
+  prefer a bad direct link to a better link via an MPR.
+- If a link or interface lookup failed, olsrd crashed.
+- Fixed a crash in the LQ packet generation code based on a
+  signed/unsigned integer comparison.
+
+
+0.4.8 ---------------------------------------------------------------------
+
+LICENSE CHANGE
+
+Olsrd is now distributed under a BSD style license. We believe olsrd will
+be better off using this license as it opens up for commercial players
+to use olsrd freely in their products. In the end this will lead to
+this kind of users doing serious testing and bug fixing of olsrd.
+
+ETX-LIKE LINK QUALITY DETECTION
+
+We can now determine the packet loss on a link by looking at the serial
+numbers of the OLSR messages received from a neighbor. This tells us how
+many packets get through from our neighbor to us. We use a new extended
+kind of HELLO messages (LQ_HELLO messages, LQ = link quality) to broadcast
+the link quality that we have determined on our end of the link to our
+neighbors. So do our neighbors, and we as well as they end up with an
+idea of how good the link is in both directions. From the LQ_HELLOs we
+also learn the link quality between our neighbors and our two-hop neigh-
+bors. In this way we can select those neighbors as MPRs that have the
+best links to our two-hop neighbors. To distribute the link quality
+throughout the network, we use a new extended version of TC messages
+(LQ_TC messages). They contain the qualities at both ends of each of our
+links. Nodes can then run Dijkstra's algorithm to find a path between
+themselves and other nodes that minimizes the packet loss.
+
+If the newly introduced "LinkQualityLevel" is set to zero in the
+configuration file, link quality is not used and the daemon behaves as
+before, i.e. as specified by the OLSR RFC. If this parameter is set
+to 1, LQ_HELLOs and LQ_TCs are used instead of HELLOs and TCs, link
+quality is measured and MPRs are selected based on the link qualities.
+If this parameter is set to 2, the routing table is additionally
+calculated based on the link qualities.
+
+Setting "LinkQualityLevel" to a non-zero value BREAKS COMPATIBILITY. You
+will then not be able to participate in RFC-conformant OLSR networks
+any longer. This is because we use LQ_HELLOs and LQ_TCs instead of HELLOs
+and TCs in this case.
+
+It's best practice to set "LinkQualityLevel" to the same value on all
+nodes in a network.
+
+When determining the quality of a link olsrd only considers a given
+number of most recent OLSR packets received from its neighbors. By
+default, olsrd looks at the 10 most recent OLSR packets. This can be
+changed via the "LinkQualityWinSize" configuration option. Values
+between 3 and 128 are legal.
+
+NEW CONFIGFILE PARSER/FORMAT/SCHEME
+
+A whole new config file syntax and parser is introduced with this
+release. The parser is generated using flex and bison and it is
+designed to be very modular. The parser can be compiled as either
+a standalone binary, a shared library or as part of olsrd. This way
+other applications can parse and generate olsrd configuration files
+only by linking to the dynamic library.
+In the new configfile options can be set pr. interface, plugin
+parameters can be set, more IPC options can be set...and more.
+The syntax is documented in the olsrd.conf(5) manual page found
+in the files/ directory.
+Olsrd internals now uses a single struct, as returned by the config
+parser, for all configuration in runtime. this means that updating
+values in this struct will dynamically update olsrd operation. It
+also means that all configuration is now kept in one place instead
+of spread all across the place.
+
+FREEBSD AND MAC OSX PORT
+
+This version offers an initial port of olsrd to FreeBSD and Mac OS
+X. Like the Windows port it currently does not support IPv6. As this
+is a very first try at supporting FreeBSD and Mac OS X, this port is
+probably not as reliable as the Linux version. We'd greatly appreciate
+feedback and bug reports. To compile you need GNU make. Then simply
+run "gmake OS=fbsd" to build the executable.
+
+NEW MAKEFILE(S)
+
+The makefiles used to build olsrd have been rewritten and now includes
+dependency file generation using makedep.
+
+DEBUG OUTPUT
+
+Tables are now only printed if changes occur, so there are no longer
+any periodical output when using a debuglevel >0. A "heartbeat" is
+now printed to STDOUT(if it is a terminal) in the form of a rotating
+line to show that olsrd is actually operating.
+Adding "ClearScreen yes" to the configuration file clears the screen
+each time before the debug output shows updated information. This
+makes the debug output easier to read in many cases. "ClearScreen no"
+is the default, if no "ClearScreen" directive is given in the
+configuration file.
+
+PLUGIN INTERFACE
+
+There are some changes in the plugin interface. It is now at
+version 2. Plugin specific parameters from the configfile
+using the PlParam option, will now be passed on to plugins.
+To receive such parameters a plugin must implement a function:
+int
+register_olsr_param(char *key, char *value)
+to which parameter pairs will be passed.
+
+NO MORE THREADS
+
+Olsrd no longer uses any thread library on its operation. Everything
+now happens in the main thread allowing for use of olsrd on platforms
+with no thread library.
+
+ACPI SUPPORT IN WILLINGNESS CALCULATION(LINUX)
+
+The willingness calculation for Linux, now also supports the more
+modern ACPI proc interface in addition to APM. This is not well
+tested and feedback is appreciated!
+
+IPC OPTIONS
+
+Various options regarding IPC connections can now be set in the
+configfile. The options are max connections, allowed unicast
+hosts and allowed net-ranges.
+
+CODE REWRITES
+
+Much of the message generation and net output code is rewritten.
+Sending of partial messages should now work 100%. Also TC, MID
+and HNA messages are now cached for a random amount of time
+before transmitted - this often leads to the situation where these
+messages are sent together with an HELLO message, which is highly
+desirable since it saves network resources.
+PLUGIN DEVELOPERS must note that the buffers and size variables
+used in net output is no longer directly accessible!
+
+NET OUTPUT CODE REWRITTEN
+
+Every interface now has one outputbuffer registered. This allows
+messages to be "cached" as explained above, so that multiple
+messages are stacked together.
+Also the outputbuffer and size are no longer accessible directly,
+an API is available to plugins(and olsr code).
+
+OS DEPENDENT NETWORK INTERFACE
+
+The OS dependent network functions are now defined in net_os.h
+instead of being mixed up with internal network functions
+in net.h.
+
+BUGFIXES
+
+A bug that caused the announced ANSN sequence number to never stop
+being increased when a change in the MPR selector set was detected
+has been fixed. Another TC related bug that caused timed out TC
+entries not to be deleted from the routing table in certain cases
+has also been fixed. These bugs could cause unstable routes.
+A bug that in many cases caused the wrong routes to be deleted
+when using IPv6 has been fixed.
+
+
+0.4.7 ---------------------------------------------------------------------
+
+NATIVE WINDOWS GUI AND INSTALLER
+
+We now have a native Windows GUI. The GTK+ version is no longer
+supported on Windows. The new native GUI is pretty compact as it does
+not require the GTK+ runtime DLLs. In addition to monitoring olsrds
+state the GUI offers an easy way for novice users to configure
+olsrd. It's pretty self-explanatory. Have a look at README-WIN32.txt
+for details. The Windows version now also comes with an installer
+based on the freely available Nullsoft Scriptable Install System
+(NSIS). Looks like the Windows port is becoming more and more
+Windows-ish. :-)
+
+WIRELESS INTERFACE DETECTION ON WINDOWS
+
+Like the Linux version the Windows port is now able to tell WLAN
+interfaces from wired interfaces. We can now, for example, set
+different HELLO intervals for WLAN interfaces and wired interfaces,
+respectively.
+
+ROUTE UPDATES
+
+The order of updates of calculated routes is swapped. Now new routes
+are added prior to deleting old ones. This could fix issues where
+in some very very few cases one could experiment loss of routes.
+
+BUGFIXES
+
+There were quite some bugs in IPv6 operation in 0.4.6. These are
+the bugs that were fixed:
+- HNA message parsing did not work.
+- Some IPv6 addresses were printed as IPv4 addresses in the
+  debug output.
+- The '-dispin' option now works again.
+- A filedescriptor leak in the IPv6 interface detection caused
+  olsrd to crash.
+
+
+0.4.6 ---------------------------------------------------------------------
+
+WINDOWS PORT!
+
+Read the README-WIN32.txt file!
+
+DYNAMIC NETWORK INTERFACE UPDATES
+
+Network interfaces can now be updated and removed/added at
+runtime. Olsrd will check all interfaces specified in the config
+file or on the command-line, every 5 seconds. If updates
+occur, olsrd will register this and update the necessary data.
+If interfaces are removed or added, olsrd will detect this
+and configure the interfaces. If an interface is removed
+olsrd will continue to check the interface, so if say, a PCMCIA
+card is removed and later on reinserted(and given the same name),
+olsrd will detect this and start running on it again.
+
+Note that olsrd will now run even if no interfaces are detected.
+
+ROUTE CALCULATION UPDATE
+
+All 1 hop neighbor addresses that are not directly reachable trough
+a symmetric link in the link set will now be added with a GW in the
+routing table. this GW will be an interface address from a registered
+symmetric link to the neighbor.
+
+MID UPDATE
+
+Alias addresses are now registered in the link set processing
+if available. This is not to pretty(since the vtime has to
+be a mere guess) but it gives faster initial route updates.
+If a HELLO is received(at initial registration) from an IP
+that is not the same as the one set as main address in the
+received HELLO header, then the IP from which the HELLO was
+received will be registered as an alias of the main address
+set in the HELLO header. The default vtime is set to 15 secs.
+
+CODE RESTRUCTURING
+
+All OS dependent interface configuration code is now located in
+OS/ifnet.c(that would be linux/ifnet.c if using GNU/Linux).
+The functions are available trough the headerfile src/ifnet.h
+
+CODE CLEANUPS
+
+- Some timer issues fixed
+- Got rid of the global socket descriptors
+- Updated indexing of network interfaces
+- Introduced a global socket to use for ioctl calls(ioctl_s)
+- Removed upper limit for interfaces to use
+- Point-to-point interfaces are now allowed
+- The main select(2) loop now uses a timeout
+- A small bugfix in the select fd-set update code
+- Some bugfixes in the configuration file parsing
+- stdout/stderr are now set to not be buffered
+- A bugfix in the MID generation regarding seq. numbering
+
+PLUGIN INTERFCAE
+
+A new set of functions that are called whenever a change in the
+interface configuration(update, addition, removal) is made is
+introduced.
+These functions are added and removed very much like the ptf
+functions. Available trough the functions add_ifchgf and del_ifchgf.
+
+OBS OBS OBS!!! PLUGIN DEVELOPERS READ THIS!!!!
+
+The interface struct(declared in interfaces.h) has changed.
+Plugin developers must update plugins that uses the interface
+struct!
+
+The headerfile olsr_plugin_io.h which contains the plugin interface
+commands now contains a revision list where all changes are
+stated.
+
+
+0.4.5 ---------------------------------------------------------------------
+
+PLUGIN: SECURE OLSR
+
+A plugin that generates and checks message signatures is added.
+Check lib/secure
+
+PLUGIN: TOPOLOGY GRAPH
+
+A plugin that generates output of the topology in the dot format
+is added. See lib/dot_draw
+
+OPTIMIZATIONS
+
+Some optimizations done that should cause fewer route recalculations.
+
+BUGFIXES
+
+Some bugs reported by Takafumi Tanaka fixed.
+
+RESTORATION OF NETWORK SETTINGS
+
+Network settings like disabling of ICMP redirects and spoof filter, are
+now restored at exit by olsrd.
+
+RFC COMPLIANCE FIX
+
+Nodes would in certain scenarios retransmit messages originating for
+themselves. This was a RFC incompliance. Reported by Ingmar Baumgart.
+
+NON-WLAN TIMERS
+
+No longer setting the HELLO interval of non-wlan interfaces as a multiplier
+of the wlan interval. The interval is set seperatly now.
+Due to this there are some updates in the configfile imperatives.
+
+CODE CLEANUPS
+
+Some new macros introduced for table insertion and removal and IP
+copying and comparison.
+
+FRONT END BUGFIXES
+
+IPv6 bugfixes in the GUI.
+
+
+0.4.4 ---------------------------------------------------------------------
+
+ROUTE CALCULATION
+
+Routes are no longer added via neighbors declaring a willingness
+of WILL_NEVER.
+
+LINK SENSING AND ROUTE CALCULATION
+
+Link sensing and route calculation has been updated to handle
+multiple links between hosts in a sane way.
+
+IP SPOOF FILTERING
+
+IP spoof filtering is disabled on the interfaces which olsrd runs.
+These settings are not restored!
+
+ICMP REDIRECTS
+
+ICMP redirect message generation is disabled on the interfaces
+which olsrd runs.
+These settings are not restored!
+
+CONFIGFILE OPTIONS FOR MID AND HNA ADDED
+
+Options to set the MID and HNA emission intervals and
+validity time in the configfile added.
+
+IPv6 ADDRESS SCOPE
+
+Option to set what IPv6 address type(scope) to use in the
+configfile added. It can be set to either global or site-local.
+
+IPv6 MULTICAST
+
+Options to set site-local and global multicast addresses
+in the configfile added.
+
+EMISSION INTERVAL FUNCTION
+
+Functions to set emission intervals at runtime added.
+
+LINK LAYER NOTIFICATIONS
+
+If started with the -llinfo switch olsrd will collect and display
+link-layer information on neighbors. This is no longer limited to
+one interface. But no action is taken based on this info - and
+there is a upper limit of 8 neighbors from which this info can
+be collected pr. interface. This limitation is inherited from the
+WLAN drivers and is not something imposed by the olsrd code!
+
+IPv6 HNA MESSAGE FORMAT
+
+IPv6 HNA messages now contains 128-bit netmask instead of prefix.
+
+PLUGIN FUNCTIONS
+
+Added "packet transform functions" which allow plugins to alter all
+outgoing OLSR traffic.
+
+RESTRUCTURING
+
+Moved most headers out of OS dependent directories. The tunneling
+and link-layer notification interface is not yet separated from
+the /linux directory.
+
+MANUALPAGE
+
+A manpage(olsrd(8)) describing olsrd has been created. It is installed
+when using 'make install'.
+
+
+0.4.3 ---------------------------------------------------------------------
+
+PLUGIN SUPPORT
+
+Olsrd now supports runtime-loadable plugins! A couple of example plugins
+are located in the lib/ directory. Read the README files in the various
+plugin directories for more info. A directive to load plugins have been
+added to the configfile as well.
+Documentation of the plugin interface can be fount at http://www.olsr.org.
+
+The plugin interface is designed to be extendable. But it should _always_
+be backwards compatible with the interface used in this release!
+
+LINK-LAYER NOTIFICATION
+
+Some preliminary link-layer notification code has been added. Link quality
+can be written to stdout if olsrd is started with the -llinfo switch.
+No action is currently taken based on this info. And info will only
+be retrieved from the interface named "eth1".
+This code is not usable for users as of yet!
+
+MPR UPDATES
+
+Neighbors with willingness set to WILL_ALWAYS is now always added. The
+MPR selection is optimized as described in RFC3626 section 8.3.1
+point 5.
+
+MPR BUGS
+
+There was a couple of bugs in the MPR selection code. All fixed.
+
+LINUX 2.6 BUG
+
+Users could not run olsrd on multiple interfaces using the Linux 2.6 kernel
+series. This is now fixed.
+
+MINOR BUGS
+
+One small bug in link hysteresis initialization and one in HNA route
+deletion.
+
+MESSAGE-SEQUENCENUMBER INCOMPLIANCE
+
+Message-seqnos was implemented on a pr. messagetype and pr. interface
+basis. This is not RFC3626 compliant and has been updates. All messages
+and interfaces now uses a global seuencenumber.
+
+RANDOM SEQUENCENUMBERS
+
+Sequencenumbers are now initialized using a random value.
+
+DAEMON MODE
+
+Fixes for running olsrd in daemon mode(debug 0).
+
+OPTIMIZATIONS
+
+Optimizations based on profiling implemented.
+
+SANITATION
+
+Message size is checked for every message before passing it to the
+appropriate message parsing function. If the size is bigger than the
+remaining size of the olsr packet then the message is discarded.
+
+GUI FRONT-END
+
+Some minor modifications done to the gui.
+
+INTERNAL CHANGES
+
+Lots of changes in handling of registration and unregistration of
+scheduler, socketparser, parser and local hna set.
+Some restructuring and movement of functions.
+
+
+0.4.2 ---------------------------------------------------------------------
+
+No public release
+
+0.4.1 ---------------------------------------------------------------------
+
+No public release
+
+0.4.0 ---------------------------------------------------------------------
+
+LINK HYSTERESIS
+
+Link hysteresis as described in the RFC added.
+
+TC REDUNDANCY
+
+TC redundancy as described in the RFC added
+
+MPR REDUNDANCY
+
+MPR redundancy as described in the RFC added
+
+SCHEDULER REWRITE
+
+The scheduler has been rewritten to register scheduled
+events(function pointers) dynamically.
+
+PARSER REWRITE
+
+The parser has been rewritten to register parse functions
+on a pr. messagetype dynamically
+
+MALLOC WRAPPER
+
+A wrapper for the malloc(3) syscal has been introduced.
+olsr_malloc(size_t, const char *) should ALWAYS be used.
+
+CODE RESTRUCTURING
+
+Lots of restructuring in headerfiles.
+Linux spesific code moved to subdirectory linux/
+FreeBSD code to be put in freebsd/
+LOTS of code restructured due to the rexrite of the scheduler
+and parser.
+
+MPR CALCULATION
+
+Optimizing the MPR set as suggested in the RFC section
+8.3.1 point 5 added.
+
+BUGFIXES
+
+Some bugs in MPR selection fixed.
+
+
+0.3.8 ---------------------------------------------------------------------
+
+CODE REWRITES
+
+HNA code completely rewritten!
+The old code was really bad! Now it is much cleaner implemented and
+should work fine.
+One- and two-hop neighbor list structures rewritten. They now use
+the same hashed double-linked lists as the rest of the information
+sets use.
+
+CODE RESTRUCTURING
+
+Some code restructuring which resulted in the new files: timer.h,
+mantissa.c, mantissa.h, hashing.c, hashing.h, linux/net.c
+linux/net.h, linux/kernel_routes.c, linux/kernel_routes.h and some
+renamed files
+
+BUG FIXES
+
+The bug causing errormessages on exit is fixed.
+The bug that caused initial HNA routes in the GUI to display a hopcount
+of 0 fixed.
+IPv6 HNA netmasks were all added as /128. It's fixed now.
+
+IPv6
+
+Turns out sitelocal address had to be preferred to avoid IPv6 header
+messing up link-sensing. Bug fixed
+
+
+0.3.7 ---------------------------------------------------------------------
+
+CODE REWRITES
+
+The entire TC set and MPR selector set code rewritten. Hashing and
+double linked lists added to the MID code.
+Lots of HNA code has been rewritten as well.
+
+HNA bugfix
+
+When a node lost connectivity to a HNA GW all HNA entries to that gw
+was deleted. This has been fixed - and HNA entries only gets deleted
+on timeout now.
+Other HNA bugs have been fixed as well. But the whole HNA implementation
+needs a rewrite!
+
+Holdingtime BUGfix
+
+There was a bug that caused holdingtime not to be properly recalculated
+when using non-default emission intervals.
+
+Forwarding and symmetric neighbors
+
+Seems I had misread the RFC on what a 1-hop symmetric neighbor is.
+Now the link-set is checked when a check for a symmetric neighbor
+is done. Not the 1 hop neighbor set as it used to be. This way
+the hack when receiving MID messages could be removed.
+
+IPv6
+
+Global addresses are now preferred. Sitelocal addresses are only used
+if no global addresses are found. There have been problems where
+the address set in the IP header of IPv6 packets do not match the
+address chosen by OLSR.
+
+GUI - 0.2.5
+
+The GUI is finally updated! It can now handle piggybacked messages
+and link sensing HELLO message format.
+
+
+0.3.6 ---------------------------------------------------------------------
+
+HNA support using IPv6
+
+HNA now works using IPv6 as well! Just add the network address and
+prefix in the HNA6 section in the configfile. The IPv6 HNA packets differ
+some from the IPv4 as they don't send the netmask but the prefix.
+
+
+NEW FILENAME FOR THE BINARY AND CONFIG FILE
+
+They are now called olsrd and olsrd.conf. I figured I'd use the olsrd
+name before somebody else started using it ;-)
+
+
+Config file
+
+New options: DEBUG, HNA6 and IPC-CONNECT added to config file.
+
+
+Output
+
+A printf-wrapper has been introduced - debug level output handling
+is much more uniform now.
+The daemon should run fine in detached mode now(DEBUG 0)
+
+GUI front-end
+
+The GUI front-end can now connect and disconnect at any time while the
+daemon is running, if started using the -ipc switch or with IPC set to
+'yes' in the configfile.
+
+
+BUGS
+
+A small HNA bug fixed.
+
+
+0.3.5 ---------------------------------------------------------------------
+
+Forwarding jitter
+
+Forwarding jitter added. Messages are piggybacked if they arrive(and are to
+be forwarded) while there is data to be forwarded buffered.
+Added some bugfixes to support parsing of piggybacked messages as well.
+
+Route calculation
+
+Fixed route calculation so that 2 hop neighbors are added. This smooths
+changes from 1 hop to 2 hop neighbor out. The old way one had to wait for
+a TC before the 2 hop neighbors were added.
+
+2 hop neighbor set
+
+All neighbors received in HELLO messages are added to the two hop
+neighborhood. This helps smoothing out the 1-to-2 hop transition as well.
+
+MID calculation
+
+MID calculation had to be updated due to the registering of two hop neighbors
+that are already one hop neighbors. They should not be considered when calculating
+two hop coverage.
+
+Optimizations
+
+Deletion of possible one hop neighbors registered on non main-addresses when
+first registering MID info from a node removed. This can not occur due
+to the fact that registering of neighbor nodes are done on main addresses
+from link-sensing
+Option to not forward messages on wired links on which they arrived removed.
+This is no longer usable to any degree when adding support for piggybacking
+of forwarded messages is to be implemented.
+
+Cleanups
+
+Some unused parameters and commandline options were removed.
+
+
+
+0.3.3 ---------------------------------------------------------------------
+
+TC MESSAGEING
+
+Added sending of empty TC messages if all MPR selectors are removed. Empty
+TC messages are sent for a TC_HOLD_TIME period as described in section
+9.3 in the RFC.
+
+HNA
+
+Fixed HNA route calculations for IPv6. I forgot to upgrade this in 0.3.2
+
+OPTIONS
+
+-hnaint and -midint command line optionas added to set the interval
+of HNA and MID generation.
+
+FORWARDING
+
+As an optimization messages have not been forwarded on the received interface
+if this is registered as a non-WLAN interface. This causes problems for
+people using Ethernet-to-WLAN adapters. This optimization is now turned
+off by default. It can be activated using the -nofwlan option.
+
+BUGS
+
+THERE ARE SOME NASTY BUGS IN 0.3.2!
+Fixed a bug that caused 2 hop neighbors not to time out.
+Fixed a bug that caused a 1 hop neighbor timeout not to recalculate
+the routing table.
+Fixed a small memleak in the MID set
+Fixed some smaller bugs.
+
+IPv6 functioning is not well tested in this release.
+
+0.3.2 ---------------------------------------------------------------------
+
+HNA
+
+Updated HNA to be RFC compliant. This means that all received HNA tuples
+are registered and only the subset of unique entries(net/netmask) with
+the smallest hopcount is inserted into the routing table.
+
+Config file
+
+User can specify configfile name using the -f switch.
+
+Bugs
+
+Fixed a link-sensing bug that caused problems when using MID nodes.
+
+0.3.1 ---------------------------------------------------------------------
+
+MPR calculation
+
+MPR calculation is now based on the willingness announced by nodes.
+
+Neighbor set
+
+The neighbor set does not have timeouts on entries any more. Creation
+and deletion of neighbor entries is done from the link-set as suggested
+in the RFC.
+
+Cleanups
+
+Gotten rid of a lot of code that became more or less obsolete due to
+all the changes introduced in 0.3.0.
+
+Bugs
+
+Fixed a nasty bug concerning the sequence numbering of TC packets.
+Fixed some bugs regarding MPR calculation - and probably introduced
+a whole new species when implementing the willingness-based calculation ;-)
+
+
+0.3.0 ---------------------------------------------------------------------
+
+Due to the extensive amount of updates this release is versioned 0.3.0
+
+Duplicate table and forwarding
+
+The duplicate table functionality is totally rewritten in 100% RFC
+compliance. The forward algorithm specified in the RFC is implemented
+this meant rewriting much of the packet processing code. The daemon
+also forwards unknown packettypes now.
+
+Link sensing and neighbor processing
+
+Link sensing and neighbor processing was done in the same operation in the
+old code. Link sensing is now a mechanism of its own which is 100% RFC
+compliant. Neighbor processing and HELLO generation has been partly
+rewritten to be RFC compliant. Neighbors are now registered as either
+SYN or NOT_SYM. The NOT_NEIGH, SYM_NEIGH and MPR_NEIGH values are only
+used when building HELLO messages. Links are in one of the following states:
+UNSPEC_LINK, ASYM_LINK or SYM_LINK.
+HELLO messages now advertise link status of neighbors on the interface
+the message is transmitted.
+
+Willingness
+
+A node now dynamically calculates willingness based on powersource and
+possibly battery power. If the node is AC powered it announces a willingness
+of 6. If batterypowered the willingness is calculated as:
+P / 26
+Where P is percentage of power left.
+
+Configuration file
+
+The daemon now tries to read its configuration from the file /etc/uolsrd.conf
+A "standard" configuration file is installed when doing 'make install'.
+This file should be edited to fit your needs.
+Command-line options can still be used to override the configuration form
+the file(ore if no config file is present).
+The -f switch can also be used to specify a configuration file.
+
+Willingness
+
+If AdvancedPowerManagemant(APM) is supported on your system the willingness
+of the node is dynamically calculated based upon the powerstatus of the node.
+MPR calculation based upon willingness is not done as of yet.
+
+TC ANSN
+
+A bugs in the TC processing fixed.
+
+HNA
+
+Some serious HNA bugs fixed. These bugs caused a node to always choos the
+gateway with the larges hopcout :) More seriously - a bug caused looping
+of HNA messages in certain scenarios.
+
+Package sequence numbers
+
+These were added. Not much use as of now - but they're there(as specified
+in the RFC).
+
+Broadcast address
+
+Users can now specify the broadcast address to use. Useful if one wishes to
+use the 255.255.255.255 broadcast.
+
+
+
+0.2.5 ---------------------------------------------------------------------
+
+Htime and Vtime
+
+Htime and Vtime processing and handling added. Holding times used to be
+a static value for all nodes. Now every node can signal its vlidity time
+to others.
+To achieve this mantissa/exponent calculation functionality was added.
+Messages now include Vtime(and Htime in HELLO) values in mantissa/exponent
+format instead of just zero. These values are as stated above, used as holding
+time for nodes.
+the GUI should be upgraded as well...
+
+Jitter
+
+The use of jitter in message generation intervals vere fixed.
+
+
+0.2.4 ---------------------------------------------------------------------
+
+Seqno bugs
+
+Some bugs concerning sequence numbers in HELLO and MID message handling
+was fixed. Newly registered nodes in the neighbor and MID sets were
+initialized with a seqno of 0. When using a "wraparound" sequencenumber
+check(as defined in olsr_protocol.h) this can produce errors if a new
+node joins a network where existing nodes has seqnos >0x00FF.
+
+IPv6 related bugs
+
+Some checks and copying of node addresses where done using sizeof(u_olsr32_t)
+which is 32 bits. This caused only the 32 firs bits of IPv6 addresses to
+be copied and checked.

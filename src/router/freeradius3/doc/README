@@ -1,0 +1,181 @@
+1. INTRO
+
+  The FreeRADIUS Server Project is a high performance and highly
+  configurable multi-protocol policy server, supporting RADIUS, DHCPv4
+  and VMPS. It is available under the terms of the GNU GPLv2.
+
+  All code in this server was written for this project.
+
+
+2. INSTALLATION
+
+   See the INSTALL file, in the parent directory.
+
+
+3. CONFIGURATION FILES
+
+  Much of the server documentation is included only in the comments in the
+  configuration files. Reading the configuration files is REQUIRED to fully
+  understand how to create complex configurations of the server.
+
+3a. 'clients.conf'
+
+  Make sure the clients (NAS, switches, access points etc) are set up to
+  use the host radiusd is running on as authentication and accounting host.
+  Configure these clients with a "radius secret", which should also be
+  entered into the client definition in /etc/raddb/clients.conf.
+  See also the manual page for clients.conf(5).
+
+3b. 'users'
+
+  Users may be defined in the "users" file (raddb/mods-config/files/authorize).
+  All entries are processed in the order as they appear in the file.
+  If an entry matches the username, radiusd will stop scanning the users
+  file (unless the attribute "Fall-Through = Yes" is set).
+
+  You can uses spaces in usernames by escaping them with \ or by using
+  quotes. For example, "joe user" or joe\ user.
+
+  The 'users' file is read by the "rlm_files" module.
+
+3c. NEW RADIUS ATTRIBUTES (to be used in the USERS file).
+
+  Name			Type		Descr.
+  ----			----		------
+  Simultaneous-Use	integer		Max. number of concurrent logins
+  Fall-Through		integer		Yes/No
+  Login-Time		string		Defines when user may login.
+  Current-Time		string		Allows you to perform time-based
+					checks when a request is received.
+
+  Login-Time defines the time span a user may login to the system. The
+  format of a so-called time string is like the format used by UUCP.
+  A time string may be a list of simple time strings separated by "|" or ",".
+
+  Each simple time string must begin with a day definition. That can be just
+  one day, multiple days, or a range of days separated by a hyphen. A
+  day is Mo, Tu, We, Th, Fr, Sa or Su, or Wk for Mo-Fr. "Any" or "Al"
+  means all days.
+
+  After that a range of hours follows in hhmm-hhmm format.
+
+  For example, "Wk2305-0855,Sa,Su2305-1655".
+
+  radiusd calculates the number of seconds left in the time span, and
+  sets the Session-Timeout to that number of seconds. So if someones
+  Login-Time is "Al0800-1800" and she logs in at 17:30, Session-Timeout
+  is set to 1800 seconds so that she is kicked off at 18:00.
+
+
+4. LOG FILES
+
+4a. /var/log/radius/radutmp
+
+  In this file the currently logged in users are held. The program "radwho"
+  reads this file and gives you a summary. Rogue sessions can be deleted
+  from this file with the "radzap" program.
+
+4b. /var/log/radius/radwtmp
+
+  This file is "wtmp" compatible and keeps a history of all radius logins/
+  logouts. This file can be read with the "last" program, and other Unix
+  accounting programs (such as "ac" and "sac") can be used to produce a
+  summary.
+
+4c. /var/log/radius/radius.log
+
+  All RADIUS informational, diagnostic and error messages are logged in
+  this file, including all login attempts.
+
+4d. /var/log/radius/radacct/<client_ip>/detail
+
+  This is the original radius logfile, as written by all the Livingston
+  radius servers. It's only created if the directory
+  /var/log/radius/radacct exists.
+
+  For more configuration options on the detail file please see
+  raddb/mods-available/detail as it expands upon this greatly.
+
+
+5.  MORE INFO, SUPPORT
+
+  The latest version of FreeRADIUS is always available from
+  the git repository hosted on GitHub at
+
+    https://github.com/FreeRADIUS/freeradius-server
+
+  or see
+
+    http://freeradius.org/git/
+
+  for more information.
+
+  There are two mailing lists for users and developers. General
+  user, administrator and configuration issues should be discussed
+  on the users list at:
+
+    http://lists.freeradius.org/mailman/listinfo/freeradius-users
+
+  When asking for help on the users list, be sure the include a
+  detailed and clear description of the problem, together with
+  full debug output from FreeRADIUS, obtained by running
+
+    radiusd -X
+
+  Developers only discussion is to be had on the devel list:
+
+    http://lists.freeradius.org/mailman/listinfo/freeradius-devel
+
+  Please do not raise general configuration issues here.
+
+
+6.  OTHER INFORMATION
+
+  The files in other directories are:
+
+  debian/	Files to build Debian Linux packages.
+
+  doc/		Various snippets of documentation
+  doc/rfc/	Copies of the RFC's.  If you have Perl, do a 'make' in
+		that directory, and look at the HTML output.
+
+  man/		Unix Manual pages for the server, configuration files,
+		and associated utilities.
+
+  mibs/		SNMP Mibs for the server.
+
+  raddb/	Default configuration files for the server.
+
+  redhat/	Files to build RedHat RPM packages.
+
+  scripts/	Sample scripts for startup and maintenance.
+
+  share/	Attribute dictionaries.
+
+  src/		Source code
+  src/main	source code for the daemon and associated utilities
+  src/lib	source code for the RADIUS library
+  src/include	header files
+  src/modules	dynamic plug-in modules
+  src/tests	test harness used by "make test"
+
+  suse/		Files to build SuSE RPM packages.
+
+
+  If you have ANY problems, concerns, or surprises when running
+  the server, then run it in debugging mode, as root, from the
+  command line:
+
+  # radiusd -X
+
+  It will produce a large number of messages.  The answers to many
+  questions, and the solution to many problems, can usually be found in
+  these messages.
+
+  For further details, see:
+
+  https://freeradius.org/documentation/
+
+  and the 'bugs' file, in this directory.
+
+$Date$

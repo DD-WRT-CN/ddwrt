@@ -1,0 +1,68 @@
+============
+INTRODUCTION
+============
+
+The jsoninfo plugin is an info plugin.
+
+Please first read what's written in the file lib/info/README_INFO.
+
+
+==================
+SUPPORTED COMMANDS
+==================
+
+Grouped information:
+* /all
+* /runtime
+* /startup
+
+Runtime information:
+* /neighbors
+* /links
+* /routes
+* /hna
+* /mid
+* /topology
+* /gateways
+* /interfaces
+* /2hop
+* /sgw
+
+A special case for Freifunk, combining /neighbors and /links:
+* /neighbours
+
+Start-up information:
+* /version
+* /config
+* /plugins
+
+The current configuration, formatted for writing directly to a configuration
+file, like /etc/olsrd/olsrd.conf:
+* /olsrd.conf
+
+
+====================
+PLUGIN CONFIGURATION
+====================
+
+The plugin is configured with the generic info plugin configuration parameters
+and with 1 extra parameter.
+
+The port in the generic info plugin configuration is set to 9090.
+
+LoadPlugin "olsrd_jsoninfo.so.1.1"
+{
+  # <generic info plugin configuration>
+
+  # The first line of the specified file will be read. If properly read, then
+  # this line will be included in the JSON reply as the value of the 'uuid'
+  # field.
+  # Default: <not set>
+  # PlParam "uuidfile" "uuid.txt"
+
+  # When set to 'true' or 'yes' then the output will be pretty-printed
+  # (multi-line indented). Otherwise the output will not contain
+  # line-breaks and indentation.
+  # Default: false
+  # PlParam "pretty" "false"
+}

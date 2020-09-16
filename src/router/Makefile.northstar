@@ -1,0 +1,638 @@
+
+
+#
+# Copyright 2001-2003, Broadcom Corporation
+# All Rights Reserved.
+#
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+#
+# $Id: Makefile,v 1.2 2005/09/26 11:06:58 seg Exp $
+#
+
+include .config
+ifneq ($(wildcard ../cy_conf.mak),)
+  include ../cy_conf.mak
+endif
+
+#
+# Paths
+#
+OPENSER_MODULES := sl tm rr maxfwd usrloc registrar dbtext textops exec auth auth_db nathelper
+OPENSER_MODULE_FILES := $(foreach module,$(OPENSER_MODULES),openser/modules/$(module)/$(module).so)
+OPENSSL_NO_CIPHERS:= no-idea no-md2 no-mdc2 no-rc5 no-sha0 no-rmd160 no-aes192
+OPENSSL_OPTIONS:= shared no-ec no-err no-fips no-hw no-krb5 no-threads zlib-dynamic
+
+# Source bases
+
+export PLATFORM LINUXDIR LIBDIR USRLIBDIR
+export TOP := $(shell pwd)
+export SRCBASE := $(shell (cd $(TOP)/.. && pwd -P))
+
+
+# Set the HAL directory if you have the HAL sources
+
+# Set the Atheros Rate Control directory if you have the proprietary rate control
+export ATH_RATE=ath_rate/sample
+
+#
+# Cross-compile environment variables
+#
+
+# Build platform
+export BUILD := i386-pc-linux-gnu
+export HOSTCC := gcc
+
+# uClibc wrapper
+export ARCH:=$(PLATFORM)
+ifeq ($(CONFIG_UCLIBC),y)
+export PLATFORM := $(PLATFORM)-uclibc
+endif
+
+#export LINUXDIR := $(SRCBASE)/linux/linux.v24
+ifeq ($(ARCH),mips)
+export LINUXDIR := $(SRCBASE)/linux/brcm63xx/linux-2.6.17
+endif
+#ifeq ($(ARCH),armeb)
+#export LINUXDIR := $(SRCBASE)/linux/xscale/linux-2.6.23
+#endif
+ifeq ($(ARCH),mipsel)
+export LINUXDIR := $(SRCBASE)/kernel/rb500/linux-2.6.17-rc5
+endif
+ifeq ($(ARCH),i386)
+export LINUXDIR := $(SRCBASE)/kernel/wrap/linux-2.6.16.7
+endif
+
+export KERNELRELEASE = $(shell cat $(LINUXDIR)/include/config/kernel.release 2> /dev/null)
+
+#export KERNELRELEASE = $(shell cat $(LINUXDIR)/.kernelrelease 2> /dev/null)
+
+#ifeq ($(PLATFORM),mipsel)
+#export CROSS_COMPILE := mipsel-linux-
+#export CONFIGURE := ./configure mipsel-linux --build=$(BUILD)
+#export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/../mipsel-linux && pwd -P)
+#endif
+
+#ifeq ($(PLATFORM),mipsel-uclibc)
+export CROSS_COMPILE := $(ARCH)-linux-uclibc-
+export CONFIGURE := ./configure $(ARCH)-linux --build=$(BUILD)
+#export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+#endif
+
+#ifeq ($(CONFIG_BCMWPA2),y)
+#export CFLAGS += -DBCMWPA2 
+#endif
+
+export BASEOPT:=-Os
+#export ARCH:= mipsel
+
+ifeq ($(ARCH),mipsel)
+export COPTS:=$(BASEOPT) -pipe -mips32 -mtune=mips32 -funit-at-a-time 
+endif
+ifeq ($(ARCH),armeb)
+export COPTS:=$(BASEOPT) -pipe -mtune=xscale -march=armv5te -Wa,-mcpu=xscale -mno-thumb-interwork -mno-thumb 
+endif
+ifeq ($(ARCH),arm)
+export COPTS:=$(BASEOPT) -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt
+#-D_FILE_OFFSET_BITS=64
+endif
+ifeq ($(ARCH),mips)
+export COPTS:=$(BASEOPT) -pipe -mips32 -mtune=mips32 -funit-at-a-time 
+endif
+ifeq ($(ARCH),i386)
+export COPTS:=$(BASEOPT) -pipe -march=i486 -funit-at-a-time 
+endif
+
+export CC := ccache $(CROSS_COMPILE)gcc
+export CXX := ccache $(CROSS_COMPILE)g++
+export AR := $(CROSS_COMPILE)ar
+export AS := $(CROSS_COMPILE)as
+export LD := $(CROSS_COMPILE)ld
+export NM := $(CROSS_COMPILE)nm
+export RANLIB := $(CROSS_COMPILE)ranlib
+export STRIP := $(CROSS_COMPILE)strip
+export SIZE := $(CROSS_COMPILE)size
+
+export CFLAGS := $(COPTS)
+
+ifeq ($(CONFIG_NVRAM_128K),y)
+export CFLAGS += -DHAVE_NVRAM_128
+#recycle already existing var
+export MIPS16_OPT = -DHAVE_NVRAM_128 
+endif
+
+#
+# Install and target directories
+#
+
+export PLATFORMDIR := $(TOP)/$(PLATFORM)
+export INSTALLDIR := $(PLATFORMDIR)/install
+export TARGETDIR := $(PLATFORMDIR)/target
+
+ifeq ($(PLATFORM),mipsel)
+obj-y += libcrypto
+endif
+#
+# Configuration
+#
+CONFIG_IPTABLES=y
+CONFIG_MUSL=y
+#CONFIG_NOOPT=y
+
+include rules/configs.mk
+
+obj-clean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-clean)
+obj-install := $(foreach obj,$(obj-y),$(obj)-install)
+obj-distclean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-distclean)
+
+all: install_headers build_date clean_target $(obj-y) $(LINUXDIR)/.config kernel
+
+build_date:
+	echo "#define BUILD_DATE \"$(shell date +%D)\"" > ../../opt/build.h 
+	echo "CONFIG_MUSL=y" >> .config 
+
+
+kernelsource:
+	mkdir -p $(LINUXDIR)
+	wget http://www.de.kernel.org/pub/linux/kernel/v2.6/linux-$(KERNELVERSION).tar.bz2 -O $(LINUXDIR)/../linux-$(KERNELVERSION).tar.bz2
+	cd $(LINUXDIR)/../ && tar -xvjf $(LINUXDIR)/../linux-$(KERNELVERSION).tar.bz2
+	cd $(LINUXDIR)/../ && ./patch $(KERNELVERSION)
+
+include kernel-features.mk
+
+kernel:
+	# Also build kernel
+ifeq ($(CONFIG_NORTHSTAR_NOSMP),y)
+	cp $(LINUXDIR)/.config_northstar $(LINUXDIR)/.config
+ifeq ($(CONFIG_BUFFALO),y)
+	-cp $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data_600.c $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data.c
+	-touch $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data.c
+else
+	-cp $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data_default.c $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data.c
+	-touch $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data.c
+endif
+else
+	cp $(LINUXDIR)/.config_northstar_smp $(LINUXDIR)/.config
+ifeq ($(CONFIG_BUFFALO),y)
+	-cp $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data_1750.c $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data.c
+	-touch $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data.c
+else
+	-cp $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data_default.c $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data.c
+	-touch $(LINUXDIR)/brcm/$(ARCH)/wl/clm/src/wlc_clm_data.c
+endif
+endif
+	$(kernelfeatures)
+ifeq ($(CONFIG_DIST),"mini")
+	sed -i 's/\# CONFIG_CC_OPTIMIZE_FOR_SIZE is not set/CONFIG_CC_OPTIMIZE_FOR_SIZE=y/g' $(LINUXDIR)/.config
+	sed -i 's/\CONFIG_KALLSYMS=y/# CONFIG_KALLSYMS is not set/g' $(LINUXDIR)/.config
+else
+	sed -i 's/\CONFIG_CC_OPTIMIZE_FOR_SIZE=y/# CONFIG_CC_OPTIMIZE_FOR_SIZE is not set/g' $(LINUXDIR)/.config
+endif
+ifeq ($(CONFIG_SWAP),y)
+	sed -i 's/\# CONFIG_SWAP is not set/CONFIG_SWAP=y/g' $(LINUXDIR)/.config
+	echo "# CONFIG_FRONTSWAP is not set" >> $(LINUXDIR)/.config
+	echo "# CONFIG_HIBERNATION is not set" >> $(LINUXDIR)/.config
+	echo "# CONFIG_MTD_SWAP is not set" >> $(LINUXDIR)/.config
+else
+	sed -i 's/\CONFIG_SWAP=y/# CONFIG_SWAP is not set/g' $(LINUXDIR)/.config
+endif
+
+	$(MAKE) -C $(LINUXDIR) oldconfig	
+
+	$(MAKE) -j 4 -C $(LINUXDIR) zImage  CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" KBUILD_MODPOST_WARN=1
+	$(MAKE) -j 4 -C $(LINUXDIR) modules  CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-" KBUILD_MODPOST_WARN=1
+
+	rm -rf $(TARGETDIR)/lib/modules
+	$(MAKE) -C $(LINUXDIR) modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR)
+
+ifeq ($(CONFIG_ATH9K),y)
+	-$(MAKE) -f Makefile.northstar ath9k
+	-$(MAKE) -f Makefile.northstar ath9k-install
+endif
+	-$(MAKE) -f Makefile.northstar libutils
+#	-$(MAKE) -f Makefile.northstar emf
+#	-$(MAKE) -f Makefile.northstar emf-install
+#	-$(MAKE) -f Makefile.northstar madwifi
+#	-$(MAKE) -f Makefile.northstar madwifi-install
+ifeq ($(CONFIG_BATMANADV),y)
+	-$(MAKE) -f Makefile.northstar batman-adv
+	-$(MAKE) -f Makefile.northstar batman-adv-install
+endif
+ifeq ($(CONFIG_OPENDPI),y)
+	-$(MAKE) -f Makefile.northstar ndpi-netfilter
+	-$(MAKE) -f Makefile.northstar ndpi-netfilter-install
+endif
+ifeq ($(CONFIG_ZFS),y)
+	-$(MAKE) -f Makefile.northstar zfs
+	-$(MAKE) -f Makefile.northstar zfs-install
+endif
+ifeq ($(CONFIG_SMBD),y)
+	-$(MAKE) -f Makefile.northstar smbd
+	-$(MAKE) -f Makefile.northstar smbd-install
+endif
+ifeq ($(CONFIG_WIREGUARD),y)
+	-$(MAKE) -f Makefile.northstar wireguard
+	-$(MAKE) -f Makefile.northstar wireguard-install
+endif
+ifeq ($(CONFIG_CAKE),y)
+	-$(MAKE) -f Makefile.northstar cake
+	-$(MAKE) -f Makefile.northstar cake-install
+	-$(MAKE) -f Makefile.northstar fq_codel_fast
+	-$(MAKE) -f Makefile.northstar fq_codel_fast-install
+endif
+
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/build
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/source
+
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+endif
+ifneq ($(CONFIG_JFFS2),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jffs2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzma
+endif
+ifneq ($(CONFIG_IPV6),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/ipv6
+endif
+ifneq ($(CONFIG_BONDING),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/bonding
+endif
+ifneq ($(CONFIG_USBIP),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/staging/usbip
+endif
+ifneq ($(CONFIG_USB),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/scsi
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/cdrom
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/isofs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/exportfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfsplus
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/fat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/vfat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/msdos
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/mbcache.ko
+endif
+ifeq ($(CONFIG_3G_ONLY),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls
+endif
+ifneq ($(CONFIG_USB_ADVANCED),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext4
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/btrfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd	
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd2	
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfsplus
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/isofs
+endif
+ifeq ($(CONFIG_BRCMFMAC),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/dhd
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/wl
+endif
+
+	find $(ARCH)-uclibc/install $(ARCH)-uclibc/target  -name \*.ko | \
+		xargs $(ARCH)-linux-nm | \
+		awk '$$1 == "U" { print $$2 } ' | \
+		sort -u > $(LINUXDIR)/mod_symtab.txt
+	$(ARCH)-linux-nm -n $(LINUXDIR)/vmlinux.o | grep ' r __ksymtab' | sed -e 's,........ r __ksymtab_,,' > $(LINUXDIR)/kernel_symtab.txt
+	$(ARCH)-linux-nm -n $(LINUXDIR)/vmlinux.o | grep ' R __ksymtab' | sed -e 's,........ R __ksymtab_,,' >> $(LINUXDIR)/kernel_symtab.txt
+	grep -f $(LINUXDIR)/mod_symtab.txt $(LINUXDIR)/kernel_symtab.txt -F > $(LINUXDIR)/sym_include.txt
+	grep -vf $(LINUXDIR)/mod_symtab.txt $(LINUXDIR)/kernel_symtab.txt -F > $(LINUXDIR)/sym_exclude.txt
+	( \
+		echo '#define SYMTAB_KEEP \'; \
+		cat $(LINUXDIR)/sym_include.txt | \
+			awk '{print "KEEP(*(___ksymtab+" $$$$1 ")) \\" }'; \
+		echo; \
+		echo '#define SYMTAB_KEEP_GPL \'; \
+		cat $(LINUXDIR)/sym_include.txt | \
+			awk '{print "KEEP(*(___ksymtab_gpl+" $$$$1 ")) \\" }'; \
+		echo; \
+		echo '#define SYMTAB_DISCARD \'; \
+		cat $(LINUXDIR)/sym_exclude.txt | \
+			awk '{print "*(___ksymtab+" $$$$1 ") \\" }'; \
+		echo; \
+		echo '#define SYMTAB_DISCARD_GPL \'; \
+		cat $(LINUXDIR)/sym_exclude.txt | \
+			awk '{print "*(___ksymtab_gpl+" $$$$1 ") \\" }'; \
+		echo; \
+	) > $(LINUXDIR)/symtab.h
+#	rm -f $(LINUXDIR)/vmlinux
+#	$(MAKE) -j 4 -C $(LINUXDIR) zImage EXTRA_LDSFLAGS="-I$(LINUXDIR) -include symtab.h"  CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-"  KBUILD_MODPOST_WARN=1
+#	#$(MAKE) -j 4 -C $(LINUXDIR) zImage EXTRA_LDSFLAGS="-I$(LINUXDIR)"  CROSS_COMPILE="ccache $(ARCH)-linux-uclibc-"  KBUILD_MODPOST_WARN=1
+
+include common.mk
+
+
+validate: $(eval FILE_SIZE = $(shell stat -c %s $(EX_PATH)))
+	@if [ ${FILE_SIZE} -gt ${MAXIMUM_SIZE} ] ; then \
+		echo "Image is to large. Maximum size ${MAXIMUM_SIZE} current size  ${FILE_SIZE}." ; \
+		rm -f $(EX_PATH) ; \
+	fi
+
+install package: clean_target $(filter-out lib.$(ARCH)-install,$(obj-install)) $(LINUXDIR)/.config
+        # Install binaries into target directory
+	install -d $(TARGETDIR)
+	for dir in $(wildcard $(patsubst %,$(INSTALLDIR)/%,$(obj-y))) ; do \
+	    (cd $${dir} && tar cpf - .) | (cd $(TARGETDIR) && tar xpf -) \
+	done
+	mkdir -p $(ARCH)-uclibc/target/etc/config
+	mkdir -p $(ARCH)-uclibc/target/etc/kaid
+	mkdir -p $(ARCH)-uclibc/target/etc/langpack
+	cp ./opt/bin/ipkg $(ARCH)-uclibc/target/bin
+	cd  $(ARCH)-uclibc/target/lib
+	cp ./opt/etc/preinit $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/postinit $(ARCH)-uclibc/target/etc
+	cp ./opt/etc/ipkg-arm.conf $(ARCH)-uclibc/target/etc/ipkg.conf
+	cp ./opt/etc/config/* $(ARCH)-uclibc/target/etc/config
+	cp ./opt/usr/lib/smb.conf $(ARCH)-uclibc/target/usr/lib
+	ln -sf ../tmp/smbshare $(ARCH)-uclibc/target/www/smb
+	# optimize the crypto library by removing unneeded symbols
+	# Install (and possibly optimize) C library
+#	$(MAKE) -f Makefile.northstar lib.$(ARCH)-install
+	# optimize the others library by removing unneeded symbols
+	$(MAKE) -f Makefile.northstar optimize-lib
+	# Install modules into filesystem
+	if grep -q "CONFIG_MODULES=y" $(LINUXDIR)/.config ; then \
+	    $(MAKE) -C $(LINUXDIR) modules_install DEPMOD=/bin/true INSTALL_MOD_PATH=$(TARGETDIR) ; \
+	fi
+ifeq ($(CONFIG_MADWIFI),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/wl
+endif
+ifeq ($(CONFIG_WP18),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/scsi
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/e1000
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/char
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/ipv6
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/sunrpc
+endif
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+endif
+ifneq ($(CONFIG_JFFS2),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jffs2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/lzma
+endif
+ifneq ($(CONFIG_IPV6),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/net/ipv6
+endif
+ifneq ($(CONFIG_BONDING),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/bonding
+endif
+ifneq ($(CONFIG_USBIP),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/staging/usbip
+endif
+ifneq ($(CONFIG_USB),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/usb
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/scsi
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/cdrom
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext2
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/isofs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/exportfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfsplus
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/fat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/vfat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/msdos
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/mbcache.ko
+endif
+ifeq ($(CONFIG_3G_ONLY),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls
+endif
+ifneq ($(CONFIG_USB_ADVANCED),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext3
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext4
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/btrfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd	
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/jbd2	
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfsplus
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/isofs
+endif
+ifeq ($(CONFIG_DIST),"mini")
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/ext4
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/xfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/btrfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/fuse
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/fat
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/udf
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfs
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/hfsplus
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/lib/raid6
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/cdrom
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls/nls_cp936.ko
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls/nls_cp950.ko
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/nls/nls_cp932.ko
+	rm -rf $(TARGETDIR)/etc/cfe/cfe_600.bin
+	rm -rf $(TARGETDIR)/usr/share/pci.ids
+	rm -rf $(TARGETDIR)/usr/sbin/mkfs.jffs2
+endif
+ifneq ($(CONFIG_DHDAP),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/dhd
+endif
+ifeq ($(CONFIG_BRCMFMAC),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/dhd
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/drivers/net/wl
+endif
+ifeq ($(CONFIG_WAVESAT),y)
+	make -f Makefile.northstar wavesat-install
+endif
+#	cp lib.$(ARCH)/libgcc_s.so.1 $(TARGETDIR)/lib
+	find $(TARGETDIR) -name "wl_*.o"  | xargs rm -rf
+ifneq ($(CONFIG_SAMBA),y)
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel/fs/cifs
+endif
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/build
+	rm -f $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/source
+        # Prepare filesystem
+        # Make sure mksquashfs-2.0 is used
+	cd $(TARGETDIR)  &&  find . -iname "CVS" | xargs rm -rf
+	cd $(TARGETDIR)  &&  find . -iname ".svn" | xargs rm -rf
+	find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	-find $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/extra -name *.ko -exec mv {} $(TARGETDIR)/lib/modules/$(KERNELRELEASE) \;
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/kernel
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/net
+	rm -rf $(TARGETDIR)/lib/modules/$(KERNELRELEASE)/extra
+	#e2fsck -y -f $(ARCH)-uclibc/root.fs
+	./busybox/examples/depmod.pl -F $(LINUXDIR)/System.map -b $(ARCH)-uclibc/target/lib/modules
+#	tar --directory=$(TARGETDIR) --remove-files -cvvjf $(TARGETDIR)/etc/local.tar.bz2 usr/local
+	rm -rf $(TARGETDIR)/usr/local
+	mkdir $(TARGETDIR)/usr/local
+ifeq ($(CONFIG_KAID),y)
+	cp kaid/kaid $(TARGETDIR)/usr/sbin
+endif
+#	mv $(TARGETDIR)/usr/lib/services.so $(TARGETDIR)/lib
+
+	export STRIP_KMOD="$(LINUXDIR)/scripts/strip-kmod.sh" && \
+	export STRIP="sstrip" && \
+	$(LINUXDIR)/scripts/rstrip.sh $(TARGETDIR)
+
+	cd $(TARGETDIR) && $(TOP)/misc/rootprep.sh
+	$(TOP)/../../tools/removewhitespace.sh $(TOP)/../../tools $(TARGETDIR)/etc/config
+	$(LINUXDIR)/scripts/squashfs/mksquashfs4 $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -comp xz -nopad  -root-owned -noappend -Xbcj arm -b 262144
+#	$(LINUXDIR)/scripts/squashfs/mksquashfs-lzma $(ARCH)-uclibc/target $(ARCH)-uclibc/root.fs -noappend -root-owned -le
+	mkfs.jffs2 --pad --big-endian --squash -e 0x20000 -o $(ARCH)-uclibc/dd-wrt.jffs2 -d $(ARCH)-uclibc/target
+	tools/lzma_4k e $(LINUXDIR)/arch/arm/boot/zImage $(ARCH)-uclibc/vmlinuz.lzma
+	echo -ne '\xde\xad\xc0\xde' >> $(ARCH)-uclibc/dd-wrt.jffs2
+#	./tools/trx -m 32000000 -o $(ARCH)-uclibc/northstar-firmware-jffs2.bin $(ARCH)-uclibc/vmlinuz.lzma $(ARCH)-uclibc/dd-wrt.jffs2
+	./tools/trx -m 40000000 -o $(ARCH)-uclibc/northstar-firmware-squashfs.bin $(ARCH)-uclibc/vmlinuz.lzma -a 131072 $(ARCH)-uclibc/root.fs
+	./tools/trx -m 40000000 -o tools/tplink/kernel.hdr0 $(ARCH)-uclibc/vmlinuz.lzma
+	cd tools/tplink && ./mktplinkfw3 -B ARCHERC9 -k kernel.hdr0 -r ../../arm-uclibc/root.fs -o ../../$(ARCH)-uclibc/archerc9.bin
+	cd tools/tplink && ./mktplinkfw3 -B ARCHERC9v2 -k kernel.hdr0 -r ../../arm-uclibc/root.fs -o ../../$(ARCH)-uclibc/archerc9v2.bin
+	cd tools/tplink && ./mktplinkfw3 -B ARCHERC1900 -k kernel.hdr0 -r ../../arm-uclibc/root.fs -o ../../$(ARCH)-uclibc/archerc1900.bin
+	cd tools/tplink && ./mktplinkfw3 -B ARCHERC8 -k kernel.hdr0 -r ../../arm-uclibc/root.fs -o ../../$(ARCH)-uclibc/archerc8.bin
+
+	-./tools/safeloader/tplink-safeloader -B ARCHER-C9-V3 -V 1 -k tools/tplink/kernel.hdr0 -r $(ARCH)-uclibc/root.fs -o $(ARCH)-uclibc/tplink-ARCHER-C9-v3-firmware.bin
+#	-./tools/safeloader/tplink-safeloader -B ARCHER-C9-V3 -V 1 -S -k $(ARCH)-uclibc/kernel.hdr0 -r $(ARCH)-uclibc/root.fs -o $(ARCH)-uclibc/archerC9v3_tp_recovery.bin
+#	-./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/ARCHER-C7v4-firmware.bin mips-uclibc/archerC7v4_tp_recovery.bin
+
+
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir868.img -i $(ARCH)-uclibc/vmlinuz.lzma -i $(ARCH)-uclibc/root.fs
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir868.img -m dev=/dev/mtdblock/7 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir868.img -i $(ARCH)-uclibc/raw-dir868.img.seama -m signature=wrgac02_dlob.hans_dir868
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir868.img
+	dd if=$(ARCH)-uclibc/web-dir868.img of=$(ARCH)-uclibc/webflash-dir868.img skip=48 iflag=skip_bytes 
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir868.trx $(ARCH)-uclibc/webflash-dir868.img
+
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir868b.img -i $(ARCH)-uclibc/vmlinuz.lzma -i $(ARCH)-uclibc/root.fs
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir868b.img -m dev=/dev/mtdblock/7 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir868b.img -i $(ARCH)-uclibc/raw-dir868b.img.seama -m signature=wrgac02_dlink.2013gui_dir868lb
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir868b.img
+	dd if=$(ARCH)-uclibc/web-dir868b.img of=$(ARCH)-uclibc/webflash-dir868b.img skip=56 iflag=skip_bytes 
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir868b.trx $(ARCH)-uclibc/webflash-dir868b.img
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir868c.img -i $(ARCH)-uclibc/vmlinuz.lzma -i $(ARCH)-uclibc/root.fs
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir868c.img -m dev=/dev/mtdblock/7 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir868c.img -i $(ARCH)-uclibc/raw-dir868c.img.seama -m signature=wrgac35_dlink.2013gui_dir868lc
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir868c.img
+	dd if=$(ARCH)-uclibc/web-dir868c.img of=$(ARCH)-uclibc/webflash-dir868c.img skip=56 iflag=skip_bytes 
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir868c.trx $(ARCH)-uclibc/webflash-dir868c.img
+
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir860.img -i $(ARCH)-uclibc/vmlinuz.lzma -i $(ARCH)-uclibc/root.fs
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir860.img -m dev=/dev/mtdblock/7 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir860.img -i $(ARCH)-uclibc/raw-dir860.img.seama -m signature=wrgac03_dlob.hans_dir860
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir860.img
+	dd if=$(ARCH)-uclibc/web-dir860.img of=$(ARCH)-uclibc/webflash-dir860.img skip=48 iflag=skip_bytes 
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir860.trx $(ARCH)-uclibc/webflash-dir860.img
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir890.img -i $(ARCH)-uclibc/vmlinuz.lzma -i $(ARCH)-uclibc/root.fs
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir890.img -m dev=/dev/mtdblock/7 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir890.img -i $(ARCH)-uclibc/raw-dir890.img.seama -m signature=wrgac36_dlink.2013gui_dir890
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir890.img
+	dd if=$(ARCH)-uclibc/web-dir890.img of=$(ARCH)-uclibc/webflash-dir890.img skip=52 iflag=skip_bytes 
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir890.trx $(ARCH)-uclibc/webflash-dir890.img
+
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir885.img -i $(ARCH)-uclibc/vmlinuz.lzma -i $(ARCH)-uclibc/root.fs
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir885.img -m dev=/dev/mtdblock/7 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir885.img -i $(ARCH)-uclibc/raw-dir885.img.seama -m signature=wrgac42_dlink.2015_dir885l
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir885.img
+	dd if=$(ARCH)-uclibc/web-dir885.img of=$(ARCH)-uclibc/webflash-dir885.img skip=52 iflag=skip_bytes 
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir885.trx $(ARCH)-uclibc/webflash-dir885.img
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir895.img -i $(ARCH)-uclibc/vmlinuz.lzma -i $(ARCH)-uclibc/root.fs
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir895.img -m dev=/dev/mtdblock/7 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir895.img -i $(ARCH)-uclibc/raw-dir895.img.seama -m signature=wrgac40_dlink.2015_dir895l
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir895.img
+	dd if=$(ARCH)-uclibc/web-dir895.img of=$(ARCH)-uclibc/webflash-dir895.img skip=52 iflag=skip_bytes 
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir895.trx $(ARCH)-uclibc/webflash-dir895.img
+
+
+	./tools/seama/packimgs -b 64 -o $(ARCH)-uclibc/raw-dir880.img -i $(ARCH)-uclibc/vmlinuz.lzma -i $(ARCH)-uclibc/root.fs
+	./tools/seama/seama -i $(ARCH)-uclibc/raw-dir880.img -m dev=/dev/mtdblock/7 -m type=firmware 
+	./tools/seama/seama -s $(ARCH)-uclibc/web-dir880.img -i $(ARCH)-uclibc/raw-dir880.img.seama -m signature=wrgac16_dlink.2013gui_dir880
+	./tools/seama/seama -d $(ARCH)-uclibc/web-dir880.img
+	dd if=$(ARCH)-uclibc/web-dir880.img of=$(ARCH)-uclibc/webflash-dir880.img skip=52 iflag=skip_bytes 
+	./tools/trx_n -m 40000000 -o $(ARCH)-uclibc/webflash-dir880.trx $(ARCH)-uclibc/webflash-dir880.img
+
+	
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC56U,3.0.0.4,380,760,$(ARCH)-uclibc/asus_rt-ac56u-firmware.trx
+#	./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC67U,3.0.0.4,$(ARCH)-uclibc/asus_rt-ac67u-firmware.trx
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC68U,3.0.0.4,380,760,$(ARCH)-uclibc/asus_rt-ac68u-firmware.trx
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC87U,3.0.0.4,380,760,$(ARCH)-uclibc/asus_rt-ac87u-firmware.trx
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC88U,3.0.0.4,380,760,$(ARCH)-uclibc/asus_rt-ac88u-firmware.trx
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC5300,3.0.0.4,380,760,$(ARCH)-uclibc/asus_rt-ac5300-firmware.trx
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC3200,3.0.0.4,380,760,$(ARCH)-uclibc/asus_rt-ac3200-firmware.trx
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC3100,3.0.0.4,380,760,$(ARCH)-uclibc/asus_rt-ac3100-firmware.trx
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-N18U,3.0.0.4,380,760,$(ARCH)-uclibc/asus_rt-n18u-firmware.trx
+	-./tools/trx_asus -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC1200G+,3.0.0.4,380,1234,$(ARCH)-uclibc/asus_rt-ac1200gp-firmware.trx
+#	-./tools/trx_asus2 -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC1200G+,3.0.0.4,380,1234,$(ARCH)-uclibc/asus_rt-ac1200gp-firmware.trx2
+#	-./tools/trx_asus3 -i $(ARCH)-uclibc/northstar-firmware-squashfs.bin -r RT-AC1200G+,3.0.0.4,380,1234,$(ARCH)-uclibc/asus_rt-ac1200gp-firmware.trx3
+
+	dd if=$(ARCH)-uclibc/northstar-firmware-squashfs.bin of=$(ARCH)-uclibc/buffalo.trx bs=131072 conv=sync
+	cd $(ARCH)-uclibc && ../tools/bufenc/makefw.sh buffalo
+
+	cp $(ARCH)-uclibc/northstar-firmware-squashfs.bin $(ARCH)-uclibc/netgear.trx
+ifeq ($(CONFIG_DHDAP),y)
+ifneq ($(CONFIG_NVRAM_128K),y)
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r8000.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r8000.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R8000.chk
+else
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r7000P.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r7000P.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R7000P.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r8500.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r8500.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R8500.chk
+endif
+else
+ifneq ($(CONFIG_NVRAM_128K),y)
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-ex6200.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-ex6200.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_EX6200.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-ac1450.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-ac1450.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_AC1450.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r6250.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r6250.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R6250.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r6300v2.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r6300v2.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R6300V2.chk 
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r6300v2-CH.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r6300v2-CH.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R6300V2CH.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r6700.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r6700.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R6700.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r7000.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r7000.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R7000.chk
+else
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r6400.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r6400.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R6400.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r6400v2.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r6400v2.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R6400V2.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r6400v2OTP.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r6400v2.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R6400V2OTP.chk
+	./netgear/packet -k $(ARCH)-uclibc/netgear.trx -f netgear/emptyfile -b netgear/comp-r6700v3.txt -ok kernel_image -oall dd-wrt.bin -or rootfs_image -i netgear/ambitCfg-r6400v2.h && cp dd-wrt.bin.chk $(ARCH)-uclibc/K3_R6700V3.chk
+endif
+endif	
+	-$(MAKE) -f Makefile.northstar validate MAXIMUM_SIZE=7470000 EX_PATH=$(ARCH)-uclibc/K3_EX6200.chk
+
+
+	cp $(ARCH)-uclibc/northstar-firmware-squashfs.bin  $(ARCH)-uclibc/tnet818.trx
+	./tools/trendnet/auto_add_header_818 $(ARCH)-uclibc/tnet818.trx
+
+	cp $(ARCH)-uclibc/northstar-firmware-squashfs.bin  $(ARCH)-uclibc/tnet828.trx
+	./tools/trendnet/auto_add_header_828 $(ARCH)-uclibc/tnet828.trx
+
+	cp $(ARCH)-uclibc/northstar-firmware-squashfs.bin  $(ARCH)-uclibc/tnet812.trx
+	./tools/trendnet/auto_add_header_812 $(ARCH)-uclibc/tnet812.trx
+
+	cp $(ARCH)-uclibc/northstar-firmware-squashfs.bin  $(ARCH)-uclibc/tnet811.trx
+	./tools/trendnet/auto_add_header_811 $(ARCH)-uclibc/tnet811.trx
+
+include rules/all.mk
+
+.PHONY: all clean distclean mrproper install package
+.PHONY: conf mconf oldconf kconf kmconf config menuconfig oldconfig
+.PHONY: dummy fixkc libnet libpcap
+
+
+

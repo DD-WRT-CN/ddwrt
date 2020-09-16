@@ -1,0 +1,222 @@
+#!/bin/sh
+
+# start: [up] [down] [wan_if] [mtu] [imq_wan] [aqd] [imq_lan]
+# status: status [wan_if] [imq_wan] [imq_lan]
+# stop:	stop xx [wan_if] xx	[imq_wan] [imq_lan]
+
+TC=/usr/sbin/tc
+IPTABLES=/usr/sbin/iptables
+IP=/usr/sbin/ip
+IPT="${IPTABLES} -t mangle "
+TCA="${TC} class add dev "
+TFA="${TC} filter add dev "
+TQA="${TC} qdisc add dev "
+
+UL=$1
+DL=$2
+ECN=""
+LL=1000000
+TGT="target 5ms"
+
+if [ "$2" != "xx" ]; then
+	if [ $1 -lt 2000 ]; then
+		TGT="target 20ms"
+		ECN="noecn"
+	fi
+fi
+
+
+if [ "$1" = "status" ]
+then
+	echo "Interface: $2"; echo
+	$TC -s qdisc ls dev $2
+	echo 
+	$TC -s class ls dev $2
+	$TC filter show dev $2
+	echo; echo "Interface: $3"; echo
+	$TC -s qdisc ls dev $3
+	echo
+	$TC -s class ls dev $3
+	$TC filter show dev $3
+	if [ "$4" != "0" ]; then
+	echo; echo "Interface: $4"; echo
+	$TC -s qdisc ls dev $4
+	echo
+	$TC -s class ls dev $4
+	$TC filter show dev $4
+	fi	
+	exit
+fi
+$TC qdisc del dev $3 root  2> /dev/null > /dev/null
+$TC qdisc del dev $5 root  2> /dev/null > /dev/null
+$TC qdisc del dev $7 root  2> /dev/null > /dev/null
+
+$IP link set $5 down
+$IP link set $7 down
+if [ "$1" = "stop" ]
+then
+	exit
+fi
+$TQA $3 root handle 1: hfsc default 30
+$TCA $3 parent 1:  classid 1:1   hfsc sc rate ${UL}kbit ul rate ${UL}kbit
+$TCA $3 parent 1:1 classid 1:2   hfsc sc rate $((75*${UL}/100))kbit ul rate ${UL}kbit
+$TCA $3 parent 1:1 classid 1:3   hfsc sc rate $((50*${UL}/100))kbit ul rate ${UL}kbit 
+$TCA $3 parent 1:1 classid 1:4   hfsc sc rate $((25*${UL}/100))kbit ul rate ${UL}kbit 
+$TCA $3 parent 1:1 classid 1:5   hfsc sc rate $((15*${UL}/100))kbit ul rate ${UL}kbit 
+$TCA $3 parent 1:1 classid 1:6   hfsc sc rate $((5*${UL}/100))kbit  ul rate ${UL}kbit
+$TCA $3 parent 1:2 classid 1:100 hfsc sc rate $((75*${UL}/100))kbit ul rate ${UL}kbit
+$TCA $3 parent 1:3 classid 1:10  hfsc sc rate $((50*${UL}/100))kbit ul rate ${UL}kbit
+$TCA $3 parent 1:4 classid 1:20  hfsc sc rate $((25*${UL}/100))kbit ul rate ${UL}kbit
+$TCA $3 parent 1:5 classid 1:30  hfsc sc rate $((15*${UL}/100))kbit ul rate ${UL}kbit
+$TCA $3 parent 1:6 classid 1:40  hfsc sc rate $((5*${UL}/100))kbit  ul rate ${UL}kbit
+
+if [ "$6" = "sfq" ]
+then
+	$TQA $3 parent 1:100 handle 100: sfq perturb 10 quantum $((${4}+14))
+	$TQA $3 parent 1:10 handle 10: sfq perturb 10 quantum $((${4}+14))
+	$TQA $3 parent 1:20 handle 20: sfq perturb 10 quantum $((${4}+14))
+	$TQA $3 parent 1:30 handle 30: sfq perturb 10 quantum $((${4}+14))
+	$TQA $3 parent 1:40 handle 40: sfq perturb 10 quantum $((${4}+14))
+elif [ "$6" = "codel" ]
+then
+	$TQA $3 parent 1:100 handle 100: $6 $TGT $ECN
+	$TQA $3 parent 1:10 handle 10: $6 $TGT $ECN
+	$TQA $3 parent 1:20 handle 20: $6 $TGT $ECN
+	$TQA $3 parent 1:30 handle 30: $6 $TGT $ECN
+	$TQA $3 parent 1:40 handle 40: $6 $TGT $ECN
+elif [ "$6" = "fq_codel" ]
+then
+	$TQA $3 parent 1:100 handle 100: $6
+	$TQA $3 parent 1:10 handle 10: $6
+	$TQA $3 parent 1:20 handle 20: $6
+	$TQA $3 parent 1:30 handle 30: $6
+	$TQA $3 parent 1:40 handle 40: $6
+elif [ "$6" = "cake" ]
+then
+	$TQA $3 parent 1:100 handle 100: $6 unlimited ethernet besteffort noatm raw internet dual-srchost ack-filter nat
+	$TQA $3 parent 1:10 handle 10: $6 unlimited ethernet besteffort noatm raw internet dual-srchost ack-filter nat
+	$TQA $3 parent 1:20 handle 20: $6 unlimited ethernet besteffort noatm raw internet dual-srchost ack-filter nat
+	$TQA $3 parent 1:30 handle 30: $6 unlimited ethernet besteffort noatm raw internet dual-srchost ack-filter nat
+	$TQA $3 parent 1:40 handle 40: $6 unlimited ethernet besteffort noatm raw internet dual-srchost ack-filter nat
+elif [ "$6" = "pie" ]
+then
+	$TQA $3 parent 1:100 handle 100: $6 ecn
+	$TQA $3 parent 1:10 handle 10: $6 ecn
+	$TQA $3 parent 1:20 handle 20: $6 ecn
+	$TQA $3 parent 1:30 handle 30: $6 ecn
+	$TQA $3 parent 1:40 handle 40: $6 ecn
+fi
+$TFA $3 protocol ip pref 1 handle 0x64 fw classid 1:100
+$TFA $3 protocol ip pref 3 handle 0x0A fw classid 1:10        
+$TFA $3 protocol ip pref 5 handle 0x14 fw classid 1:20        
+$TFA $3 protocol ip pref 8 handle 0x1E fw classid 1:30        
+$TFA $3 protocol ip pref 9 handle 0x28 fw classid 1:40        
+
+if [ "$2" != "0" ] ; then 
+	$IP link set $5 up
+	
+	$TQA $5 root handle 1: hfsc default 30                               
+	$TCA $5 parent 1:  classid 1:1   hfsc sc rate ${DL}kbit ul rate ${DL}kbit
+	$TCA $5 parent 1:1 classid 1:2   hfsc sc rate $((75*${DL}/100))kbit ul rate ${DL}kbit
+	$TCA $5 parent 1:1 classid 1:3   hfsc sc rate $((50*${DL}/100))kbit ul rate ${DL}kbit 
+	$TCA $5 parent 1:1 classid 1:4   hfsc sc rate $((25*${DL}/100))kbit ul rate ${DL}kbit 
+	$TCA $5 parent 1:1 classid 1:5   hfsc sc rate $((15*${DL}/100))kbit ul rate ${DL}kbit 
+	$TCA $5 parent 1:1 classid 1:6   hfsc sc rate $((5*${DL}/100))kbit  ul rate ${DL}kbit
+	$TCA $5 parent 1:2 classid 1:100 hfsc sc rate $((75*${DL}/100))kbit ul rate ${DL}kbit
+	$TCA $5 parent 1:3 classid 1:10  hfsc sc rate $((50*${DL}/100))kbit ul rate ${DL}kbit
+	$TCA $5 parent 1:4 classid 1:20  hfsc sc rate $((25*${DL}/100))kbit ul rate ${DL}kbit
+	$TCA $5 parent 1:5 classid 1:30  hfsc sc rate $((15*${DL}/100))kbit ul rate ${DL}kbit
+	$TCA $5 parent 1:6 classid 1:40  hfsc sc rate $((5*${DL}/100))kbit  ul rate ${DL}kbit
+	if [ "$6" = "sfq" ]
+	then
+		$TQA $5 parent 1:100 handle 100: sfq perturb 10 quantum $((${4}+14))
+		$TQA $5 parent 1:10 handle 10: sfq perturb 10 quantum $((${4}+14))
+		$TQA $5 parent 1:20 handle 20: sfq perturb 10 quantum $((${4}+14))
+		$TQA $5 parent 1:30 handle 30: sfq perturb 10 quantum $((${4}+14))
+		$TQA $5 parent 1:40 handle 40: sfq perturb 10 quantum $((${4}+14))
+	elif [ "$6" = "codel" ]
+	then
+		$TQA $5 parent 1:100 handle 100: $6 $TGT $ECN
+		$TQA $5 parent 1:10 handle 10: $6 $TGT $ECN
+		$TQA $5 parent 1:20 handle 20: $6 $TGT $ECN
+		$TQA $5 parent 1:30 handle 30: $6 $TGT $ECN
+		$TQA $5 parent 1:40 handle 40: $6 $TGT $ECN
+	elif [ "$6" = "fq_codel" ]
+	then
+		$TQA $3 parent 1:100 handle 100: $6
+		$TQA $3 parent 1:10 handle 10: $6
+		$TQA $3 parent 1:20 handle 20: $6
+		$TQA $3 parent 1:30 handle 30: $6
+		$TQA $3 parent 1:40 handle 40: $6
+	elif [ "$6" = "cake" ]
+	then
+		$TQA $5 parent 1:100 handle 100: $6 unlimited ethernet besteffort noatm raw internet dual-dsthost ack-filter nat
+		$TQA $5 parent 1:10 handle 10: $6 unlimited ethernet besteffort noatm raw internet dual-dsthost ack-filter nat
+		$TQA $5 parent 1:20 handle 20: $6 unlimited ethernet besteffort noatm raw internet dual-dsthost ack-filter nat
+		$TQA $5 parent 1:30 handle 30: $6 unlimited ethernet besteffort noatm raw internet dual-dsthost ack-filter nat
+		$TQA $5 parent 1:40 handle 40: $6 unlimited ethernet besteffort noatm raw internet dual-dsthost ack-filter nat
+	elif [ "$6" = "pie" ]
+	then
+		$TQA $5 parent 1:100 handle 100: $6 ecn
+		$TQA $5 parent 1:10 handle 10: $6 ecn
+		$TQA $5 parent 1:20 handle 20: $6 ecn
+		$TQA $5 parent 1:30 handle 30: $6 ecn
+		$TQA $5 parent 1:40 handle 40: $6 ecn
+	fi
+	$TFA $5 protocol ip pref 1 handle 0x64 fw classid 1:100
+	$TFA $5 protocol ip pref 3 handle 0x0A fw classid 1:10        
+	$TFA $5 protocol ip pref 5 handle 0x14 fw classid 1:20        
+	$TFA $5 protocol ip pref 8 handle 0x1E fw classid 1:30        
+	$TFA $5 protocol ip pref 9 handle 0x28 fw classid 1:40 
+fi
+
+if [ "$7" != "0" ] ; then
+	$IP link set $7 up
+	
+	$TQA $7 root handle 1: hfsc default 30
+	$TCA $7 parent 1:  classid 1:1   hfsc sc rate ${LL}kbit ul rate ${LL}kbit
+	$TCA $7 parent 1:1 classid 1:2   hfsc sc rate $((75*${LL}/100))kbit ul rate ${LL}kbit
+	$TCA $7 parent 1:1 classid 1:3   hfsc sc rate $((50*${LL}/100))kbit ul rate ${LL}kbit 
+	$TCA $7 parent 1:1 classid 1:4   hfsc sc rate $((25*${LL}/100))kbit ul rate ${LL}kbit 
+	$TCA $7 parent 1:1 classid 1:5   hfsc sc rate $((15*${LL}/100))kbit ul rate ${LL}kbit 
+	$TCA $7 parent 1:1 classid 1:6   hfsc sc rate $((5*${LL}/100))kbit  ul rate ${LL}kbit
+	$TCA $7 parent 1:2 classid 1:100 hfsc sc rate $((75*${LL}/100))kbit ul rate ${LL}kbit
+	$TCA $7 parent 1:3 classid 1:10  hfsc sc rate $((50*${LL}/100))kbit ul rate ${LL}kbit
+	$TCA $7 parent 1:4 classid 1:20  hfsc sc rate $((25*${LL}/100))kbit ul rate ${LL}kbit
+	$TCA $7 parent 1:5 classid 1:30  hfsc sc rate $((15*${LL}/100))kbit ul rate ${LL}kbit
+	$TCA $7 parent 1:6 classid 1:40  hfsc sc rate $((5*${LL}/100))kbit  ul rate ${LL}kbit
+	if [ "$6" = "sfq" ]
+	then
+		$TQA $7 parent 1:100 handle 100: sfq perturb 10 quantum $((${4}+14))
+		$TQA $7 parent 1:10 handle 10: sfq perturb 10 quantum $((${4}+14))
+		$TQA $7 parent 1:20 handle 20: sfq perturb 10 quantum $((${4}+14))
+		$TQA $7 parent 1:30 handle 30: sfq perturb 10 quantum $((${4}+14))
+		$TQA $7 parent 1:40 handle 40: sfq perturb 10 quantum $((${4}+14))
+	elif [ "$6" = "codel" ]
+	then
+		$TQA $7 parent 1:100 handle 100: $6 $TGT $ECN
+		$TQA $7 parent 1:10 handle 10: $6 $TGT $ECN
+		$TQA $7 parent 1:20 handle 20: $6 $TGT $ECN
+		$TQA $7 parent 1:30 handle 30: $6 $TGT $ECN
+		$TQA $7 parent 1:40 handle 40: $6 $TGT $ECN
+	elif [ "$6" = "fq_codel" ]
+	then
+		$TQA $3 parent 1:100 handle 100: $6
+		$TQA $3 parent 1:10 handle 10: $6
+		$TQA $3 parent 1:20 handle 20: $6
+		$TQA $3 parent 1:30 handle 30: $6
+		$TQA $3 parent 1:40 handle 40: $6
+	elif [ "$6" = "cake" ]
+	then
+		$TQA $7 parent 1:100 handle 100: $6 unlimited ethernet besteffort noatm raw lan triple-isolate no-ack-filter nonat
+		$TQA $7 parent 1:10 handle 10: $6 unlimited ethernet besteffort noatm raw lan triple-isolate no-ack-filter nonat
+		$TQA $7 parent 1:20 handle 20: $6 unlimited ethernet besteffort noatm raw lan triple-isolate no-ack-filter nonat
+		$TQA $7 parent 1:30 handle 30: $6 unlimited ethernet besteffort noatm raw lan triple-isolate no-ack-filter nonat
+		$TQA $7 parent 1:40 handle 40: $6 unlimited ethernet besteffort noatm raw lan triple-isolate no-ack-filter nonat
+	fi
+	$TFA $7 protocol ip pref 1 handle 0x64 fw classid 1:100
+	$TFA $7 protocol ip pref 3 handle 0x0A fw classid 1:10
+	$TFA $7 protocol ip pref 5 handle 0x14 fw classid 1:20
+	$TFA $7 protocol ip pref 8 handle 0x1E fw classid 1:30
+	$TFA $7 protocol ip pref 9 handle 0x28 fw classid 1:40
+fi

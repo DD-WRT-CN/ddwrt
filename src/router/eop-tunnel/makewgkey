@@ -1,0 +1,5 @@
+#!/bin/sh
+nv=/usr/sbin/nvram
+mkdir -p /tmp/wireguard
+$nv set oet$1_private=$(wg genkey)
+$nv set oet$1_public=$($nv get oet$1_private|wg pubkey)

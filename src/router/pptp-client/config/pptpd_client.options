@@ -1,0 +1,18 @@
+defaultroute
+lock
+noauth
+nodetach
+refuse-pap
+refuse-chap
+refuse-mschap
+nobsdcomp
+nodeflate
+mppc
+lcp-echo-failure 4
+lcp-echo-interval 30
+maxfail 0
+usepeerdns
+idle 0
+ip-up-script /tmp/pptpd_client/ip-up
+ip-down-script /tmp/pptpd_client/ip-down
+ipparam kelokepptpd

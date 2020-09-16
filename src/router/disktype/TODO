@@ -1,0 +1,24 @@
+$Id$   -*- text -*-
+
+ disktype ToDo
+===============
+
+ext4
+btrfs
+
+Check NTFS, HPFS, FAT stuff
+Check EVMS
+Nero CD images (.nrg)
+OCFS (Oracle Cluster FS) http://oss.oracle.com/projects/ocfs/
+Other disklabels: SGI, OSF, Ultrix, Acorn, MS LDM, IBM, Minix,
+  Unixware
+Other FS: SGI EFS, SCO BFS, Acorn ADFS, JFFS1/2, IBM CMS FS
+
+Reverse-engineer the format of Apple disk images (esp. .dmg's)
+
+Port CD TOC access (ioctl's) to non-Linux systems
+
+Use C99 fixed-size integer types (see "c99-branch" in CVS)
+
+Make disktype a reusable library
+Record detection results in a data structure
