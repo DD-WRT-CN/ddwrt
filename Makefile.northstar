@@ -17,15 +17,57 @@ SRCBASE := src
 IMAGEDIR := $(RELEASEDIR)/image
 export PATH := $(RELEASEDIR)/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin:$(PATH)
 export TOOLCHAIN := $(RELEASEDIR)/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin
+ifeq ($(wildcard $(RELEASEDIR)/.svn/*),)
+	SVNREV := 44374
+else
+	SVNREV := `svnversion -n`
+endif
+
+dd_ver:
+	echo "make dd_ver"
+	echo '#define SVN_REVISION "$(SVNREV)"' > src/router/libutils/revision.h
+	echo '#define SVN_REVISION "$(SVNREV)"' > src/router/httpd/visuals/revision.h
+	echo '#define SVN_REVISION "$(SVNREV)"' > src/router/httpd/revision.h
+	echo '#define SVN_REVISION "$(SVNREV)"' > src/router/shared/revision.h
+	echo '#define SVN_REVISION "$(SVNREV)"' > src/router/services/revision.h
+	echo '#define SVN_REVISION "$(SVNREV)"' > src/router/rc/revision.h
+
+pre_config:
+ifeq ($(BUILD_NAME),)
+		cp -rf src/router/configs/northstar/.config_northstar src/router/.config
+endif
+
+dd_tools:
+ifeq ($(wildcard $(SRCBASE)/router/tools/trx),)
+	gcc -o $(RELEASEDIR)/opt/tools/trx $(RELEASEDIR)/opt/tools/trx.c
+	gcc -o $(RELEASEDIR)/opt/tools/trx_n $(RELEASEDIR)/opt/tools/trx_n.c
+	gcc -o $(RELEASEDIR)/tools/strip $(RELEASEDIR)/tools/strip.c
+	gcc -o $(RELEASEDIR)/tools/write3 $(RELEASEDIR)/tools/write3.c
+	gcc -o $(RELEASEDIR)/tools/write4 $(RELEASEDIR)/tools/write4.c
+	#gcc -o -DUEMF -DWEBS -DLINUX $(RELEASEDIR)/tools/webcomp $(RELEASEDIR)/tools/webcomp.c
+	#make -C $(RELEASEDIR)/src/router/busybox/scripts bb_mkdep
+	make -C $(RELEASEDIR)/src/router/tools jsformat
+	cp $(RELEASEDIR)/opt/tools/trx $(RELEASEDIR)/src/router/tools/
+	cp $(RELEASEDIR)/opt/tools/trx_n $(RELEASEDIR)/src/router/tools/
+	ln -sf $(RELEASEDIR)/opt $(RELEASEDIR)/src/router/
+	#chmod +x $(RELEASEDIR)/src/router/iptables/extensions/.dccp-test
+	#chmod +x $(RELEASEDIR)/src/router/iptables/extensions/.layer7-test
+endif
 
 install: all
 	install -d $(RELEASEDIR)/image
 	$(MAKE) -C src install
 
-all clean:
-	if [ ! -f src/router/.config ]; then \
-		cp src/router/configs/northstar/.config_northstar src/router/.config; \
-	fi
+all: dd_ver pre_config dd_tools
+	#$(MAKE) -C src/router/  -f Makefile.northstar jansson-configure
+	#$(MAKE) -C src/router/  -f Makefile.northstar jansson
+	#$(MAKE) -C src/router/  -f Makefile.northstar nvram
+	#$(MAKE) -C src/router/  -f Makefile.northstar utils
+	#$(MAKE) -C src/router/  -f Makefile.northstar iptables
+	#$(MAKE) -C src/router/  -f Makefile.northstar libnet
+	$(MAKE) -C src/router/ -f Makefile.northstar $@
+
+clean:
 	$(MAKE) -C src/router/ -f Makefile.northstar $@
 
 distclean:

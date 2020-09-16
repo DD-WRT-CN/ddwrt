@@ -52,7 +52,7 @@ export OPENSSL_CMAKEFLAGS := -ffunction-sections -fdata-sections -Wl,--gc-sectio
 endif
 
 
-openssl:
+all openssl: openssl-configure
 	$(MAKE) -C openssl CC="$(CC) -I$(TOP)/openssl/crypto -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
 	$(MAKE) -C openssl build_libs CC="$(CC) -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
 	$(MAKE)  -C openssl build_programs CC="$(CC) -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
@@ -66,7 +66,7 @@ openssl-apps: openssl-shared
 	-rm openssl/apps/openssl
 	$(MAKE) -C openssl build_programs CC="$(CC) -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
 
-openssl-apps-static:
+openssl-apps-static: openssl
 	-rm openssl/libcrypto.so.1.1
 	-rm openssl/libssl.so.1.1
 	-rm openssl/apps/openssl
@@ -90,7 +90,7 @@ endif
 openssl-clean:
 	$(MAKE) -C openssl clean
 
-
+.PHONY: all openssl
 
 OPENSSL_NO_CIPHERS:= no-idea no-md2 no-mdc2 no-rc5 no-camellia no-whirlpool no-seed -no-gost no-ssl3 no-heartbeats no-rc2 no-weak-ssl-ciphers no-zlib no-aria no-devcryptoeng no-siphash no-sm2 no-sm3 no-sm4 no-tests no-external-tests
 

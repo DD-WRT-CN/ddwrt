@@ -446,7 +446,7 @@ endif
 	WLFILES_SRC_HI += src/wl/sys/wlc_event.c
 	WLFILES_SRC_HI += src/wl/sys/wlc_channel.c
 	WLFILES_SRC_HI += src/wl/clm/src/wlc_clm.c
-	WLFILES_SRC_HI += src/wl/clm/src/wlc_clm_data.c
+	#WLFILES_SRC_HI += src/wl/clm/src/wlc_clm_data.c
 	ifeq ($(WLCLMINC),1)
 		WLFLAGS += -DWLCLMINC
 		WLFILES_SRC_HI += src/wl/clm/src/wlc_clm_data_inc.c

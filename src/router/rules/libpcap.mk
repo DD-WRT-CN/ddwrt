@@ -12,7 +12,7 @@ libpcap-configure:
 		--with-pcap=linux --without-septel --without-dag \
 		--disable-canusb --disable-can --disable-bluetooth \
 		CC="$(CC)" CFLAGS="$(COPTS) $(MIPS16_OPT) -fPIC"
-libpcap:
+libpcap: libpcap-configure
 	rm -f $(TOP)/libpcap/libpcap.a
 	rm -f $(TOP)/libpcap/libpcap.so
 	$(MAKE) -C libpcap CC="$(CC)" AR=$(AR) RANLIB=$(RANLIB) libpcap.so

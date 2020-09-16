@@ -2,7 +2,7 @@ jansson-configure:
 	cd jansson && autoreconf --force --install
 	cd jansson && ./configure --prefix=/usr --libdir=/usr/lib --host=$(ARCH)-linux CC="$(CC)" CFLAGS="$(COPTS) $(MIPS16_OPT) -ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" LDFLAGS="-lm"
 
-jansson:
+jansson: jansson-configure
 	$(MAKE) -C jansson
 
 jansson-clean:

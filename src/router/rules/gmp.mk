@@ -8,7 +8,7 @@ gmp-configure:
 		CFLAGS="$(COPTS) $(MIPS16_OPT) -I$(TOP)/iptables/include/libipq/ -ffunction-sections -fdata-sections" LDFLAGS="-L$(TOP)/iptables/libipq"
 
 
-gmp:
+gmp: gmp-configure
 	$(MAKE) -C gmp CFLAGS="$(COPTS)"
 
 gmp-install:

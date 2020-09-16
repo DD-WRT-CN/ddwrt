@@ -11,7 +11,7 @@ json-c-configure:
 	-mkdir -p $(TOP)/_staging
 	make -C json-c install
 
-json-c:
+json-c: json-c-configure
 	make -C json-c
 	-mkdir -p $(TOP)/_staging
 	make -C json-c install

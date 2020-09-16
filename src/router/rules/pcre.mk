@@ -3,7 +3,7 @@ pcre-configure:
 	touch $(TOP)/pcre/*   
 
 
-pcre:
+pcre: pcre-configure
 	$(MAKE) -C pcre CFLAGS="$(COPTS) $(MIPS16_OPT)" CXXFLAGS="$(COPTS) $(MIPS16_OPT)" CPPFLAGS="$(COPTS) $(MIPS16_OPT)"
 
 pcre-clean:

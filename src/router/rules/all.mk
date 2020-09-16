@@ -129,7 +129,7 @@ include rules/samba3.mk
 include rules/ntfs-3g.mk
 include rules/mmc.mk
 include rules/mmc-fonera.mk
-include rules/mmc-ixp4xx.mk
+#include rules/mmc-ixp4xx.mk
 include rules/openser.mk				
 include rules/nocat.mk
 include rules/http-redirect.mk
@@ -215,7 +215,7 @@ include rules/ethtool.mk
 include rules/openlldp.mk
 include rules/ipsec-tools.mk
 include rules/libunwind.mk
-include rules/strace.mk
+#include rules/strace.mk
 include rules/util-linux.mk
 include rules/asterisk.mk
 include rules/zaptel.mk
@@ -227,7 +227,7 @@ include rules/services.mk
 include rules/utils.mk
 include rules/libutils.mk
 include rules/zlib.mk
-include rules/oled.mk
+#include rules/oled.mk
 include rules/pound.mk
 include rules/radvd.mk
 include rules/nprobe.mk
@@ -238,11 +238,11 @@ include rules/ap-serv.mk
 include rules/tolapai.mk
 include rules/buffalo-flash.mk
 include rules/relayd.mk
-include mac80211-rules/ath9k.mk
+#include mac80211-rules/ath9k.mk
 include rules/libnltiny.mk
 include rules/hotplug2.mk
 include rules/dsl_cpe_control.mk
-include rules/atm.mk
+#include rules/atm.mk
 include rules/aiccu.mk
 include rules/l2tpv3tun.mk
 include rules/rt3062.mk

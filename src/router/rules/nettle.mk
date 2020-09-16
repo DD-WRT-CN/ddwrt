@@ -8,7 +8,7 @@ endif
 nettle-configure: pcre zlib openssl gmp
 	cd nettle && ./configure --host=$(ARCH)-linux --disable-pic --prefix=/usr --libdir=/usr/lib $(NETTLE_CONFIGURE_ARGS) CFLAGS="$(COPTS) $(MIPS16_OPT) -fPIC -ffunction-sections -fdata-sections -I$(TOP)/pcre -I$(TOP)/gmp -I$(TOP)/zlib  -fPIC" CPPFLAGS="$(COPTS) $(MIPS16_OPT) -fPIC" LDFLAGS="-L$(TOP)/pcre/.libs -L$(TOP)/gmp/.libs -lpthread -lpcre -L$(TOP)/zlib $(LDFLAGS) -lz"
 
-nettle: openssl gmp
+nettle: openssl gmp nettle-configure
 	make -C nettle desdata
 	make -C nettle 
 

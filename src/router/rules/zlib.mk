@@ -35,7 +35,7 @@ zlib-configure:
 	$(call CMakeClean,$(ZLIB_PKG_BUILD_DIR))
 	$(call CMakeConfigure,$(ZLIB_PKG_BUILD_DIR),$(ZLIB_STAGING_DIR),$(ZLIB_CMAKE_OPTIONS),$(ZLIB_EXTRA_CFLAGS),$(ZLIB_EXTRA_LDFLAGS)) 
 
-zlib:
+zlib: zlib-configure
 	$(MAKE) -C zlib
 	rm -f zlib/libz.a
 

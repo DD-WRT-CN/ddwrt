@@ -74,14 +74,6 @@
 #define F_OK	0
 #endif /* WIN || CE */
 
-#if (defined (LINUX) && !defined(__rtems__) && !defined (_STRUCT_TIMEVAL))
-struct timeval
-{
-	time_t	tv_sec;		/* Seconds.  */
-	time_t	tv_usec;	/* Microseconds.  */
-};
-#define _STRUCT_TIMEVAL 1
-#endif /* LINUX && ! _STRUCT_TIMEVAL */
 
 #ifdef ECOS
 	#define		O_RDONLY		1
