@@ -14,7 +14,7 @@ gnutls-configure: gmp nettle
 		GMP_CFLAGS="-I$(TOP)/gmp" \
 		GMP_LIBS="-L$(TOP)/gmp/.libs -lgmp"
 
-gnutls: gmp nettle
+gnutls: gmp nettle gnutls-configure
 	make -C gnutls
 
 gnutls-install:

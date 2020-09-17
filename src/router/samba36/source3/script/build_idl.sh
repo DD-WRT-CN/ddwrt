@@ -7,7 +7,7 @@ else
 	FULL=0
 fi
 
-ARGS="--includedir=../librpc/idl --outputdir $PIDL_OUTPUTDIR --header --ndr-parser --client --samba3-ndr-server $PIDL_ARGS --"
+ARGS="--includedir=../../librpc/idl --outputdir $PIDL_OUTPUTDIR --header --ndr-parser --client --samba3-ndr-server $PIDL_ARGS --"
 IDL_FILES="$*"
 
 oldpwd=`pwd`

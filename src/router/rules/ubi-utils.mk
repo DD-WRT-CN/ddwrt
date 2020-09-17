@@ -11,7 +11,7 @@ ubi-utils-configure:
 		ZSTD_LIBS="$(LDLTO) -L$(TOP)/zstd/lib -lzstd" \
 		AR_FLAGS="cru $(LTOPLUGIN)" \
 		RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
-ubi-utils:
+ubi-utils: ubi-utils-configure
 	$(MAKE) -C ubi-utils
 
 ubi-utils-clean:

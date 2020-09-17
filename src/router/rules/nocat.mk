@@ -1,4 +1,4 @@
-nocat-configure:
+nocat-configure: 
 	rm -f $(TOP)/glib/config.cache
 	cd glib && ./config.sh "$(CC)" "$(COPTS) $(MIPS16_OPT) $(LTO) -std=gnu89 -ffunction-sections -fdata-sections -Wl,--gc-sections" "$(LTOPLUGIN)" ac_cv_host=$(ARCH)-uclibc-linux --target=$(ARCH)-linux --host=$(ARCH)
 	cd nocat && ./configure \
@@ -13,7 +13,7 @@ nocat-configure:
 	    AR_FLAGS="cru $(LTOPLUGIN)" \
 	    RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 
-nocat:
+nocat: nocat-configure
 	make  -C glib
 	cp $(TOP)/glib/.libs/*.a $(TOP)/glib-1.2.10-install/lib
 	cp $(TOP)/glib/gmodule/.libs/*.a $(TOP)/glib-1.2.10-install/lib

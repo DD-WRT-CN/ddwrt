@@ -52,7 +52,7 @@ ipeth-configure:
 	cd $(TOP)/ipeth/usbmuxd && make
 
 
-ipeth: comgt
+ipeth: comgt ipeth-configure
 ifneq ($(CONFIG_FREERADIUS),y)
 ifneq ($(CONFIG_ASTERISK),y)
 ifneq ($(CONFIG_AIRCRACK),y)

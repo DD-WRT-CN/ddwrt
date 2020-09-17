@@ -108,7 +108,7 @@ This is edition @value{edition} of the GLIB documentation,
 @comment node-name, next, previous, up
 @chapter Doubly linked lists
 
-@subsection Functions
+@section Functions
 
 @deftypefun GList* g_list_alloc (void)
 @end deftypefun
@@ -165,7 +165,7 @@ This is edition @value{edition} of the GLIB documentation,
 @comment node-name, next, previous, up
 @chapter Signly linked lists
 
-@subsection Functions
+@section Functions
 @deftypefun GSList* g_slist_alloc (void)
 @end deftypefun
 
@@ -218,7 +218,7 @@ This is edition @value{edition} of the GLIB documentation,
 @comment node-name, next, previous, up
 @chapter List allocators
 
-@subsection Functions
+@section Functions
 
 @deftypefun GListAllocator* g_list_allocator_new (void)
 @end deftypefun
@@ -236,7 +236,7 @@ This is edition @value{edition} of the GLIB documentation,
 @comment node-name, next, previous, up
 @chapter Hash tables
 
-@subsection Functions
+@section Functions
 
 @deftypefun GHashTable* g_hash_table_new (GHashFunc @var{hash_func}, GCompareFunc @var{key_compare_func})
 @end deftypefun
@@ -266,7 +266,7 @@ This is edition @value{edition} of the GLIB documentation,
 @comment node-name, next, previous, up
 @chapter Cache handling
 
-@subsection Functions
+@section Functions
 
 @deftypefun GCache* g_cache_new (GCacheNewFunc @var{value_new_func}, GCacheDestroyFunc @var{value_destroy_func}, GCacheDupFunc @var{key_dup_func}, GCacheDestroyFunc @var{key_destroy_func}, GHashFunc @var{hash_key_func}, GHashFunc @var{hash_value_func}, GCompareFunc @var{key_compare_func})
 @end deftypefun
@@ -290,7 +290,7 @@ This is edition @value{edition} of the GLIB documentation,
 @comment node-name, next, previous, up
 @chapter Tree handling
 
-@subsection Functions
+@section Functions
 
 @deftypefun GTree* g_tree_new (GCompareFunc @var{key_compare_func})
 @end deftypefun
@@ -320,7 +320,7 @@ This is edition @value{edition} of the GLIB documentation,
 @comment node-name, next, previous, up
 @chapter Memory handling
 
-@subsection Functions
+@section Functions
 
 @deftypefun gpointer g_malloc (gulong @var{size})
 @end deftypefun
@@ -371,7 +371,7 @@ be freed (but which we haven't gotten around to doing yet).
 @comment node-name, next, previous, up
 @chapter Timer functions
 
-@subsection Functions
+@section Functions
 
 @deftypefun GTimer* g_timer_new (void)
 @end deftypefun
@@ -395,7 +395,7 @@ be freed (but which we haven't gotten around to doing yet).
 @comment node-name, next, previous, up
 @chapter Output functions
 
-@subsection Functions
+@section Functions
 
 @deftypefun void g_error (gchar *@var{format}, @dots{})
 @end deftypefun

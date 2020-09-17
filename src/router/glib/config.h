@@ -5,7 +5,7 @@
 /* #undef const */
 
 /* Define if you don't have vprintf but do have _doprnt.  */
-/* #undef HAVE_DOPRNT */
+#define HAVE_DOPRNT 1
 
 /* Define if you have <unistd.h>.  */
 #define HAVE_UNISTD_H 1
@@ -32,7 +32,7 @@
 #define GLIB_BYTE_CONTENTS_GMUTEX 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 /* #undef HAVE_BROKEN_WCTYPE */
-/* #undef HAVE_DOPRNT */
+#define HAVE_DOPRNT 1
 #define HAVE_FLOAT_H 1
 #define HAVE_GETPWUID_R 1
 #define HAVE_GETPWUID_R_POSIX 1

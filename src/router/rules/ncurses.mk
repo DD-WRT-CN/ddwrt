@@ -24,7 +24,7 @@ ncurses-configure:
 ncurses-clean:
 	make -j 4 -C ncurses clean
 
-ncurses:
+ncurses: ncurses-configure
 	make -j 4 -C ncurses
 	rm -rf ncurses/include/ncurses
 	mkdir -p ncurses/include/ncurses

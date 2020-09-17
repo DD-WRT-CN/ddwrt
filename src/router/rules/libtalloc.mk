@@ -58,7 +58,7 @@ libtalloc-configure:
 
 #	cd libtalloc && ./configure --hostcc=gcc --prefix=/usr CFLAGS="$(COPTS) $(MIPS16_OPT)"
 
-libtalloc:
+libtalloc: libtalloc-configure
 	make -C libtalloc
 	
 libtalloc-install:

@@ -1,4 +1,4 @@
-prefix=/home/dd-wrt/DEV/src/router/glib/../glib-1.2.10-install
+prefix=/home/paldier/ddwrt/src/router/glib/../glib-1.2.10-install
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
@@ -7,5 +7,5 @@ Name: GModule
 Description: Dynamic module loader for GLib
 Requires: glib
 Version: 1.2.10
-Libs: -L${libdir} -rdynamic -lgmodule -ldl
+Libs: -L${libdir} -rdynamic -lgmodule 
 Cflags:

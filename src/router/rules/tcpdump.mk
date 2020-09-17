@@ -3,7 +3,7 @@ tcpdump-configure: libpcap
 		AR="$(ARCH)-linux-ar cru $(LTOPLUGIN)" \
 		RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 
-tcpdump:
+tcpdump: tcpdump-configure
 	make -j 4 -C tcpdump
 
 

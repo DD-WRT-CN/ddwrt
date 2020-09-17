@@ -39,7 +39,7 @@ CONFIGURE_ARGS+= \
 lighttpd-configure: pcre-configure pcre openssl
 	cd lighttpd && ./configure $(CONFIGURE_ARGS) CFLAGS="-fPIC -DNEED_PRINTF $(COPTS) -I$(TOP)/pcre" LDFLAGS="-L$(TOP)/pcre/.libs -lpthread $(LDFLAGS)"
 
-lighttpd: openssl
+lighttpd: lighttpd-configure openssl
 	make -C lighttpd
 
 lighttpd-clean:

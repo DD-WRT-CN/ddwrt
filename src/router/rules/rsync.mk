@@ -4,7 +4,7 @@ rsync-configure:
 		CFLAGS="$(COPTS) $(MIPS16_OPT) -I$(TOP)/openssl/include -ffunction-sections -fdata-sections -Wl,--gc-sections -Drpl_malloc=malloc -L$(TOP)/openssl -L$(TOP)/zstd/lib -I$(TOP)/zstd/lib"
 
 	$(MAKE) -C rsync reconfigure
-rsync:
+rsync: rsync-configure
 	$(MAKE) -C rsync
 
 rsync-clean:

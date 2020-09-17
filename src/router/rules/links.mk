@@ -3,7 +3,7 @@ links-configure:
 	export CXXFLAGS="$(COPTS) -DNEED_PRINTF -L$(TOP)/openssl" ; \
 	cd links && ./configure --target=$(ARCH)-linux --host=$(ARCH)-linux --prefix=/usr --with-ssl=$(TOP)/openssl
 
-links:
+links: links-configure
 	make -C links
 
 links-clean:

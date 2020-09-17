@@ -4,7 +4,7 @@ readline-configure:
 	cd readline/shlib && rm -f libreadline.so
 	cd readline/shlib && rm -f libhistory.so
 
-readline:
+readline: readline-configure
 	$(MAKE) -C readline
 	cd readline/shlib && rm -f libreadline.so
 	cd readline/shlib && rm -f libhistory.so

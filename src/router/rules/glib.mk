@@ -42,7 +42,7 @@ glib20-configure: libffi zlib util-linux
 
 	$(MAKE) -C glib20/libglib clean all
 
-glib20: libffi zlib util-linux util-linux-install
+glib20: glib20-configure libffi zlib util-linux util-linux-install
 	make -C util-linux install DESTDIR=$(INSTALLDIR)/util-linux
 	mkdir -p $(INSTALLDIR)/util-linux/usr/lib
 	-cp -urv $(INSTALLDIR)/util-linux/usr/tmp/* $(INSTALLDIR)/util-linux/usr/lib

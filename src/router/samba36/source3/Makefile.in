@@ -1617,15 +1617,24 @@ IDL_FILES = librpc/idl/messaging.idl \
 	    librpc/idl/server_id.idl
 
 samba3-idl::
+	@cp ../librpc/idl/idl_types.h librpc/idl/
 	@PIDL_OUTPUTDIR="librpc/gen_ndr" PIDL_ARGS="$(PIDL_ARGS)" CPP="$(CPP)" PIDL="../pidl/pidl" \
 	 srcdir="$(srcdir)" ../librpc/build_idl.sh ../librpc/idl/*.idl
 	@PIDL_OUTPUTDIR="librpc/gen_ndr" PIDL_ARGS="$(PIDL_ARGS)" CPP="$(CPP)" PIDL="../pidl/pidl" \
+	 srcdir="$(srcdir)" $(srcdir)/script/build_idl.sh $(IDL_FILES)
+	@PIDL_OUTPUTDIR="../librpc/gen_ndr" PIDL_ARGS="$(PIDL_ARGS)" CPP="$(CPP)" PIDL="../pidl/pidl" \
+	 srcdir="$(srcdir)" ../librpc/build_idl.sh ../librpc/idl/*.idl
+	@PIDL_OUTPUTDIR="../librpc/gen_ndr" PIDL_ARGS="$(PIDL_ARGS)" CPP="$(CPP)" PIDL="../pidl/pidl" \
 	 srcdir="$(srcdir)" $(srcdir)/script/build_idl.sh $(IDL_FILES)
 
 idl_full::
 	@PIDL_OUTPUTDIR="librpc/gen_ndr" PIDL_ARGS="$(PIDL_ARGS)" CPP="$(CPP)" PIDL="../pidl/pidl" \
 	 srcdir="$(srcdir)" ../librpc/build_idl.sh --full ../librpc/idl/*.idl
 	@PIDL_OUTPUTDIR="librpc/gen_ndr" PIDL_ARGS="$(PIDL_ARGS)" CPP="$(CPP)" PIDL="../pidl/pidl" \
+	 srcdir="$(srcdir)" $(srcdir)/script/build_idl.sh --full $(IDL_FILES)
+	@PIDL_OUTPUTDIR="../librpc/gen_ndr" PIDL_ARGS="$(PIDL_ARGS)" CPP="$(CPP)" PIDL="../pidl/pidl" \
+	 srcdir="$(srcdir)" ../librpc/build_idl.sh --full ../librpc/idl/*.idl
+	@PIDL_OUTPUTDIR="../librpc/gen_ndr" PIDL_ARGS="$(PIDL_ARGS)" CPP="$(CPP)" PIDL="../pidl/pidl" \
 	 srcdir="$(srcdir)" $(srcdir)/script/build_idl.sh --full $(IDL_FILES)
 
 #####################################################################

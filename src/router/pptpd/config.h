@@ -4,8 +4,6 @@
  * acconfig.h
  *
  * Additional autoconf defines for this program.
- *
- * $Id: acconfig.h,v 1.6 2005/12/29 01:21:09 quozl Exp $
  */
 
 /* Use BSD User land PPP? */
@@ -36,7 +34,7 @@
 #define PACKAGE "pptpd"
 
 /* Version */
-#define VERSION "1.3.4"
+#define VERSION "1.4.0"
 
 /* Just #define to int if it's not defined */
 /* #undef socklen_t */
@@ -72,10 +70,10 @@
 /* #undef HAVE_LIBINTL */
 
 /* Define to 1 if you have the <libintl.h> header file. */
-/* #undef HAVE_LIBINTL_H */
+#define HAVE_LIBINTL_H 1
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
-#define HAVE_LIBNSL 1
+/* #undef HAVE_LIBNSL */
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 /* #undef HAVE_LIBSOCKET */
@@ -152,6 +150,9 @@
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME ""
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
 #define PACKAGE_VERSION ""
 
@@ -159,7 +160,10 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.3.4"
+#define VERSION "1.4.0"
+
+/* Use vrf_socket from vrf library */
+/* #undef VRF */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

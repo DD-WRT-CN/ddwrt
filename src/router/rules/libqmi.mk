@@ -7,7 +7,7 @@ libqmi-configure:
 	QMICLI_LIBS="-pthread -lpthread -L$(TOP)/glib20/libglib/glib/.libs -L$(TOP)/glib20/libglib/gio/.libs -L$(TOP)/glib20/libglib/gobject/.libs  -L$(TOP)/glib20/libglib/glib/.libs -L$(TOP)/glib20/libglib/gmodule/.libs -L$(TOP)/glib20/libglib/gthread/.libs -lgio-2.0 -lgobject-2.0 -lglib-2.0"
 	QMICLI_LIBS=" -ffunction-sections -fdata-sections -Wl,--gc-sections"
 
-libqmi:
+libqmi: libqmi-configure
 	$(MAKE) -C libqmi
 
 libqmi-clean:

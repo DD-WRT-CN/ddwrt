@@ -9,7 +9,7 @@ libdnet-configure:
 		CFLAGS="$(COPTS) $(MIPS16_OPT) -fPIC -DNEED_PRINTF -I$(TOP)/iptables/include/libipq/" LDFLAGS="-L$(TOP)/iptables/libipq"
 
 
-libdnet:
+libdnet: libdnet-configure
 	$(MAKE) -C libdnet CFLAGS="$(COPTS) -fPIC -DNEED_PRINTF"
 
 libdnet-install:

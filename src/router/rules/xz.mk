@@ -7,7 +7,7 @@ xz-configure:
 	--disable-werror \
 	--disable-doc
 
-xz:
+xz: xz-configure
 	$(MAKE) -C xz
 
 xz-clean:

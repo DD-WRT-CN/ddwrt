@@ -1,5 +1,5 @@
 
-ntfs-3g:
+ntfs-3g: ntfs-3g-configure
 	CC="$(CC)" \
 	CFLAGS="$(COPTS)  $(MIPS16_OPT) -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	CPPFLAGS="$(COPTS) $(MIPS16_OPT) -ffunction-sections -fdata-sections -Wl,--gc-sections" \

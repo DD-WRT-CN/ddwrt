@@ -10,7 +10,7 @@ libmbim-configure: glib20
 	MBIMPROXY_CFLAGS="$(COPTS) -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections -Drpl_realloc=realloc -Drpl_malloc=malloc -I$(TOP)/glib20/libglib/glib -I$(TOP)/glib20/libglib -I$(TOP)/glib20/libglib/gmodule -pthread" \
 	MBIMPROXY_LIBS="-pthread -lpthread -L$(TOP)/glib20/libglib/glib/.libs -L$(TOP)/glib20/libglib/gio/.libs -L$(TOP)/glib20/libglib/gobject/.libs  -L$(TOP)/glib20/libglib/glib/.libs -L$(TOP)/glib20/libglib/gmodule/.libs -L$(TOP)/glib20/libglib/gthread/.libs $(GLIB_GIO) -lgobject-2.0 -lglib-2.0"
 
-libmbim: glib20
+libmbim: glib20 libmbim-configure
 	$(MAKE) -C libmbim
 
 libmbim-clean:

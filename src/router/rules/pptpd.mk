@@ -6,7 +6,7 @@ else
 endif
 	@true
 
-pptpd:
+pptpd: pptpd-configure
 ifeq ($(CONFIG_PPTPD),y)
 ifeq ($(CONFIG_PPTP_ACCEL),y)
 	$(MAKE) -C pptpd-accel

@@ -8,7 +8,7 @@ libnetfilter_log-configure: libnfnetlink
 		--prefix=/usr \
 		--libdir=$(TOP)/libnfnetlink/src/.libs
 
-libnetfilter_log: libnfnetlink
+libnetfilter_log: libnfnetlink libnetfilter_log-configure
 	$(MAKE) -C libnetfilter_log CFLAGS="$(COPTS) $(MIPS16_OPT) -D_GNU_SOURCE"
 	$(MAKE) -C libnetfilter_log/utils nfulnl_test CFLAGS="$(COPTS) $(MIPS16_OPT) -D_GNU_SOURCE" LDFLAGS="-L$(TOP)/libnfnetlink/src/.libs -lnfnetlink"
 	#$(MAKE) -C libnetfilter_log/utils CFLAGS="$(COPTS) $(MIPS16_OPT) -D_GNU_SOURCE"

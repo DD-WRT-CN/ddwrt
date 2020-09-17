@@ -36,22 +36,22 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_triplet = mipsel-unknown-linux-gnu
-ACLOCAL = ${SHELL} /home/dd-wrt/DEV/src/router/glib/missing --run aclocal-1.7
+ACLOCAL = ${SHELL} /home/paldier/ddwrt/src/router/glib/missing --run aclocal-1.7
 AMDEP_FALSE = #
 AMDEP_TRUE = 
-AMTAR = ${SHELL} /home/dd-wrt/DEV/src/router/glib/missing --run tar
-AR = mipsel-linux-uclibc-ar
-AUTOCONF = ${SHELL} /home/dd-wrt/DEV/src/router/glib/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/dd-wrt/DEV/src/router/glib/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/dd-wrt/DEV/src/router/glib/missing --run automake-1.7
+AMTAR = ${SHELL} /home/paldier/ddwrt/src/router/glib/missing --run tar
+AR = arm-linux-uclibc-ar
+AUTOCONF = ${SHELL} /home/paldier/ddwrt/src/router/glib/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/paldier/ddwrt/src/router/glib/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/paldier/ddwrt/src/router/glib/missing --run automake-1.7
 AWK = gawk
-CC = mipsel-linux-uclibc-gcc
+CC = arm-linux-uclibc-gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -pipe -Os -fomit-frame-pointer -mips32 -mtune=mips32 -funit-at-a-time -Wall  -D_REENTRANT
-CPP = mipsel-linux-uclibc-gcc -E
+CFLAGS = -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt  -flto -fwhole-program -std=gnu89 -ffunction-sections -fdata-sections -Wl,--gc-sections -Wall  -D_REENTRANT
+CPP = arm-linux-uclibc-gcc -E
 CPPFLAGS = 
-CXX = mipsel-linux-g++
-CXXCPP = mipsel-linux-g++ -E
+CXX = ccache arm-linux-uclibc-g++
+CXXCPP = ccache arm-linux-uclibc-g++ -E
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2
 CYGPATH_W = echo
@@ -78,7 +78,7 @@ G_MODULE_BROKEN_RTLD_GLOBAL = 0
 G_MODULE_HAVE_DLERROR = 1
 G_MODULE_IMPL = G_MODULE_IMPL_DL
 G_MODULE_LDFLAGS = -rdynamic
-G_MODULE_LIBS = -ldl
+G_MODULE_LIBS = 
 G_MODULE_NEED_USCORE = 0
 G_THREAD_CFLAGS =  -D_REENTRANT
 G_THREAD_LIBS = -lpthread
@@ -86,7 +86,7 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
-LDFLAGS = -s
+LDFLAGS = 
 LIBOBJS = 
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
@@ -99,7 +99,7 @@ LT_REVISION = 10
 MAINT = #
 MAINTAINER_MODE_FALSE = 
 MAINTAINER_MODE_TRUE = #
-MAKEINFO = ${SHELL} /home/dd-wrt/DEV/src/router/glib/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/paldier/ddwrt/src/router/glib/missing --run makeinfo
 OBJEXT = o
 PACKAGE = glib
 PACKAGE_BUGREPORT = 
@@ -108,10 +108,10 @@ PACKAGE_STRING =
 PACKAGE_TARNAME = 
 PACKAGE_VERSION = 
 PATH_SEPARATOR = :
-RANLIB = mipsel-linux-uclibc-ranlib
+RANLIB = arm-linux-ranlib --plugin=/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/liblto_plugin.so
 SET_MAKE = 
 SHELL = /bin/sh
-STRIP = @true
+STRIP = arm-linux-uclibc-strip
 VERSION = 1.2.10
 ac_ct_AR = 
 ac_ct_CC = 
@@ -141,13 +141,13 @@ host_os = linux-gnu
 host_vendor = unknown
 includedir = ${prefix}/include
 infodir = ${prefix}/info
-install_sh = /home/dd-wrt/DEV/src/router/glib/install-sh
+install_sh = /home/paldier/ddwrt/src/router/glib/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localstatedir = ${prefix}/var
 mandir = ${prefix}/man
 oldincludedir = /usr/include
-prefix = /home/dd-wrt/DEV/src/router/glib/../glib-1.2.10-install
+prefix = /home/paldier/ddwrt/src/router/glib/../glib-1.2.10-install
 program_transform_name = s,x,x,
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
@@ -186,21 +186,21 @@ libgmodule_la_LDFLAGS = \
 	-export-dynamic
 
 
-libgmodule_la_LIBADD = -ldl # $(libglib)
+libgmodule_la_LIBADD =  # $(libglib)
 
 # we should really depend on $(libglib) for libgmodule.la, but libtool has a
 # problem with this ;(
 libgplugin_a_la_SOURCES = libgplugin_a.c
 libgplugin_a_la_LDFLAGS = -rdynamic -avoid-version -module
-libgplugin_a_la_LIBADD = -ldl # $(libglib)
+libgplugin_a_la_LIBADD =  # $(libglib)
 
 libgplugin_b_la_SOURCES = libgplugin_b.c
 libgplugin_b_la_LDFLAGS = -rdynamic -avoid-version -module
-libgplugin_b_la_LIBADD = -ldl # $(libglib)
+libgplugin_b_la_LIBADD =  # $(libglib)
 
 noinst_PROGRAMS = testgmodule
 testgmodule_LDFLAGS = -rdynamic
-testgmodule_LDADD = libgmodule.la $(libglib) -ldl
+testgmodule_LDADD = libgmodule.la $(libglib) 
 subdir = gmodule
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs

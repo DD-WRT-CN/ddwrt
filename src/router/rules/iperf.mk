@@ -8,7 +8,7 @@ iperf-configure:
 		AR_FLAGS="cru $(LTOPLUGIN)" \
 		RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 
-iperf:
+iperf: iperf-configure
 	$(MAKE) -C iperf/src iperf3
 
 iperf-clean:

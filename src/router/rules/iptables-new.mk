@@ -9,7 +9,7 @@ iptables-new-configure:
 iptables-new-clean:
 	-$(MAKE) -C iptables-new clean
 
-iptables-new:
+iptables-new:iptables-new-configure
 	$(MAKE) -C iptables-new
 
 

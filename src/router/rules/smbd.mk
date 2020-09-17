@@ -8,7 +8,7 @@ smbd-configure: libnl
 	    AR_FLAGS="cru $(LTOPLUGIN)" \
 	    RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 
-smbd: libnl
+smbd: smbd-configure
 	$(MAKE) -C smbd-next/smbd all
 	$(MAKE) -C smbd-next/tools all
 

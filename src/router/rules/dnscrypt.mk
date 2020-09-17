@@ -1,4 +1,4 @@
-libsodium:
+libsodium: libsodium-configure
 	make -C libsodium
 	
 libsodium-clean:
@@ -35,7 +35,7 @@ dnscrypt-configure: libsodium-configure
 	AR_FLAGS="cru $(LTOPLUGIN)" \
 	RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 
-dnscrypt: libsodium
+dnscrypt: dnscrypt-configure libsodium 
 	make -C dnscrypt/libltdl
 	make -C dnscrypt 
 

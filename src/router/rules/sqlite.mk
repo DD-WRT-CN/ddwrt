@@ -1,7 +1,7 @@
 sqlite-configure:
 	cd sqlite && ./configure --host=$(ARCH)-linux --disable-readline --prefix=/usr --libdir=/usr/lib --disable-static-shell CFLAGS="$(COPTS) -fPIC"
 
-sqlite:
+sqlite: sqlite-configure
 	make -C sqlite
 
 sqlite-install:

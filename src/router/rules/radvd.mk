@@ -13,7 +13,7 @@ radvd-clean:
 	if test -e "radvd/Makefile"; then make -C radvd/flex clean; make -C radvd clean; make -C radvd/libdaemon clean; fi
 		
 
-radvd:
+radvd: radvd-configure
 	make -C radvd/libdaemon
 	make -C radvd/flex libfl.a
 	make -C radvd

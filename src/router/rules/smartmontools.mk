@@ -7,7 +7,7 @@ smartmontools-configure:
 		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
 		--prefix=/usr --libdir=/usr/lib
 
-smartmontools:
+smartmontools: smartmontools-configure
 	$(MAKE) -C smartmontools svnversion.h
 	$(MAKE) -C smartmontools
 

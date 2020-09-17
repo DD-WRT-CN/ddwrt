@@ -38,7 +38,7 @@ chillispot-configure:
 	    AR_FLAGS="cru $(LTOPLUGIN)" \
 	    RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 
-chillispot:
+chillispot: chillispot-configure
 	rm -f coova-chilli/src/cmdline.c
 	rm -f coova-chilli/src/cmdline.h
 	$(MAKE) -C $(CHILLIDIR)

@@ -1,4 +1,4 @@
-libmnl: 
+libmnl: libmnl-configure
 	$(MAKE) -C libmnl
 
 libmnl-install:

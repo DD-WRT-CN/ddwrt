@@ -7,7 +7,7 @@ libnl-configure:
 	    RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 	$(MAKE) -C libnl
 
-libnl:
+libnl: libnl-configure
 	$(MAKE) -C libnl
 
 libnl-clean:

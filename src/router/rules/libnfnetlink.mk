@@ -7,7 +7,7 @@ libnfnetlink-configure:
 		--disable-static \
 		--libdir=$(TOP)/libnfnetlink/src/.libs
 
-libnfnetlink:
+libnfnetlink: libnfnetlink-configure
 	$(MAKE) -C libnfnetlink CFLAGS="$(COPTS)  $(MIPS16_OPT) -D_GNU_SOURCE"
 
 libnfnetlink-install:

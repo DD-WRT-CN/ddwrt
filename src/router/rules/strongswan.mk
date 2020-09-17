@@ -99,7 +99,7 @@ strongswan-configure: gmp sqlite
 	export LDFLAGS="-L$(TOP)/gmp/.libs -L$(TOP)/openssl -L$(TOP)/sqlite/.libs" ; \
 	cd strongswan && ./configure --host=$(ARCH)-linux $(CONFIGURE_ARGS)
 
-strongswan: gmp sqlite
+strongswan: strongswan-configure gmp sqlite
 	#$(MAKE) -C strongswan CFLAGS="$(COPTS) -DNEED_PRINTF -include `pwd`/strongswan/config.h -I$(TOP)/gmp -I$(TOP)/openssl/include" LDFLAGS="-L$(TOP)/gmp/.libs -L$(TOP)/openssl"
 	$(MAKE) -C strongswan CFLAGS="-DNEED_PRINTF -include `pwd`/strongswan/config.h"
 
