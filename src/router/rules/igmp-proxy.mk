@@ -5,7 +5,7 @@ igmp-proxy-configure:
 igmp-proxy-clean:
 	make -C igmp-proxy clean
 
-igmp-proxy:
+igmp-proxy: igmp-proxy-configure
 ifeq ($(CONFIG_DIST),"micro")
 	make -C igmp-proxy
 else

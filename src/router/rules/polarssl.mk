@@ -33,7 +33,7 @@ polarssl-configure:
 		. \
 	)
 
-polarssl:
+polarssl: polarssl-configure
 	$(MAKE) -C $(POLAR_SSL_PATH) 
 	-rm -f $(POLAR_SSL_PATH)/library/libpolarssl.so
 	-rm -f $(POLAR_SSL_PATH)/library/libpolarssl.so.1

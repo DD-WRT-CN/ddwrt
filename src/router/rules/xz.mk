@@ -1,4 +1,4 @@
-xz-configure:
+xz/stamp-h1:
 	-cd xz && ./autogen.sh
 	cd xz && ./configure --host=$(ARCH)-linux --prefix=/usr CFLAGS="$(COPTS) -std=c99" ac_cv_prog_cc_c99= \
 	--libdir=/usr/lib \
@@ -6,8 +6,9 @@ xz-configure:
 	--enable-assume-ram=4 \
 	--disable-werror \
 	--disable-doc
+	touch $@
 
-xz: xz-configure
+xz: xz/stamp-h1
 	$(MAKE) -C xz
 
 xz-clean:

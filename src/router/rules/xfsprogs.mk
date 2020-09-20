@@ -15,7 +15,7 @@ xfsprogs-configure:
 		AR_FLAGS="cru $(LTOPLUGIN)" \
 		RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 
-xfsprogs:
+xfsprogs: xfsprogs-configure
 	make -C xfsprogs DEBUG= Q= 
 
 xfsprogs-clean:

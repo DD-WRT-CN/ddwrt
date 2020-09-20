@@ -146,6 +146,10 @@ include rules/configs.mk
 obj-clean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 obj-distclean := $(foreach obj,$(obj-y) $(obj-n),$(obj)-distclean)
+obj-configure := $(foreach obj,$(obj-y) $(obj-n),$(obj)-configure)
+
+all_configure: $(obj-configure)
+	echo done
 
 all: install_headers build_date clean_target $(obj-y) $(LINUXDIR)/.config kernel
 

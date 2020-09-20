@@ -1,5 +1,5 @@
 
-dhcpv6:
+dhcpv6: dhcpv6-configure
 	CC="$(CC)" \
 	CFLAGS="$(COPTS) $(LTO) $(MIPS16_OPT) $(JFLAGS) -DNEED_PRINTF   -D_GNU_SOURCE -I$(TOP)/shared -DUSE_DHCP6SRV -DNOCONFIG_DEBUG -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	CPPFLAGS="$(COPTS) $(LTO) $(MIPS16_OPT) $(JFLAGS) -DNEED_PRINTF  -D_GNU_SOURCE -I$(TOP)/shared  -DUSE_DHCP6SRV -DNOCONFIG_DEBUG -ffunction-sections -fdata-sections -Wl,--gc-sections" \

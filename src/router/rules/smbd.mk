@@ -1,4 +1,4 @@
-smbd-configure: libnl
+smbd/stamp-h1: libnl
 	cd smbd-next/tools && ./autogen.sh
 	cd smbd-next/tools && ./configure --prefix=/usr --host=$(ARCH)-linux --disable-shared --enable-static  --libdir=/usr/lib \
 	    CFLAGS="$(COPTS) $(LTO) $(MIPS16_OPT) -D_GNU_SOURCE -DNEED_PRINTF -Drpl_malloc=malloc -ffunction-sections -fdata-sections -Wl,--gc-sections" \
@@ -7,8 +7,9 @@ smbd-configure: libnl
 	    LIBNL_LIBS="-L$(TOP)/libnl/lib/.libs -lnl-3 -lnl-genl-3" \
 	    AR_FLAGS="cru $(LTOPLUGIN)" \
 	    RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
+	touch $@
 
-smbd: smbd-configure
+smbd: smbd/stamp-h1 libnl
 	$(MAKE) -C smbd-next/smbd all
 	$(MAKE) -C smbd-next/tools all
 

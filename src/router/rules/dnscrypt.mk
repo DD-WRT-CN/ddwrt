@@ -16,8 +16,6 @@ libsodium-configure:
 	LDFLAGS="$(LDLTO) $(COPTS) $(MIPS16_OPT) $(LTOFIXUP) -ffunction-sections -fdata-sections -Wl,--gc-sections  -fPIC -v -Wl,--verbose" \
 	AR_FLAGS="cru $(LTOPLUGIN)" \
 	RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
-	make -C libsodium clean
-	make -C libsodium
 
 
 DNSCRYPT_CONFIGURE_ARGS+= \
@@ -25,7 +23,7 @@ DNSCRYPT_CONFIGURE_ARGS+= \
 	--with-include-path="$(TOP)/openssl/include $(TOP)/libsodium/src/libsodium/include" \
 	--with-lib-path="$(TOP)/openssl , $(TOP)/gmp, $(TOP)/libsodium/src/libsodium/.libs"
 
-dnscrypt-configure: libsodium-configure
+dnscrypt-configure: libsodium
 	cd dnscrypt && ./autogen.sh && \
 	./configure --host=$(ARCH)-linux --prefix=/usr \
 	$(DNSCRYPT_CONFIGURE_ARGS) \

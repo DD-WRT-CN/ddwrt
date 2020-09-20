@@ -9,7 +9,7 @@ endif
 endif
 
 
-glib20-configure: libffi zlib util-linux
+glib20/stamp-h1: libffi zlib util-linux
 	make -C util-linux
 	make -C util-linux install DESTDIR=$(INSTALLDIR)/util-linux
 	mkdir -p $(INSTALLDIR)/util-linux/usr/lib
@@ -28,7 +28,6 @@ glib20-configure: libffi zlib util-linux
 
 	cd glib20/gettext && ./autogen.sh
 	cd glib20/gettext && ./configure --enable-static --disable-shared --host=$(ARCH)-linux  LDFLAGS="$(COPTS) $(LTO) -std=gnu89 $(MIPS16_OPT) -D_GNU_SOURCE -fPIC -Drpl_malloc=malloc " CFLAGS="$(COPTS)  $(MIPS16_OPT)  -D_GNU_SOURCE -fPIC -Drpl_malloc=malloc" CXXFLAGS="$(COPTS)  $(MIPS16_OPT) -D_GNU_SOURCE -fPIC -Drpl_malloc=malloc"
-	$(MAKE) -C glib20/gettext clean all
 
 	-cd glib20/libglib && ./autogen.sh
 	cd glib20/libglib && ./configure --enable-shared --enable-static --disable-fam --with-libiconv=gnu --disable-libelf --with-pcre=internal --disable-libmount --enable-debug=no --disable-selinux --disable-man --host=$(ARCH)-linux  CFLAGS="$(COPTS) $(LTO) -std=gnu89  -DNVALGRIND=1 $(MIPS16_OPT) -D_GNU_SOURCE=1  -I$(TOP)/zlib -fPIC -Drpl_malloc=malloc -I$(TOP)/glib20/gettext -I$(TOP)/libffi/$(ARCH)-$(SUBARCH)-linux-gnu/include  -L$(TOP)/libffi/$(ARCH)-$(SUBARCH)-linux-gnu/.libs -lffi -L$(TOP)/glib20/gettext/.libs -L$(TOP)/glib20/libglib/gmodule/.libs   -L$(TOP)/zlib -L$(TOP)/$(ARCH)-uclibc/install/util-linux/usr/lib -pthread -lpthread -lz" --disable-modular-tests \
@@ -39,10 +38,9 @@ glib20-configure: libffi zlib util-linux
 	AR_FLAGS="cru $(LTOPLUGIN)" \
 	RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)" \
 	glib_cv_stack_grows=no glib_cv_uscore=no ac_cv_func_mmap_fixed_mapped=yes ac_cv_func_posix_getpwuid_r=yes ac_cv_func_posix_getgrgid_r=yes
+	touch $@
 
-	$(MAKE) -C glib20/libglib clean all
-
-glib20: glib20-configure libffi zlib util-linux util-linux-install
+glib20: glib20/stamp-h1 libffi zlib util-linux util-linux-install
 	make -C util-linux install DESTDIR=$(INSTALLDIR)/util-linux
 	mkdir -p $(INSTALLDIR)/util-linux/usr/lib
 	-cp -urv $(INSTALLDIR)/util-linux/usr/tmp/* $(INSTALLDIR)/util-linux/usr/lib

@@ -1,4 +1,4 @@
-smartdns-configure:
+smartdns/stamp-h1:
 	@true
 
 smartdns-clean:

@@ -6,7 +6,7 @@ comgt-clean:
 	$(MAKE) -C usb_modeswitch clean
 	$(MAKE) -C comgt clean
 
-comgt:
+comgt: comgt-configure
 	$(MAKE) -C usb_modeswitch
 	$(MAKE) -C comgt CC="$(CC)"  
 

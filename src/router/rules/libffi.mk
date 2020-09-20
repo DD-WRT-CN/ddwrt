@@ -1,7 +1,8 @@
-libffi-configure:
+libffi/stamp-h1:
 	cd libffi && ./configure --host=$(ARCH)-linux --build=$(ARCH) --prefix=/usr --libdir=/usr/lib CFLAGS="$(COPTS) -std=gnu89 -D_GNU_SOURCE -fPIC -Drpl_malloc=malloc"
+	touch $@
 
-libffi: libffi-configure
+libffi: libffi/stamp-h1
 	make -C libffi
 
 libffi-install:

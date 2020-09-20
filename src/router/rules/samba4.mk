@@ -4,7 +4,7 @@ else
 	SAMBA4_AES_ARGS:= --accel-aes=none
 endif
 
-samba4-configure: gnutls icu zlib
+samba4/stamp-h1: gnutls icu zlib
 	cp $(TOP)/samba4/waf-cross-answers/$(ARCH).txt $(TOP)/samba4/cross-answers.txt
 	echo 'Checking uname machine type: "$(ARCH)"' >> $(TOP)/samba4/cross-answers.txt
 	echo 'Checking uname release type: "$(LINUX_VERSION)"' >> $(TOP)/samba4/cross-answers.txt
@@ -95,13 +95,10 @@ samba4-configure: gnutls icu zlib
 		LDFLAGS="$(LDLTO) -Wl,--gc-sections -L$(TOP)/gnutls/lib/.libs -lgnutls -L$(TOP)/nettle -lnettle -lhogweed -L$(TOP)/gmp/.libs -lgmp -L$(TOP)/icu/target_staging/lib -L$(TOP)/zlib  -fPIC"
 		AR_FLAGS="cru $(LTOPLUGIN)" \
 		RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
-		-make -C samba4
-		sed -i 's/\/USR\/BIN\/PYTHON3/PYTHON3/g' $(TOP)/samba4/bin/default/source3/smbd/build_options.c
-		-make -C samba4
-		sed -i 's/\/USR\/BIN\/PYTHON3/PYTHON3/g' $(TOP)/samba4/bin/default/source3/smbd/build_options.c
+	touch $@
 
 
-samba4: gnutls icu zlib samba4-configure
+samba4: gnutls icu zlib samba4/stamp-h1
 	-sed -i 's/\/USR\/BIN\/PYTHON3/PYTHON3/g' $(TOP)/samba4/bin/default/source3/smbd/build_options.c
 	make -C samba4
 

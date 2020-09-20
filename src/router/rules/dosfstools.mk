@@ -4,7 +4,7 @@ dosfstools-configure:
 	    CC="$(CC) $(COPTS) $(MIPS16_OPT) -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections -D_GNU_SOURCE  -DNEED_PRINTF -std=gnu89" \
 	    LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections"
 
-dosfstools:
+dosfstools: dosfstools-configure
 	make -C dosfstools
 
 dosfstools-clean:

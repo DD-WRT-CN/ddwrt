@@ -1,4 +1,4 @@
-libmnl: libmnl-configure
+libmnl: libmnl/stamp-h1
 	$(MAKE) -C libmnl
 
 libmnl-install:
@@ -7,9 +7,10 @@ libmnl-install:
 	cd $(INSTALLDIR)/libmnl/usr/lib ; ln -s libmnl.so.0.2.0 libmnl.so  ; true
 	cd $(INSTALLDIR)/libmnl/usr/lib ; ln -s libmnl.so.0.2.0 libmnl.so.0  ; true
 
-libmnl-configure:
+libmnl/stamp-h1:
 	-cd libmnl && aclocal && autoconf && automake -a && cd ..
 	cd libmnl && ./configure --host=$(ARCH)-linux CFLAGS="$(COPTS) $(MIPS16_OPT)"
+	touch $@
 
 libmnl-clean:
 	$(MAKE) -C libmnl clean

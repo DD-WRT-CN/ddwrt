@@ -1,4 +1,4 @@
-aircrack-ng: pcre zlib
+aircrack-ng: pcre zlib aircrack-ng-configure
 	$(MAKE) -C aircrack-ng
 
 aircrack-ng-install:

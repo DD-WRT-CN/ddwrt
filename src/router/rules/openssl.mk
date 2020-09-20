@@ -52,7 +52,7 @@ export OPENSSL_CMAKEFLAGS := -ffunction-sections -fdata-sections -Wl,--gc-sectio
 endif
 
 
-all openssl: openssl-configure
+all openssl: openssl/stamp-h1
 	$(MAKE) -C openssl CC="$(CC) -I$(TOP)/openssl/crypto -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
 	$(MAKE) -C openssl build_libs CC="$(CC) -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
 	$(MAKE)  -C openssl build_programs CC="$(CC) -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
@@ -118,7 +118,7 @@ OPENSSL_OPTIONS += -DOPENSSL_SMALL_FOOTPRINT
 
 
 
-openssl-configure:
+openssl/stamp-h1:
 	cd openssl && CROSS_COMPILE= && ./Configure $(OPENSSL_TARGET) \
 			--prefix=/usr \
 			--libdir=/usr/lib \
@@ -133,9 +133,4 @@ endif
 ifeq ($(ARCH),mipsel)
 	cd openssl && patch -p0 < mips.diff
 endif
-
-	$(MAKE) -C openssl clean
-	-$(MAKE) -C openssl CC="$(CC) -I$(TOP)/openssl/crypto -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
-	-$(MAKE) -C openssl build_libs CC="$(CC) -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
-	-$(MAKE) -C openssl build_programs CC="$(CC) -fPIC" MAKEDEPPROG=$(ARCH)-linux-uclibc-gcc $(OPENSSL_MAKEFLAGS)
-	-rm -f openssl/apps/openssl
+	touch $@

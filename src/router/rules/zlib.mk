@@ -31,13 +31,13 @@ ZLIB_CMAKE_OPTIONS+=-DARMv8=ON -DWITH_NEON=ON
 endif
 
 
-zlib-configure:
+zlib/stamp-h1:
 	$(call CMakeClean,$(ZLIB_PKG_BUILD_DIR))
 	$(call CMakeConfigure,$(ZLIB_PKG_BUILD_DIR),$(ZLIB_STAGING_DIR),$(ZLIB_CMAKE_OPTIONS),$(ZLIB_EXTRA_CFLAGS),$(ZLIB_EXTRA_LDFLAGS)) 
+	touch $@
 
-zlib: zlib-configure
+zlib: zlib/stamp-h1
 	$(MAKE) -C zlib
-	rm -f zlib/libz.a
 
 zlib-install:
 	install -D zlib/libz.so.1.2.11 $(INSTALLDIR)/zlib/usr/lib/libz.so.1.2.11

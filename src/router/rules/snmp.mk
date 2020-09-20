@@ -100,7 +100,7 @@ SNMP_TRANSPORTS_INCLUDED = Callback UDP Unix
 SNMP_TRANSPORTS_EXCLUDED = TCP TCPIPv6
 
 
-snmp-configure: nvram libutils
+snmp/stamp-h1: nvram libutils
 	cd snmp && rm -f config.cache
 	-cd snmp && mkdir build_mac80211
 	-cd snmp && mkdir build_standard
@@ -195,8 +195,9 @@ snmp-configure: nvram libutils
 				--with-opaque-special-types \
 				AR_FLAGS="cru $(LTOPLUGIN)" \
 				RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
+	touch $@
 
-snmp: snmp-configure
+snmp: snmp/stamp-h1 nvram libutils
 ifeq ($(CONFIG_SNMP),y)
 ifeq ($(CONFIG_ATH9K),y)
 	$(MAKE) -C snmp/build_mac80211 LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -L$(TOP)/openssl -L$(TOP)/libutils -L$(TOP)/nvram -L$(TOP)/libnl-tiny -L$(TOP)/wireless-tools -lshutils -lutils -lwireless -lnvram $(SNMP_EXTRALIB)"

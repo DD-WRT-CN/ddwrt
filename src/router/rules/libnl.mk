@@ -5,7 +5,6 @@ libnl-configure:
 	    LDFLAGS="$(LDLTO) -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	    AR_FLAGS="cru $(LTOPLUGIN)" \
 	    RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
-	$(MAKE) -C libnl
 
 libnl: libnl-configure
 	$(MAKE) -C libnl

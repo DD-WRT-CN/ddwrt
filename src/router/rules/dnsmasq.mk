@@ -36,7 +36,6 @@ dnsmasq-clean:
 
 
 dnsmasq:
-	$(MAKE) -C dnsmasq clean
 ifeq ($(CONFIG_DNSMASQ_TFTP),y)
 	$(MAKE) -j 4 -C dnsmasq CFLAGS="$(COPTS) $(DNSMASQ_COPTS) -DNO_LOG -ffunction-sections -fdata-sections -Wl,--gc-sections" LDFLAGS="$(COPTS) $(DNSMASQ_COPTS) -DNO_LOG -ffunction-sections -fdata-sections -Wl,--gc-sections  $(LDLTO)"
 else

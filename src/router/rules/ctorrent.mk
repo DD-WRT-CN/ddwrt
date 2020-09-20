@@ -4,7 +4,7 @@ ctorrent-configure:
 ctorrent-clean:
 	make -C ctorrent clean
 
-ctorrent:
+ctorrent: ctorrent-configure
 	make -C ctorrent
 
 ctorrent-install:

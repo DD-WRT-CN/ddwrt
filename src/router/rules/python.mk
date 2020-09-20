@@ -1,4 +1,4 @@
-python-configure: libffi-configure libffi libffi-install
+python/stamp-h1: libffi-configure libffi libffi-install
 #	cd python && cp Modules/Setup Modules/Setup
 	cd python && echo "# bogus" > Modules/Setup.local 
 	cd python && ./configure  --host=$(ARCH)-linux --build=$(ARCH) --sysconfdir=/etc \
@@ -24,13 +24,13 @@ python-configure: libffi-configure libffi libffi-install
 		ac_cv_buggy_getaddrinfo=no \
 		ac_cv_header_uuid_h=yes \
 		ac_cv_has_x509_verify_param_set1_host=yes
-
+	touch $@
 
 
 python-clean:
 	make -C python clean
 
-python: python-configure
+python: python/stamp-h1 libffi libffi-install
 	make -C libffi install DESTDIR=$(INSTALLDIR)/libffi
 	make -C python python Parser/pgen
 	make -C python sharedmods

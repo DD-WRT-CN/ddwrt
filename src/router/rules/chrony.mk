@@ -11,7 +11,7 @@ chrony-configure:
 	--disable-sechash \
 	--sysconfdir=/etc/chrony \
 
-chrony:
+chrony: chrony-configure
 	make   -C chrony
 
 chrony-clean:

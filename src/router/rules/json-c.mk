@@ -1,4 +1,4 @@
-json-c-configure: 
+json-c/stamp-h1: 
 	cd json-c && ./autogen.sh && \
 		ac_cv_func_malloc_0_nonnull=yes \
 		ac_cv_func_realloc_0_nonnull=yes \
@@ -7,11 +7,10 @@ json-c-configure:
 		--libdir=$(TOP)/_staging/usr/lib \
 		--includedir=$(TOP)/_staging/usr/include \
 		CFLAGS="-fPIC -DNEED_PRINTF $(COPTS) $(MIPS16_OPT)" LDFLAGS="-lm"
-	make -C json-c
-	-mkdir -p $(TOP)/_staging
-	make -C json-c install
+	touch $@
 
-json-c: json-c-configure
+
+json-c: json-c/stamp-h1
 	make -C json-c
 	-mkdir -p $(TOP)/_staging
 	make -C json-c install

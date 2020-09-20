@@ -95,16 +95,14 @@ openvpn-conf-prep:
 	cd openvpn && autoconf
 	cd openvpn && automake
 
-openvpn-conf: openssl wolfssl
+openvpn/stamp-h1: lzo openvpn-conf-prep
 	mkdir -p openvpn/openssl
 	mkdir -p openvpn/wolfssl
 	cd $(OVPN)/openssl && ../configure $(CONFIGURE_ARGS_OVPN)
 	cd $(OVPN)/wolfssl && ../configure $(CONFIGURE_ARGS_WOLFSSL)
+	touch $@
 
-
-openvpn-configure: lzo openvpn-conf-prep openvpn-conf
-
-openvpn: lzo $(SSL_DEP)
+openvpn: openvpn/stamp-h1 lzo $(SSL_DEP)
 #ifeq ($(CONFIG_NEWMEDIA),y)
 #else
 #	cd $(OVPN) && ./configure --host=$(ARCH)-linux CPPFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -I../lzo/include -I../openssl/include -L../lzo -L../openssl -L../lzo/src/.libs" --enable-static --disable-shared --disable-pthread --disable-plugins --disable-debug --disable-management --disable-socks --enable-lzo --enable-small --enable-server --enable-http --enable-password-save CFLAGS="$(COPTS)  -ffunction-sections -fdata-sections -Wl,--gc-sections" LDFLAGS="-L../openssl -L../lzo -L../lzo/src/.libs  -ffunction-sections -fdata-sections -Wl,--gc-sections"

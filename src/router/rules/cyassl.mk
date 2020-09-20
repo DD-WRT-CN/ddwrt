@@ -2,10 +2,11 @@ CONFIGURE_ARGS += \
         --without-zlib \
         --enable-singleThreaded
 
-cyassl-configure: 
+cyassl/stamp-h1: 
 	cd cyassl && ./configure $(CONFIGURE_ARGS) CFLAGS="-fPIC -DNEED_PRINTF $(COPTS)"
+	touch $@
 
-cyassl: cyassl-configure
+cyassl: cyassl/stamp-h1
 	make -C cyassl
 
 cyassl-install:

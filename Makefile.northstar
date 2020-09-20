@@ -20,7 +20,7 @@ export TOOLCHAIN := $(RELEASEDIR)/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_m
 ifeq ($(wildcard $(RELEASEDIR)/.svn/*),)
 	SVNREV := 44374
 else
-	SVNREV := `svnversion -n`
+	SVNREV := $(shell svnversion -n)
 endif
 
 dd_ver:
@@ -56,15 +56,10 @@ endif
 
 install: all
 	install -d $(RELEASEDIR)/image
-	$(MAKE) -C src install
+	$(MAKE) -C src/router/ -f Makefile.northstar $@
 
 all: dd_ver pre_config dd_tools
-	#$(MAKE) -C src/router/  -f Makefile.northstar jansson-configure
-	#$(MAKE) -C src/router/  -f Makefile.northstar jansson
-	#$(MAKE) -C src/router/  -f Makefile.northstar nvram
-	#$(MAKE) -C src/router/  -f Makefile.northstar utils
-	#$(MAKE) -C src/router/  -f Makefile.northstar iptables
-	#$(MAKE) -C src/router/  -f Makefile.northstar libnet
+	#$(MAKE) -C src/router/ -f Makefile.northstar all_configure
 	$(MAKE) -C src/router/ -f Makefile.northstar $@
 
 clean:

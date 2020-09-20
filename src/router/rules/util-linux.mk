@@ -1,4 +1,4 @@
-util-linux-configure: ncurses
+util-linux/stamp-h1: ncurses
 	-make -C util-linux clean
 	cd util-linux && autoreconf -fi && ./configure --host=$(ARCH)-linux-uclibc --prefix=/usr --libdir=/usr/tmp CFLAGS="$(COPTS) $(MIPS16_OPT) -fPIC -DNEED_PRINTF" PKG_CONFIG="/tmp" NCURSES_CFLAGS="-I$(TOP)/ncurses/include" NCURSES_LIBS="-L$(TOP)/ncurses/lib -lncurses" --disable-makeinstall-chown \
 	--disable-rpath \
@@ -8,12 +8,12 @@ util-linux-configure: ncurses
 	--without-python	\
 	--without-udev		\
 	--with-ncurses
-	make -C util-linux
+	touch $@
 
 util-linux-clean:
 	make -C util-linux clean
 
-util-linux: util-linux-configure
+util-linux: util-linux/stamp-h1 ncurses
 	make -C util-linux
 
 util-linux-install:

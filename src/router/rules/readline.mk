@@ -1,10 +1,8 @@
-readline-configure: 
+readline/stamp-h1: 
 	cd readline && ./configure --host=$(ARCH)-uclibc-linux --prefix=/usr --libdir=/usr/lib --disable-static CFLAGS="$(COPTS) $(MIPS16_OPT) -fPIC -fno-strict-aliasing"
-	$(MAKE) -C readline clean all
-	cd readline/shlib && rm -f libreadline.so
-	cd readline/shlib && rm -f libhistory.so
+	touch $@
 
-readline: readline-configure
+readline: readline/stamp-h1
 	$(MAKE) -C readline
 	cd readline/shlib && rm -f libreadline.so
 	cd readline/shlib && rm -f libhistory.so

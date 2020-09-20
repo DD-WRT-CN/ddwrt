@@ -37,8 +37,7 @@ libgd-configure: libpng
 	LIBZ_CFLAGS="-I$(TOP)/zlib" \
 	LIBZ_LIBS="-L$(TOP)/zlib -lz" \
 	LIBPNG_CFLAGS="-I$(TOP)/libpng" \
-	LIBPNG_LIBS="-L$(TOP)/libpng/.libs -lpng16" \
-	$(MAKE) -C libgd
+	LIBPNG_LIBS="-L$(TOP)/libpng/.libs -lpng16"
 
 libgd-install:
 	@true

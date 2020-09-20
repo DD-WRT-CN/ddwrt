@@ -12,7 +12,7 @@ htop-configure: ncurses libnl
 	    LIBNL3GENL_CFLAGS="-I$(TOP)/libnl/include" \
 	    LIBNL3GENL_LIBS="-L$(TOP)/libnl/lib/.libs -lnl-genl-3"
 
-htop: ncurses libnl
+htop: ncurses libnl htop-configure
 	$(MAKE) -C htop
 
 htop-clean:
