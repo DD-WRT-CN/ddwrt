@@ -2599,9 +2599,9 @@ configure:13330: checking whether stripping libraries is possible
 configure:13335: result: yes
 configure:13461: checking for shl_load
 configure:13518: ccache arm-linux-uclibc-gcc -o conftest -fPIC -DNEED_PRINTF -Drpl_realloc=realloc -Drpl_malloc=malloc -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt  -I/home/paldier/ddwrt/src/router/zlib/include -fPIC -DNEED_PRINTF -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt  -I/home/paldier/ddwrt/src/router/zlib/include -L/home/paldier/ddwrt/src/router/zlib conftest.c  >&5
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccqa2Ub3.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccMTukGa.o: in function `main':
 conftest.c:(.text.startup+0x30): undefined reference to `shl_load'
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccqa2Ub3.o:(.data.rel+0x0): undefined reference to `shl_load'
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccMTukGa.o:(.data.rel+0x0): undefined reference to `shl_load'
 collect2: error: ld returned 1 exit status
 configure:13524: $? = 1
 configure: failed program was:
