@@ -1,4 +1,4 @@
-transmission: libevent curl transmission/stamp-h1
+transmission: libevent curl zlib transmission-configure
 	CC="ccache $(ARCH)-linux-uclibc-gcc" \
 	CFLAGS="$(COPTS) -D_GNU_SOURCE -ffunction-sections -fdata-sections -Wl,--gc-sections  -I$(TOP)/zlib  -I$(TOP)/curl/include -I$(TOP)/libevent/include  $(LTO)" \
 	CPPFLAGS="$(COPTS) -D_GNU_SOURCE -ffunction-sections -fdata-sections -Wl,--gc-sections  -I$(TOP)/zlib   -I$(TOP)/curl/include -I$(TOP)/libevent/include  $(LTO)" \
@@ -30,7 +30,7 @@ transmission-install:
 transmission-clean:
 	$(MAKE) -C transmission clean
 
-transmission/stamp-h1: libevent-configure curl-configure
+transmission-configure: zlib
 	-cd transmission && ./autogen.sh
 	cd transmission && ./configure  --prefix=/usr ac_cv_host=$(ARCH)-uclibc-linux --target=$(ARCH)-linux --host=$(ARCH) CC="ccache $(ARCH)-linux-uclibc-gcc" \
 	--enable-daemon --enable-lightweight --disable-nls --without-systemd-daemon --libdir=/usr/lib --disable-static --disable-dependency-tracking \
@@ -47,5 +47,4 @@ transmission/stamp-h1: libevent-configure curl-configure
 	OPENSSL_LIBS="-L$(TOP)/openssl -lssl -lcrypto" \
 	AR_FLAGS="cru $(LTOPLUGIN)" \
 	RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
-	$(MAKE) -C transmission clean
-	touch $@
+

@@ -38,7 +38,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `finite' function. */
-/* #undef HAVE_FINITE */
+#define HAVE_FINITE 1
 
 /* Define to 1 if you have the <float.h> header file. */
 #define HAVE_FLOAT_H 1
@@ -270,7 +270,7 @@
 /* #undef HAVE___VA_COPY */
 
 /* Define as const if the declaration of iconv() needs const. */
-/* #undef ICONV_CONST */
+#define ICONV_CONST 
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

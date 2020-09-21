@@ -45,7 +45,7 @@
 
 #define QUAGGA_COPYRIGHT "Copyright 1996-2005 Kunihiro Ishiguro, et al."
 
-#define QUAGGA_CONFIG_ARGS ""
+#define QUAGGA_CONFIG_ARGS "--host=arm-uclibc-linux --localstatedir=/var/run --libdir=/usr/tmp --enable-opaque-lsa --disable-nhrpd --enable-ospf-te --disable-ospfclient --enable-multipath=32 --enable-ipv6 --prefix=/usr --sysconfdir=/tmp --disable-ospf6d --enable-vtysh --enable-user=root --enable-group=root --disable-ospfapi --disable-isisd --disable-pimd --disable-nhrpd --enable-pie=no --with-libreadline=/home/paldier/ddwrt/src/router/readline CFLAGS=-fno-strict-aliasing -I/home/paldier/ddwrt/src/router/ -DNEED_PRINTF -fcommon -Drpl_malloc=malloc -Drpl_realloc=realloc -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt   LDFLAGS=-L/home/paldier/ddwrt/src/router/readline/shlib -L/home/paldier/ddwrt/src/router/ncurses/lib -lncurses"
 
 pid_t pid_output (const char *);
 

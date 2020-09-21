@@ -75,7 +75,7 @@ my $cli_stomp = 0;
 foreach (@ARGV) {
     $file = $_;
 
-    open (FH, "gcc -E -DHAVE_CONFIG_H -DVTYSH_EXTRACT_PL -DHAVE_IPV6 -I.. -I./ -I./.. -I../lib -I../lib -I../isisd/topology  $file |");
+    open (FH, "ccache arm-linux-uclibc-gcc -E -DHAVE_CONFIG_H -DVTYSH_EXTRACT_PL -DHAVE_IPV6 -I.. -I./ -I./.. -I../lib -I../lib -I../isisd/topology  $file |");
     local $/; undef $/;
     $line = <FH>;
     close (FH);

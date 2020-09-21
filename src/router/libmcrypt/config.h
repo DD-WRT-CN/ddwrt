@@ -2,13 +2,13 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
-/* #undef CLOSEDIR_VOID */
+#define CLOSEDIR_VOID 1
 
 /* dlmutex */
 /* #undef DLMUTEX */
 
 /* Define to 1 if you have the <argz.h> header file. */
-#define HAVE_ARGZ_H 1
+/* #undef HAVE_ARGZ_H */
 
 /* Define to 1 if you have the `bcopy */
 /* #undef HAVE_BCOPY */
@@ -39,7 +39,7 @@
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
-#define HAVE_MALLOC 1
+#define HAVE_MALLOC 0
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #define HAVE_MALLOC_H 1
@@ -67,7 +67,7 @@
 
 /* Define to 1 if your system has a GNU libc compatible `realloc' function,
    and to 0 otherwise. */
-#define HAVE_REALLOC 1
+#define HAVE_REALLOC 0
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -172,7 +172,7 @@
 #endif
 
 /* Define to rpl_malloc if the replacement function should be used. */
-/* #undef malloc */
+#define malloc rpl_malloc
 
 /* Define to rpl_realloc if the replacement function should be used. */
-/* #undef realloc */
+#define realloc rpl_realloc
