@@ -47,7 +47,7 @@ frr-configure: ncurses json-c readline libyang libcap
 		LIBYANG_LIBS="-L$(TOP)/libyang -lyang -L$(TOP)/pcre/.libs -lpcre" \
 		PYTHON=/usr/bin/python3
 
-frr: ncurses json-c libyang libcap
+frr: ncurses json-c libyang libcap frr-configure
 	make -C frr/build
 
 frr-install:

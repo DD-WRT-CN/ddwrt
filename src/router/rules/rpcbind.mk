@@ -7,7 +7,7 @@ rpcbind-configure: libtirpc
 		TIRPC_LIBS="-L$(TOP)/libtirpc/src/.libs -ltirpc" \
 		--prefix=/usr --with-systemdsystemunitdir=no
 
-rpcbind: libtirpc
+rpcbind: libtirpc rpcbind-configure
 	make -C rpcbind
 
 rpcbind-clean:

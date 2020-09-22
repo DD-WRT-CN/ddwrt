@@ -60,7 +60,7 @@ mc-configure: glib20 ncurses
 #	--with-glib-prefix="$(TOP)/mc/glib" \
 
 
-mc: glib20 ncurses
+mc: glib20 ncurses mc-configure
 	make -C util-linux
 	make -C util-linux install DESTDIR=$(INSTALLDIR)/util-linux
 	mkdir -p $(INSTALLDIR)/util-linux/usr/lib

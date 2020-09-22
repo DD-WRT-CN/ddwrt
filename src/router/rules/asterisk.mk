@@ -5,7 +5,7 @@ editline-configure:
 	CPPFLAGS="$(COPTS) $(MIPS16_OPT) -DNEED_PRINTF -D_GNU_SOURCE -I$(TOP)/ncurses/include" \
 	LDFLAGS="-L$(TOP)/ncurses/lib"
 
-editline:
+editline: editline-configure
 	make -C editline
 
 editline-install:
@@ -17,7 +17,7 @@ editline-install:
 	rm -f $(INSTALLDIR)/editline/usr/lib/*.la
 
 
-asterisk-configure: util-linux-configure util-linux-install jansson editline
+asterisk-configure: util-linux-install jansson editline zlib
 	rm -f asterisk/menuselect.makeopts && \
 	cd asterisk && ./configure --host=$(ARCH)-linux-uclibc \
 	--libdir=/usr/lib \
@@ -75,7 +75,9 @@ asterisk-configure: util-linux-configure util-linux-install jansson editline
 	JANSSON_CFLAGS="-I$(TOP)/jansson/src" \
 	JANSSON_LIBS="-L$(TOP)/jansson/src/.libs -ljansson -L$(TOP)/minidlna/lib -lsqlite3 -L$(TOP)/openssl" \
 	LIBEDIT_CFLAGS="-I$(TOP)/editline/src" \
-	LIBEDIT_LIBS="-L$(TOP)/editline/src/.libs -ledit -L$(TOP)/ncurses/lib -lncurses"
+	LIBEDIT_LIBS="-L$(TOP)/editline/src/.libs -ledit -L$(TOP)/ncurses/lib -lncurses" \
+	LIBXML2_INCLUDE="-I $(INSTALLDIR)/libxml2/include" \
+	LIBXML2_LIB="-L$(TOP)/libxml2/.libs -lxml2"
 	-cd chan_dongle && aclocal && autoconf && automake -a && cd ..
 	cd chan_dongle && ./configure  ac_cv_header_locale_h=yes --host=$(ARCH)-linux-uclibc --libdir=/usr/lib --with-asterisk=$(TOP)/asterisk/include DESTDIR=$(INSTALLDIR)/asterisk/usr/lib/asterisk/modules CFLAGS="$(COPTS) $(MIPS16_OPT) -I$(TOP)/glib20/libiconv/include -DASTERISK_VERSION_NUM=13000 -DLOW_MEMORY -D_XOPEN_SOURCE=600"
 
@@ -83,7 +85,7 @@ asterisk-clean:
 	$(MAKE) -C asterisk clean
 #	$(MAKE) -C chan_dongle clean
 
-asterisk: jansson
+asterisk: jansson asterisk-configure zlib
 	make -C util-linux
 	make -C util-linux install DESTDIR=$(INSTALLDIR)/util-linux
 	mkdir -p $(INSTALLDIR)/util-linux/usr/lib
@@ -278,5 +280,4 @@ endif
 	rm -rf $(INSTALLDIR)/util-linux/usr/tmp 
 	rm -f $(INSTALLDIR)/util-linux/lib/libfdisk.so*
 	rm -f $(INSTALLDIR)/util-linux/lib/libsmartcols.so*
-
 

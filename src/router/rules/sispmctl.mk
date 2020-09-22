@@ -6,7 +6,7 @@ sispmctl-configure: comgt
 		LIBUSB_CFLAGS="-I$(TOP)/usb_modeswitch/libusb-compat/libusb" \
 		LIBUSB_LIBS="-L$(TOP)/usb_modeswitch/libusb-compat/libusb/.libs -lusb"
 
-sispmctl:
+sispmctl: sispmctl-configure
 	$(MAKE) -C sispmctl
 
 sispmctl-clean:

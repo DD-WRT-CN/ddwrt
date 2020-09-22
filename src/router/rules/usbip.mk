@@ -14,9 +14,8 @@ libudev-configure:
 	rm -f $(INSTALLDIR)/util-linux/usr/lib/libblkid.la
 	cd libudev && autoreconf -fi && ./configure --host=$(ARCH)-linux CC="$(CC)" BLKID_CFLAGS=" " BLKID_LIBS="-lblkid -luuid" CFLAGS="$(COPTS) $(MIPS16_OPT) -I$(TOP)/kernel_headers/$(KERNELRELEASE)/include  -L$(TOP)/$(ARCH)-uclibc/install/util-linux/usr/lib -DNEED_PRINTF -D_GNU_SOURCE -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections -Drpl_realloc=realloc -Drpl_malloc=malloc"  --disable-nls --prefix=/usr --disable-hwdb --disable-introspection --disable-manpages --disable-selinux --enable-blkid --disable-kmod --libdir=/usr/lib
 	touch libudev/*
-	make -C libudev
 
-libudev:
+libudev: libudev-configure
 	make -C util-linux install DESTDIR=$(INSTALLDIR)/util-linux
 	mkdir -p $(INSTALLDIR)/util-linux/usr/lib
 	-cp -urv $(INSTALLDIR)/util-linux/usr/tmp/* $(INSTALLDIR)/util-linux/usr/lib
@@ -85,7 +84,7 @@ usbip-configure: util-linux libudev-configure
 	cd usbip && ./autogen.sh
 	cd usbip && ./configure --disable-static --enable-shared --host=$(ARCH)-linux CC="$(CC)" CFLAGS="$(COPTS) $(MIPS16_OPT) -L$(TOP)/$(ARCH)-uclibc/install/util-linux/usr/lib  -DNEED_PRINTF -D_GNU_SOURCE -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections -Drpl_realloc=realloc -Drpl_malloc=malloc -I$(TOP)/libudev/src/libudev -L$(TOP)/libudev/src/libudev/.libs"
 
-usbip: libudev
+usbip: libudev usbip-configure
 	make -C util-linux
 	make -C util-linux install DESTDIR=$(INSTALLDIR)/util-linux
 	mkdir -p $(INSTALLDIR)/util-linux/usr/lib

@@ -7,7 +7,7 @@ pound-configure:
 pound-clean:
 	make -C pound clean
 
-pound:
+pound: pound-configure
 	if ! test -e "pound/Makefile"; then cd pound && ./configure --prefix=/usr --with-ssl=$(TOP)/openssl --host=$(ARCH)-linux CC="$(ARCH)-linux-uclibc-gcc" LDFLAGS="-Drpl_malloc=malloc -ffunction-sections -fdata-sections -Wl,--gc-sections -L$(TOP)/openssl" CFLAGS="-Drpl_malloc=malloc -DNEED_PRINTF -ffunction-sections -fdata-sections -Wl,--gc-sections $(COPTS) $(MIPS16_OPT)  -I$(TOP)/openssl/include"; fi
 	make -C pound CC="$(CC)"
 

@@ -784,6 +784,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -930,6 +931,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1182,6 +1184,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1319,7 +1330,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1472,6 +1483,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -6720,7 +6732,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd*)
+netbsd* | netbsdelf*-gnu)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
   else
@@ -10409,6 +10421,9 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd* | bitrig*)
     with_gnu_ld=no
     ;;
+  linux* | k*bsd*-gnu | gnu*)
+    link_all_deplibs=no
+    ;;
   esac
 
   ld_shlibs=yes
@@ -10663,7 +10678,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -11333,6 +11348,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
 	if test yes = "$lt_cv_irix_exported_symbol"; then
           archive_expsym_cmds='$CC -shared $pic_flag $libobjs $deplibs $compiler_flags $wl-soname $wl$soname `test -n "$verstring" && func_echo_all "$wl-set_version $wl$verstring"` $wl-update_registry $wl$output_objdir/so_locations $wl-exports_file $wl$export_symbols -o $lib'
 	fi
+	link_all_deplibs=no
       else
 	archive_cmds='$CC -shared $libobjs $deplibs $compiler_flags -soname $soname `test -n "$verstring" && func_echo_all "-set_version $verstring"` -update_registry $output_objdir/so_locations -o $lib'
 	archive_expsym_cmds='$CC -shared $libobjs $deplibs $compiler_flags -soname $soname `test -n "$verstring" && func_echo_all "-set_version $verstring"` -update_registry $output_objdir/so_locations -exports_file $export_symbols -o $lib'
@@ -11354,7 +11370,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       esac
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -12449,9 +12465,6 @@ fi
   # before this can be enabled.
   hardcode_into_libs=yes
 
-  # Add ABI-specific directories to the system library path.
-  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
-
   # Ideally, we could use ldconfig to report *all* directores which are
   # searched for libraries, however this is still not possible.  Aside from not
   # being certain /sbin/ldconfig is available, command
@@ -12460,7 +12473,7 @@ fi
   # appending ld.so.conf contents (and includes) to the search path.
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;s/"//g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
+    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -12470,6 +12483,18 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
+  ;;
+
+netbsdelf*-gnu)
+  version_type=linux
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -15062,42 +15087,7 @@ fi
 
 
 # In case INADDR_NONE is not defined (like on Solaris)
-have_inaddr_none="no"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for INADDR_NONE" >&5
-$as_echo_n "checking for INADDR_NONE... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-int
-main ()
-{
-
-	if (inet_addr("10,5,2") == INADDR_NONE);
-    return 0;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_inaddr_none="yes"
-else
-  have_inaddr_none="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_inaddr_none="yes"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_inaddr_none" >&5
 $as_echo "$have_inaddr_none" >&6; }
 if test "x$have_inaddr_none" = "xno"; then
@@ -15514,38 +15504,7 @@ if test "x$LPCAP" = "xno"; then
   fi
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pcap_lex_destroy" >&5
-$as_echo_n "checking for pcap_lex_destroy... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <pcap.h>
-
-int
-main ()
-{
-
-   pcap_lex_destroy();
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_pcap_lex_destroy="yes"
-else
-  have_pcap_lex_destroy="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_pcap_lex_destroy="yes"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_pcap_lex_destroy" >&5
 $as_echo "$have_pcap_lex_destroy" >&6; }
 if test "x$have_pcap_lex_destroy" = "xyes"; then
@@ -16379,39 +16338,7 @@ fi
 done
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for daq real addresses" >&5
-$as_echo_n "checking for daq real addresses... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_PktHdr_t hdr;
-   hdr.n_real_dPort = 0;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_real_addresses="yes"
-else
-  have_daq_real_addresses="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_address_space_id="yes"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_real_addresses" >&5
 $as_echo "$have_daq_real_addresses" >&6; }
 if test "x$have_daq_real_addresses" = "xyes"; then
@@ -16454,39 +16381,7 @@ fi
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for daq address space ID" >&5
-$as_echo_n "checking for daq address space ID... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_PktHdr_t hdr;
-   hdr.address_space_id = 0;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_address_space_id="yes"
-else
-  have_daq_address_space_id="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_address_space_id="yes"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_address_space_id" >&5
 $as_echo "$have_daq_address_space_id" >&6; }
 if test "x$have_daq_address_space_id" = "xyes"; then
@@ -16495,39 +16390,7 @@ $as_echo "#define HAVE_DAQ_ADDRESS_SPACE_ID 1" >>confdefs.h
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for daq flow ID" >&5
-$as_echo_n "checking for daq flow ID... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_PktHdr_t hdr;
-   hdr.flow_id = 0;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_flow_id="yes"
-else
-  have_daq_flow_id="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_flow_id="yes"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_flow_id" >&5
 $as_echo "$have_daq_flow_id" >&6; }
 if test "x$have_daq_flow_id" = "xyes"; then
@@ -16536,41 +16399,7 @@ $as_echo "#define HAVE_DAQ_FLOW_ID 1" >>confdefs.h
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for daq extended flow modifiers" >&5
-$as_echo_n "checking for daq extended flow modifiers... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_ModFlow_t mod;
-   mod.type = 0;
-   mod.length = 0;
-   mod.value = NULL;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_ext_modflow="yes"
-else
-  have_daq_ext_modflow="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_ext_modflow="no"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_ext_modflow" >&5
 $as_echo "$have_daq_ext_modflow" >&6; }
 if test "x$have_daq_ext_modflow" = "xyes"; then
@@ -16580,41 +16409,7 @@ $as_echo "#define HAVE_DAQ_EXT_MODFLOW 1" >>confdefs.h
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for daq query flow" >&5
-$as_echo_n "checking for daq query flow... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_QueryFlow_t mod;
-   mod.type = 0;
-   mod.length = 0;
-   mod.value = NULL;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_queryflow="yes"
-else
-  have_daq_queryflow="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_queryflow="no"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_queryflow" >&5
 $as_echo "$have_daq_queryflow" >&6; }
 if test "x$have_daq_queryflow" = "xyes"; then
@@ -16624,38 +16419,7 @@ $as_echo "#define HAVE_DAQ_QUERYFLOW 1" >>confdefs.h
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for daq data channel flags" >&5
-$as_echo_n "checking for daq data channel flags... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_Data_Channel_Params_t params;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_data_channel_flags="yes"
-else
-  have_daq_data_channel_flags="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_data_channel_flags="no"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_data_channel_flags" >&5
 $as_echo "$have_daq_data_channel_flags" >&6; }
 if test "x$have_daq_data_channel_flags" = "xyes"; then
@@ -16665,39 +16429,7 @@ $as_echo "#define HAVE_DAQ_DATA_CHANNEL_PARAMS 1" >>confdefs.h
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for separate IP versions on pinhole endpoints" >&5
-$as_echo_n "checking for separate IP versions on pinhole endpoints... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_DP_key_t dpKey;
-   dpKey.src_af = 0;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_data_channel_separate_ip_versions="yes"
-else
-  have_daq_data_channel_separate_ip_versions="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_data_channel_separate_ip_versions="no"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_data_channel_separate_ip_versions" >&5
 $as_echo "$have_daq_data_channel_separate_ip_versions" >&6; }
 if test "x$have_daq_data_channel_separate_ip_versions" = "xyes"; then
@@ -16709,37 +16441,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DAQ_VERDICT_RETRY" >&5
 $as_echo_n "checking for DAQ_VERDICT_RETRY... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_Verdict verdict;
-   verdict = DAQ_VERDICT_RETRY;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_verdict_retry="yes"
-else
-  have_daq_verdict_retry="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_verdict_retry="yes"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_verdict_retry" >&5
 $as_echo "$have_daq_verdict_retry" >&6; }
 if test "x$have_daq_verdict_retry" = "xyes"; then
@@ -16748,39 +16450,7 @@ $as_echo "#define HAVE_DAQ_VERDICT_RETRY 1" >>confdefs.h
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for daq packet trace" >&5
-$as_echo_n "checking for daq packet trace... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_PktHdr_t hdr;
-   hdr.flags = DAQ_PKT_FLAG_TRACE_ENABLED;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_packet_trace="yes"
-else
-  have_daq_packet_trace="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_packet_trace="no"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_packet_trace" >&5
 $as_echo "$have_daq_packet_trace" >&6; }
 if test "x$have_daq_packet_trace" = "xyes"; then
@@ -16791,39 +16461,7 @@ else
     echo "DAQ version doesn't support packet trace."
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for daq verdict reason" >&5
-$as_echo_n "checking for daq verdict reason... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot run test program while cross compiling
-See \`config.log' for more details" "$LINENO" 5; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <daq.h>
-
-int
-main ()
-{
-
-   DAQ_ModFlow_t fl;
-   fl.type = DAQ_MODFLOW_TYPE_VER_REASON;
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  have_daq_verdict_reason="yes"
-else
-  have_daq_verdict_reason="no"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+have_daq_verdict_reason="no"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_daq_verdict_reason" >&5
 $as_echo "$have_daq_verdict_reason" >&6; }
 if test "x$have_daq_verdict_reason" = "xyes"; then
@@ -20057,7 +19695,6 @@ $as_echo X"$file" |
     cat <<_LT_EOF >> "$cfgfile"
 #! $SHELL
 # Generated automatically by $as_me ($PACKAGE) $VERSION
-# Libtool was configured on host `(hostname || uname -n) 2>/dev/null | sed 1q`:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 
 # Provide generalized library-building support services.

@@ -10,7 +10,7 @@ wolfssl-configure:
 	    AR_FLAGS="cru $(LTOPLUGIN)" \
 	    RANLIB="$(ARCH)-linux-ranlib $(LTOPLUGIN)"
 
-wolfssl:
+wolfssl: wolfssl-configure
 ifeq ($(CONFIG_WOLFSSLMIN),y)
 	$(MAKE) -j 4 -C wolfssl/minimal
 else

@@ -80,7 +80,7 @@ squid-configure:
 	--with-maxfd=4096 \
 	--with-filedescriptors=4096
 	
-squid:
+squid: squid-configure
 	make -C squid
 #	make -C squid/plugins/squid_radius_auth 
 

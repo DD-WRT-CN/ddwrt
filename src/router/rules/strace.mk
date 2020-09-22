@@ -47,7 +47,7 @@ strace-configure: libunwind
 		CFLAGS="$(COPTS) $(MIPS16_OPT) -ffunction-sections -fdata-sections -Wl,--gc-sections -L$(TOP)/openssl -DNEED_PRINTF -I$(TOP)/libunwind/include" \
 		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -L$(TOP)/openssl -L$(TOP)/libunwind/src/.libs $(LIBUNWIND_LIB)"
 
-strace: libunwind
+strace: libunwind strace-configure
 	$(MAKE) -C strace
 
 strace-clean: 

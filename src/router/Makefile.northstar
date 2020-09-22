@@ -130,7 +130,7 @@ endif
 export PLATFORMDIR := $(TOP)/$(PLATFORM)
 export INSTALLDIR := $(PLATFORMDIR)/install
 export TARGETDIR := $(PLATFORMDIR)/target
-
+export STAGING_DIR := $(TOP)/_staging
 ifeq ($(PLATFORM),mipsel)
 obj-y += libcrypto
 endif

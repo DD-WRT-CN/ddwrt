@@ -5,10 +5,8 @@ slang-configure:
 		--libdir=/usr/lib \
 		--prefix=/usr \
 		--enable-debug=no 
-	make -C slang clean
-	make -C slang
 
-slang:
+slang: slang-configure
 	make -C slang
 
 slang-clean:

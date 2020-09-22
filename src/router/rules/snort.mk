@@ -1,4 +1,4 @@
-snort-configure: daq-configure pcre-configure daq pcre
+snort-configure: daq pcre
 	cd snort && autoreconf
 	export ac_cv_func_malloc_0_nonnull=yes  ; \
 	export have_inaddr_none=yes ; \
@@ -41,7 +41,7 @@ snort-configure: daq-configure pcre-configure daq pcre
 	sed -i 's/need_relink=yes/need_relink=no/g' $(TOP)/snort/libtool
 
 
-snort: pcre
+snort: pcre snort-configure
 	$(MAKE) -C snort CFLAGS="$(COPTS) $(MIPS16_OPT) -DNEED_PRINTF -I$(TOP)/librpc"
 	$(MAKE) -C snort/so_rules/src
 

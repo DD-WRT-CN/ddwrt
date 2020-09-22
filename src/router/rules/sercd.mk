@@ -1,7 +1,7 @@
 sercd-configure:
 	cd sercd && ./configure --host=$(ARCH)-linux CFLAGS="$(COPTS) -DNEED_PRINTF" --prefix=/usr
 
-sercd:
+sercd: sercd-configure
 	make -C sercd
 
 sercd-clean:

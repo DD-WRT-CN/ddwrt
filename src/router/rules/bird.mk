@@ -1,4 +1,4 @@
-bird: 
+bird: bird-configure
 	$(MAKE) -C bird
 
 bird-install:

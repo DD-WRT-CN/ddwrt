@@ -14,7 +14,7 @@ ifeq ($(ARCH),aarch64)
 UNBOUND_COPTS += -DNEED_PRINTF
 endif
 
-unbound-configure:
+unbound-configure: expat
 	cd unbound && ./configure --disable-ecdsa \
 		--disable-gost \
 		--enable-allsymbols \
@@ -27,11 +27,12 @@ unbound-configure:
 		--libdir=/usr/lib \
 		--sysconfdir=/etc \
 		--host=$(ARCH)-linux \
+		--with-libexpat="$(STAGING_DIR)/usr/" \
 		CC="$(CC)" \
 		CFLAGS="$(COPTS) $(MIPS16_OPT) $(UNBOUND_COPTS) -ffunction-sections -fdata-sections -Wl,--gc-sections -L$(TOP)/openssl" \
 		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -L$(TOP)/openssl"
 
-unbound: 
+unbound: unbound-configure expat 
 	$(MAKE) -C unbound
 
 unbound-clean: 
@@ -51,3 +52,27 @@ unbound-install:
 	rm -f $(INSTALLDIR)/unbound/usr/sbin/unbound-control-setup
 	rm -f $(INSTALLDIR)/unbound/usr/sbin/unbound-host
 	
+
+expat/stamp-h1:
+	cd $(TOP)/expat && \
+	$(CONFIGURE) --prefix=$(STAGING_DIR)/usr/ \
+		--libdir=$(STAGING_DIR)/usr/lib \
+		--includedir=$(STAGING_DIR)/usr/include
+	touch $@
+
+expat: expat/stamp-h1
+	@$(SEP)
+	@$(MAKE) -C expat
+	-mkdir -p $(STAGING_DIR)/usr/lib
+	-mkdir -p $(STAGING_DIR)/usr/include
+	make -C expat install
+
+expat-install: expat
+	mkdir -p $(INSTALLDIR)/expat/usr/lib
+	install -D expat/.libs/libexpat.so.1.5.2 $(INSTALLDIR)/expat/usr/lib/libexpat.so.1.5.2
+	$(STRIP) $(INSTALLDIR)/expat/usr/lib/libexpat.so.1.5.2
+	cd $(INSTALLDIR)/expat/usr/lib && ln -sf libexpat.so.1.5.2 libexpat.so.1
+
+expat-clean:
+	-@$(MAKE) -C expat clean
+	@rm -f expat/stamp-h1
