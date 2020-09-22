@@ -61,7 +61,6 @@ expat/stamp-h1:
 	touch $@
 
 expat: expat/stamp-h1
-	@$(SEP)
 	@$(MAKE) -C expat
 	-mkdir -p $(STAGING_DIR)/usr/lib
 	-mkdir -p $(STAGING_DIR)/usr/include

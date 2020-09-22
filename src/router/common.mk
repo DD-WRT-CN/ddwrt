@@ -76,7 +76,6 @@ clean: rc-clean httpd-clean services-clean radauth-clean shared-clean libutils-c
 clean_target:
 	rm -rf $(TARGETDIR)
 	rm -rf $(INSTALLDIR)
-	rm -rf $(STAGING_DIR)
 
 distclean mrproper: $(obj-distclean) clean_target
 	rm -rf $(INSTALLDIR)

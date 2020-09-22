@@ -18,13 +18,13 @@ IMAGEDIR := $(RELEASEDIR)/image
 
 install: all
 	install -d $(RELEASEDIR)/image
-	$(MAKE) -C src install
+	$(MAKE) -f Makefile.northstar install
 
 all clean:
-	$(MAKE) -C src $@
+	$(MAKE) -f Makefile.northstar $@
 
 distclean:
-	$(MAKE) -C src $@
+	$(MAKE) -f Makefile.northstar $@
 	rm -rf $(IMAGEDIR)
 
 .PHONY: all clean install

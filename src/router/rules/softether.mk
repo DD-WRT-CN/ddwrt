@@ -21,14 +21,17 @@ SOFTETHER_EXTRA_LDFLAGS=-L$(TOP)/openssl -lcrypto -lssl -L$(TOP)/readline/shlib 
 softether-configure: zlib readline ncurses
 	rm -f $(TOP)/softether/CMakeCache.txt
 	rm -rf $(TOP)/softether/host
+	rm -rf $(TOP)/softether/bin
 	mkdir $(TOP)/softether/host
 	-cp -urv $(TOP)/softether/* $(TOP)/softether/host
 	sed -i 's/\SHARED/STATIC/g' $(TOP)/softether/host/src/Mayaqua/CMakeLists.txt
 	sed -i 's/\SHARED/STATIC/g' $(TOP)/softether/host/src/Cedar/CMakeLists.txt
+	sed -i 's/tmp/bin/g' $(TOP)/softether/host/src/hamcorebuilder/CMakeLists.txt
 	sed -i 's/\readline/libreadline.a/g' $(TOP)/softether/host/src/Cedar/CMakeLists.txt
 	cd $(TOP)/softether/host && export CC=gcc && export LD=ld && export CFLAGS=-O2 && cmake -DCMAKE_BUILD_TYPE=release .
 	cd $(TOP)/softether/host && export CC=gcc && export LD=ld && export CFLAGS=-O2 && make
-	cp $(TOP)/softether/host/tmp/hamcorebuilder  $(TOP)/softether/src/bin
+	mkdir -p $(TOP)/softether/bin
+	cp $(TOP)/softether/host/bin/hamcorebuilder  $(TOP)/softether/bin/
 	$(call CMakeClean,$(SOFTETHER_PKG_BUILD_DIR))
 	$(call CMakeConfigure,$(SOFTETHER_PKG_BUILD_DIR),$(SOFTETHER_STAGING_DIR),$(SOFTETHER_CMAKE_OPTIONS),$(SOFTETHER_EXTRA_CFLAGS),$(SOFTETHER_EXTRA_LDFLAGS)) 
 
