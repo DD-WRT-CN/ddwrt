@@ -157,7 +157,7 @@ configure:4151: $? = 0
 configure:4151: result: yes
 configure:4151: checking for setproctitle
 configure:4151: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt  -D_GNU_SOURCE -ffunction-sections -fdata-sections -Wl,--gc-sections  -I/home/paldier/ddwrt/src/router/pppd/include -DNEED_PRINTF -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt  -D_GNU_SOURCE -ffunction-sections -fdata-sections -Wl,--gc-sections  -I/home/paldier/ddwrt/src/router/pppd.new/include  conftest.c  >&5
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccDCX6d8.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/cc5RoMqH.o: in function `main':
 conftest.c:(.text.startup.main+0x4): undefined reference to `setproctitle'
 collect2: error: ld returned 1 exit status
 configure:4151: $? = 1

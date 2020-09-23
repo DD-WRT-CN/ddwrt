@@ -175,6 +175,8 @@ asterisk-install:
 	chmod 700 asterisk/build_tools/install_subst
 	-ASTCFLAGS="$(COPTS) $(MIPS16_OPT) -DLOW_MEMORY -DNEED_PRINTF -fPIC -I$(TOP)/ncurses/include -I$(TOP)/openssl/include -I$(TOP)/minidlna/sqlite-3.6.22" \
 	ASTLDFLAGS="$(COPTS) $(MIPS16_OPT) -DLOW_MEMORY -DNEED_PRINTF -fPIC -L$(TOP)/ncurses/lib -L$(TOP)/openssl -L$(TOP)/minidlna/lib" \
+	LIBXML2_INCLUDE="-I $(INSTALLDIR)/libxml2/include" \
+	LIBXML2_LIB="-L$(TOP)/libxml2/.libs -lxml2"
 	$(MAKE) -C asterisk \
 		ASTVARLIBDIR="/usr/lib/asterisk" \
 		NOISY_BUILD="1" \

@@ -27,8 +27,8 @@ install: all
 	cd $(INSTALLDIR)/usr/bin && ln -sf mactelnet_multicall mndp
 
 	install -d $(INSTALLDIR)/etc/config
-	install -m 600 -o root config/mactelnet.webservices $(INSTALLDIR)/etc/config
-	install -m 600 -o root config/mactelnet.nvramconfig $(INSTALLDIR)/etc/config
+	install -D config/mactelnet.webservices $(INSTALLDIR)/etc/config
+	install -D config/mactelnet.nvramconfig $(INSTALLDIR)/etc/config
 
 install-docs:
 	install -d $(DESTDIR)/usr/share/man/man1/

@@ -3,13 +3,17 @@ libsodium: libsodium-configure
 	
 libsodium-clean:
 	make -C libsodium clean
-	
+
+libsodium-install:
+	@true
+
 libsodium-configure:
 	cd libsodium && ./autogen.sh && ./configure --host=$(ARCH)-linux-uclibc  \
 	--disable-ssp \
 	--disable-shared \
 	--enable-static \
 	--enable-minimal \
+	--prefix="/usr" \
 	CC="ccache $(ARCH)-linux-uclibc-gcc" \
 	CFLAGS="$(LTO) $(LTOFIXUP) $(COPTS) $(MIPS16_OPT)  -ffunction-sections -fdata-sections -Wl,--gc-sections" \
 	CPPFLAGS="$(LTO) $(LTOFIXUP) $(COPTS) $(MIPS16_OPT) -ffunction-sections -fdata-sections -Wl,--gc-sections" \

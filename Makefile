@@ -16,14 +16,16 @@ RELEASEDIR := $(shell pwd)
 SRCBASE := src
 IMAGEDIR := $(RELEASEDIR)/image
 
-install: all
+install:
 	install -d $(RELEASEDIR)/image
 	$(MAKE) -f Makefile.northstar install
 
-all clean:
+all:
 	$(MAKE) -f Makefile.northstar $@
+	install -d $(RELEASEDIR)/image
+	$(MAKE) -f Makefile.northstar install
 
-distclean:
+distclean clean:
 	$(MAKE) -f Makefile.northstar $@
 	rm -rf $(IMAGEDIR)
 
