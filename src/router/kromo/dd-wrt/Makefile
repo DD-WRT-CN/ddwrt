@@ -1167,7 +1167,6 @@ endif
 #install: installwebfiles stripfiles $(PROCESSLANGFILES) optimizefiles removeobsolete makewww removepwc cleanup
 install: installwebfiles stripfiles $(PROCESSLANGFILES) removeobsolete makewww removepwc cleanup
 
-
 postinstall: installwebfiles removeobsolete removepwc cleanup
 
 webcomp:

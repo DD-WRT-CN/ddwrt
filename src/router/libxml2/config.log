@@ -1480,7 +1480,7 @@ configure:13295: $? = 0
 configure:13295: result: yes
 configure:13295: checking for isnand
 configure:13295: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt   conftest.c  >&5
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccGKKm07.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccGwnoXI.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `isnand'
 collect2: error: ld returned 1 exit status
 configure:13295: $? = 1
@@ -1584,7 +1584,7 @@ configure: failed program was:
 configure:13295: result: no
 configure:13295: checking for fp_class
 configure:13295: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt   conftest.c  >&5
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccKbDema.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/cccs5AD5.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `fp_class'
 collect2: error: ld returned 1 exit status
 configure:13295: $? = 1
@@ -1688,7 +1688,7 @@ configure: failed program was:
 configure:13295: result: no
 configure:13295: checking for class
 configure:13295: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt   conftest.c  >&5
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccEf7oMc.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccnq8okv.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `class'
 collect2: error: ld returned 1 exit status
 configure:13295: $? = 1
@@ -1792,7 +1792,7 @@ configure: failed program was:
 configure:13295: result: no
 configure:13295: checking for fpclass
 configure:13295: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt   conftest.c  >&5
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/cchOtdgg.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/cc287SVL.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `fpclass'
 collect2: error: ld returned 1 exit status
 configure:13295: $? = 1
@@ -1914,7 +1914,7 @@ configure:13319: $? = 0
 configure:13319: result: yes
 configure:13319: checking for _stat
 configure:13319: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-a9 -mtune=cortex-a9  -msoft-float -mfloat-abi=soft -fno-caller-saves -fno-plt   conftest.c  >&5
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/cctUJlLv.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccCLIUto.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `_stat'
 collect2: error: ld returned 1 exit status
 configure:13319: $? = 1
@@ -2096,7 +2096,7 @@ configure:13849: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-
 conftest.c:100:6: warning: conflicting types for built-in function 'isnan' [-Wbuiltin-declaration-mismatch]
  char isnan ();
       ^~~~~
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccwt1LK2.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccPC6oDm.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `isnan'
 collect2: error: ld returned 1 exit status
 configure:13849: $? = 1
@@ -2221,7 +2221,7 @@ configure:13880: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-
 conftest.c:84:6: warning: conflicting types for built-in function 'isnan' [-Wbuiltin-declaration-mismatch]
  char isnan ();
       ^~~~~
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/cceE26d5.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccY8fcOL.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `isnan'
 collect2: error: ld returned 1 exit status
 configure:13880: $? = 1
@@ -2323,7 +2323,7 @@ configure:13900: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-
 conftest.c:100:6: warning: conflicting types for built-in function 'isinf' [-Wbuiltin-declaration-mismatch]
  char isinf ();
       ^~~~~
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccVKJnL7.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/cc7wzaw7.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `isinf'
 collect2: error: ld returned 1 exit status
 configure:13900: $? = 1
@@ -2448,7 +2448,7 @@ configure:13931: ccache arm-linux-uclibc-gcc -o conftest -Os -pipe -mcpu=cortex-
 conftest.c:84:6: warning: conflicting types for built-in function 'isinf' [-Wbuiltin-declaration-mismatch]
  char isinf ();
       ^~~~~
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccXINRfa.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccslG09p.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `isinf'
 collect2: error: ld returned 1 exit status
 configure:13931: $? = 1
@@ -2553,7 +2553,7 @@ conftest.c:100:1: warning: function declaration isn't a prototype [-Wstrict-prot
 conftest.c:109:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
  main ()
  ^~~~
-/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccAW99Fc.o: in function `main':
+/home/paldier/ddwrt/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin/../lib64/gcc/arm-openwrt-linux-muslgnueabi/8.2.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: /tmp/ccSeTRmv.o: in function `main':
 conftest.c:(.text.startup+0x4): undefined reference to `shl_load'
 collect2: error: ld returned 1 exit status
 configure:14213: $? = 1
