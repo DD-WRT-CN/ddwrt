@@ -51,7 +51,7 @@ ifeq ($(wildcard $(SRCBASE)/router/tools/trx),)
 	make -C $(RELEASEDIR)/src/router/tools jsformat
 	cp $(RELEASEDIR)/opt/tools/trx $(RELEASEDIR)/src/router/tools/
 	cp $(RELEASEDIR)/opt/tools/trx_n $(RELEASEDIR)/src/router/tools/
-	cp $(RELEASEDIR)/opt/asus/asustrx $(RELEASEDIR)/src/router/tools/
+	cp $(RELEASEDIR)/opt/asus/asustrx $(RELEASEDIR)/src/router/tools/trx_asus
 	ln -sf $(RELEASEDIR)/opt $(RELEASEDIR)/src/router/
 	#chmod +x $(RELEASEDIR)/src/router/iptables/extensions/.dccp-test
 	#chmod +x $(RELEASEDIR)/src/router/iptables/extensions/.layer7-test
