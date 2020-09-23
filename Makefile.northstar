@@ -41,7 +41,7 @@ dd_tools:
 ifeq ($(wildcard $(SRCBASE)/router/tools/trx),)
 	gcc -o $(RELEASEDIR)/opt/tools/trx $(RELEASEDIR)/opt/tools/trx.c
 	gcc -o $(RELEASEDIR)/opt/tools/trx_n $(RELEASEDIR)/opt/tools/trx_n.c
-	gcc -o $(RELEASEDIR)/opt/asus/asustrx $(RELEASEDIR)/opt/asus/asustrx.c
+	gcc -o $(RELEASEDIR)/opt/asus/trx_asus $(RELEASEDIR)/opt/asus/trx_asus.c
 	gcc -o $(RELEASEDIR)/tools/strip $(RELEASEDIR)/tools/strip.c
 	gcc -o $(RELEASEDIR)/tools/write3 $(RELEASEDIR)/tools/write3.c
 	gcc -o $(RELEASEDIR)/tools/write4 $(RELEASEDIR)/tools/write4.c
@@ -51,7 +51,7 @@ ifeq ($(wildcard $(SRCBASE)/router/tools/trx),)
 	make -C $(RELEASEDIR)/src/router/tools jsformat
 	cp $(RELEASEDIR)/opt/tools/trx $(RELEASEDIR)/src/router/tools/
 	cp $(RELEASEDIR)/opt/tools/trx_n $(RELEASEDIR)/src/router/tools/
-	cp $(RELEASEDIR)/opt/asus/asustrx $(RELEASEDIR)/src/router/tools/trx_asus
+	cp $(RELEASEDIR)/opt/asus/trx_asus $(RELEASEDIR)/src/router/tools/trx_asus
 	ln -sf $(RELEASEDIR)/opt $(RELEASEDIR)/src/router/
 	#chmod +x $(RELEASEDIR)/src/router/iptables/extensions/.dccp-test
 	#chmod +x $(RELEASEDIR)/src/router/iptables/extensions/.layer7-test
