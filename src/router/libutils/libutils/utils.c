@@ -560,6 +560,7 @@ int check_wan_link(int num)
 	return wan_link;
 }
 
+
 int wanactive(char *wanaddr)
 {
 	return (!nvram_match("wan_proto", "disabled") && strcmp(wanaddr, "0.0.0.0") && check_wan_link(0));
