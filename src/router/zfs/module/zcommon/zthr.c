@@ -534,3 +534,14 @@ zthr_has_waiters(zthr_t *t)
 	mutex_exit(&t->zthr_state_lock);
 	return (has_waiters);
 }
+#if defined(_KERNEL)
+EXPORT_SYMBOL(zthr_has_waiters);
+EXPORT_SYMBOL(zthr_wait_cycle_done);
+EXPORT_SYMBOL(zthr_iscancelled);
+EXPORT_SYMBOL(zthr_resume);
+EXPORT_SYMBOL(zthr_wakeup);
+EXPORT_SYMBOL(zthr_create);
+EXPORT_SYMBOL(zthr_cancel);
+EXPORT_SYMBOL(zthr_destroy);
+EXPORT_SYMBOL(zthr_create_timer);
+#endif
