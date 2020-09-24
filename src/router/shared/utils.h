@@ -1171,6 +1171,9 @@ extern int has_no_apmode(const char *prefix);
 extern int has_qboost_tdma(const char *prefix);
 extern int has_beacon_limit(const char *prefix);
 extern int has_spectralscanning(const char *prefix);
+extern int has_half(const char *prefix);
+extern int has_quarter(const char *prefix);
+extern int has_subquarter(const char *prefix);
 extern int getath9kdevicecount(void);
 #else
 static inline int is_mac80211(const char *prefix)
@@ -1214,6 +1217,21 @@ static inline int has_beacon_limit(char *prefix)
 }
 
 static inline int has_channelsurvey(char *prefix)
+{
+	return 0;
+}
+
+static inline int has_half(char *prefix)
+{
+	return 0;
+}
+
+static inline int has_quarter(char *prefix)
+{
+	return 0;
+}
+
+static inline int has_subquarter(char *prefix)
 {
 	return 0;
 }
@@ -1303,14 +1321,7 @@ static inline int getmaxvaps(const char *prefix)
 }
 #endif
 
-#if defined(HAVE_SUBQUARTER) && (defined(HAVE_REGISTER) || defined(HAVE_SUPERCHANNEL))
-int registered_has_subquarter(void)
-#else
-static inline int registered_has_subquarter(void)
-{
-	return 0;
-}
-#endif
+int registered_has_subquarter(void);
 
 extern char *get3GDeviceVendor(void);
 

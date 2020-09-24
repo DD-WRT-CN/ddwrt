@@ -92,17 +92,17 @@ struct mon mons[] = {
 #endif
 	{ "dnsmasq", M_LAN, "dnsmasq_enable", "1", NULL, NULL, NULL },
 #ifdef HAVE_SMARTDNS
-	{ "smartdns", M_LAN, "smartdns", "1", NULL, NULL, NULL },
+	{ "smartdns", M_WAN, "smartdns", "1", NULL, NULL, NULL },
 #endif
 	{ "dhcpfwd", M_WAN, "dhcpfwd_enable", "1", NULL, NULL, NULL },
 #ifdef HAVE_PRIVOXY
-	{ "privoxy", M_LAN, "privoxy_enable", "1", NULL, NULL, NULL },
+	{ "privoxy", M_WAN, "privoxy_enable", "1", NULL, NULL, NULL },
 #endif
 #ifdef HAVE_NOCAT
-	{ "splashd", M_LAN, "NC_enable", "1", NULL, NULL, NULL },
+	{ "splashd", M_WAN, "NC_enable", "1", NULL, NULL, NULL },
 #endif
 #ifdef HAVE_CHILLI
-	{ "chilli", M_LAN, "chilli_enable", "1", NULL, NULL, NULL },
+	{ "chilli", M_WAN, "chilli_enable", "1", NULL, NULL, NULL },
 #endif
 #ifdef HAVE_WIFIDOG
 	{ "wifidog", M_WAN, "wd_enable", "1", NULL, NULL, NULL },
@@ -124,7 +124,7 @@ struct mon mons[] = {
 	{ "openvpn", M_LAN, "openvpncl_enable", "1", NULL, NULL, NULL },
 #endif
 #endif
-	{ "ddns", M_LAN, "ddns_enable", "1", NULL, NULL, &check_ddns },
+	{ "ddns", M_WAN, "ddns_enable", "1", NULL, NULL, &check_ddns },
 	{ NULL, 0, NULL, NULL, NULL, NULL }
 };
 
@@ -332,7 +332,7 @@ static int do_mon(void)
 			printf("checking %s\n", v->name);
 
 			if (v->type == M_WAN)
-				if (!check_wan_link(0)) {
+				if (!nvram_matchi("wanup", 1)) {
 					printf("process is wan, but wan is not up\n");
 					continue;
 				}
