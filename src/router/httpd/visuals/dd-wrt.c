@@ -1289,6 +1289,19 @@ void showRadio(webs_t wp, char *propname, char *nvname)
 	websWrite(wp, "</div>\n");
 }
 
+void showRadioInv(webs_t wp, char *propname, char *nvname)
+{
+	websWrite(wp, "<div class=\"setting\">\n");
+	show_caption(wp, "label", propname, NULL);
+	websWrite(wp,
+		  "<input class=\"spaceradio\" type=\"radio\" value=\"0\" name=\"%s\" %s><script type=\"text/javascript\">Capture(share.enable)</script></input>&nbsp;\n",
+		  nvname, nvram_default_matchi(nvname, 0, 1) ? "checked=\"checked\"" : "");
+	websWrite(wp,
+		  "<input class=\"spaceradio\" type=\"radio\" value=\"1\" name=\"%s\" %s><script type=\"text/javascript\">Capture(share.disable)</script></input>&nbsp;\n",
+		  nvname, nvram_default_matchi(nvname, 1, 1) ? "checked=\"checked\"" : "");
+	websWrite(wp, "</div>\n");
+}
+
 #define showRadioDefaultOn(wp, propname, nvname) \
 	do { \
 	nvram_default_get(nvname,"1"); \
@@ -2886,6 +2899,7 @@ void ej_show_wireless_single(webs_t wp, char *prefix)
 	char wl_ff[16];
 	char wmm[32];
 	char wl_uapsd[16];
+	char wl_ldpc[16];
 	char wl_smps[16];
 	char wl_isolate[32];
 	char wl_intmit[32];
@@ -3159,6 +3173,13 @@ void ej_show_wireless_single(webs_t wp, char *prefix)
 	sprintf(wl_noise_immunity, "%s_noise_immunity", prefix);
 	sprintf(wl_ofdm_weak_det, "%s_ofdm_weak_det", prefix);
 	sprintf(wl_uapsd, "%s_uapsd", prefix);
+	sprintf(wl_ldpc, "%s_ldpc", prefix);
+	if (has_ldpc(prefix)) {
+		char *netmode = nvram_nget("%s_net_mode", prefix);
+		if ((strcmp(netmode, "mixed") &&	//
+		     strcmp(netmode, "ac-only") && strcmp(netmode, "acn-mixed")))
+			showRadioInv(wp, "wl_basic.ldpc", wl_ldpc);
+	}
 	if (has_uapsd(prefix)) {
 		showRadio(wp, "wl_basic.uapsd", wl_uapsd);
 	}
@@ -3293,14 +3314,13 @@ void ej_show_wireless_single(webs_t wp, char *prefix)
 	}
 #if !defined(HAVE_BUFFALO)
 #if defined(HAVE_MADWIFI)
-	if ((is_ath10k(prefix) && has_5ghz(prefix)) || (is_mt7615(prefix) && has_5ghz(prefix)) || is_ath5k(prefix) || is_ath9k(prefix)
-	    || (!is_mvebu(prefix) && !has_vht80(prefix) && !is_ath10k(prefix) && !is_mt76(prefix))) {
+	if (has_half(prefix))
 		websWrite(wp, "document.write(\"<option value=\\\"10\\\" %s >\" + share.half + \"</option>\");\n", nvram_matchi(wl_width, 10) ? "selected=\\\"selected\\\"" : "");
+	if (has_quarter(prefix))
 		websWrite(wp, "document.write(\"<option value=\\\"5\\\" %s >\" + share.quarter + \"</option>\");\n", nvram_matchi(wl_width, 5) ? "selected=\\\"selected\\\"" : "");
-		if (registered_has_subquarter() && (is_ath5k(prefix) || is_ath9k(prefix))) {
-			/* will be enabled once it is tested and the spectrum analyse is done */
-			websWrite(wp, "document.write(\"<option value=\\\"2\\\" %s >\" + share.subquarter + \"</option>\");\n", nvram_matchi(wl_width, 2) ? "selected=\\\"selected\\\"" : "");
-		}
+	if (registered_has_subquarter() && has_subquarter(prefix)) {
+		/* will be enabled once it is tested and the spectrum analyse is done */
+		websWrite(wp, "document.write(\"<option value=\\\"2\\\" %s >\" + share.subquarter + \"</option>\");\n", nvram_matchi(wl_width, 2) ? "selected=\\\"selected\\\"" : "");
 	}
 #endif
 #endif
@@ -3707,7 +3727,6 @@ void ej_show_wireless_single(webs_t wp, char *prefix)
 		websWrite(wp, "<span class=\"default\"><script type=\"text/javascript\">\n//<![CDATA[\n document.write(\"(\" + share.deflt + \": 500 \" + share.meters + \")\");\n//]]>\n</script></span>\n");
 		websWrite(wp, "</div>\n");
 	}
-
 #ifdef HAVE_MADWIFI
 	if (nvram_nmatch("ap", "%s_mode", prefix)
 	    || nvram_nmatch("wdsap", "%s_mode", prefix)
@@ -3883,6 +3902,7 @@ void ej_show_wireless_single(webs_t wp, char *prefix)
 	sprintf(wl_noise_immunity, "%s_noise_immunity", prefix);
 	sprintf(wl_ofdm_weak_det, "%s_ofdm_weak_det", prefix);
 	sprintf(wl_uapsd, "%s_uapsd", prefix);
+	sprintf(wl_ldpc, "%s_ldpc", prefix);
 	sprintf(wl_smps, "%s_smps", prefix);
 #if 0
 	showRadio(wp, "wl_basic.csma", wl_csma);
@@ -3935,14 +3955,13 @@ void ej_show_wireless_single(webs_t wp, char *prefix)
 		}
 #if !defined(HAVE_BUFFALO)
 #if defined(HAVE_MADWIFI) || defined(HAVE_ATH9K) && !defined(HAVE_MADIFI_MIMO)
-		if ((is_ath10k(prefix) && has_5ghz(prefix)) || (is_mt7615(prefix) && has_5ghz(prefix)) || is_ath5k(prefix) || is_ath9k(prefix)
-		    || (!is_mvebu(prefix) && !has_vht80(prefix) && !is_ath10k(prefix) && !is_mt76(prefix))) {
+		if (has_half(prefix))
 			websWrite(wp, "document.write(\"<option value=\\\"10\\\" %s >\" + share.half + \"</option>\");\n", nvram_matchi(wl_width, 10) ? "selected=\\\"selected\\\"" : "");
+		if (has_quarter(prefix))
 			websWrite(wp, "document.write(\"<option value=\\\"5\\\" %s >\" + share.quarter + \"</option>\");\n", nvram_matchi(wl_width, 5) ? "selected=\\\"selected\\\"" : "");
-			if (registered_has_subquarter() && (is_ath5k(prefix) || is_ath9k(prefix))) {
-				/* will be enabled once it is tested and the spectrum analyse is done */
-				websWrite(wp, "document.write(\"<option value=\\\"2\\\" %s >\" + share.subquarter + \"</option>\");\n", nvram_matchi(wl_width, 2) ? "selected=\\\"selected\\\"" : "");
-			}
+		if (registered_has_subquarter() && has_subquarter(prefix)) {
+			/* will be enabled once it is tested and the spectrum analyse is done */
+			websWrite(wp, "document.write(\"<option value=\\\"2\\\" %s >\" + share.subquarter + \"</option>\");\n", nvram_matchi(wl_width, 2) ? "selected=\\\"selected\\\"" : "");
 		}
 #endif
 #endif
@@ -4265,6 +4284,12 @@ void ej_show_wireless_single(webs_t wp, char *prefix)
 	}
 #endif
 #endif
+	if (has_ldpc(prefix)) {
+		char *netmode = nvram_nget("%s_net_mode", prefix);
+		if ((strcmp(netmode, "mixed") &&	//
+		     strcmp(netmode, "ac-only") && strcmp(netmode, "acn-mixed")))
+			showRadioInv(wp, "wl_basic.ldpc", wl_ldpc);
+	}
 	if (has_uapsd(prefix)) {
 		showRadio(wp, "wl_basic.uapsd", wl_uapsd);
 	}
