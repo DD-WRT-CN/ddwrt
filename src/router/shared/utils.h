@@ -779,6 +779,8 @@
 
 #define ROUTER_UBNT_POWERBEAMAC_GEN2 0x10a10c
 
+#define ROUTER_PHICOMM_K3 0x10a10d
+
 #define NVROUTER "DD_BOARD"
 #define NVROUTER_ALT "alternate_name"
 

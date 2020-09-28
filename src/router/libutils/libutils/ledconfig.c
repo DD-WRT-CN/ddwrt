@@ -1682,6 +1682,8 @@ static void getledconfig(struct ledconfig *cfg)
 		cfg->connected_gpio = 0x100;
 		cfg->sec0_gpio = 0x103;
 		break;
+	//case ROUTER_PHICOMM_K3:
+		//break;
 #endif
 	}
 }

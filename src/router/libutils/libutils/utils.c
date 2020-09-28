@@ -1682,6 +1682,7 @@ void getSystemMac(char *newmac)
 		strcpy(newmac, nvram_safe_get("et2macaddr"));
 		break;
 	case ROUTER_DLINK_DIR885:
+	case ROUTER_PHICOMM_K3:
 		if (nvram_exists("et0macaddr"))
 			strcpy(newmac, nvram_safe_get("et0macaddr"));
 		else

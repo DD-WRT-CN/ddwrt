@@ -3749,6 +3749,7 @@ void setRegulationDomain(char *reg)
 		case ROUTER_ASUS_AC5300:
 		case ROUTER_ASUS_AC3200:
 		case ROUTER_ASUS_AC3100:
+		case ROUTER_PHICOMM_K3:
 			memcpy(pairs, dhd_pairs, sizeof(pairs));
 			pairs[EU].code0 = "E0";
 			pairs[EU].rev0 = 962;

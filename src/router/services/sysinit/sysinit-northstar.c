@@ -5603,6 +5603,43 @@ void start_sysinit(void)
 		set_gpio(18, 1);	// fixup wifi button
 		set_gpio(20, 1);	// fixup ses button
 		break;
+	case ROUTER_PHICOMM_K3:
+		if (!nvram_exists("0:venid")) {
+
+			nvram_set("devpath0", "pcie/1/1");
+			nvram_set("devpath1", "pcie/2/1");
+			restore_set("0:", ac3100_0_params);
+			restore_set("1:", ac3100_1_params);
+			nvram_commit();
+		}
+		if (!strlen(nvram_safe_get("et2macaddr"))) {
+			if (!strlen(nvram_safe_get("et0macaddr")))
+				nvram_set("et2macaddr", nvram_safe_get("0:macaddr"));
+			else
+				nvram_set("et2macaddr", nvram_safe_get("et0macaddr"));
+			nvram_set("et2mdcport", nvram_safe_get("et0mdcport"));
+			nvram_set("et2phyaddr", nvram_safe_get("et0phyaddr"));
+			nvram_seti("et_txq_thresh", 3300);
+			nvram_set("vlan1ports", "0 1 2 5 8*");
+			nvram_set("vlan2ports", "3 8u");
+			nvram_set("vlan1hwname", "et2");
+			nvram_set("vlan2hwname", "et2");
+			nvram_unset("et0macaddr");
+			nvram_unset("et1macaddr");
+			nvram_commit();
+		}
+		/* ldo patch */
+		{
+			char *terr = nvram_safe_get("territory_code");
+			if (strstr(terr, "01") && nvram_match("0:boardflags4", "0xe")) {
+				nvram_set("0:boardflags4", "0x8e");
+				nvram_set("1:boardflags4", "0x8e");
+				nvram_commit();
+			}
+		}
+		nvram_seti("wait_time", 1);	//otherwise boot time takes very long
+		set_gpio(17, 1);	// fixup reset button
+		break;
 	case ROUTER_ASUS_AC5300:
 		/* update board limits */
 		if (nvram_match("0:maxp2ga0", "0x60") && nvram_match("bl_version", "1.0.3.4")) {

@@ -462,6 +462,10 @@ int internal_getRouterBrand()
 		return ROUTER_ASUS_RTN18U;
 	}
 
+	if (nvram_match("modelname", "K3")) {
+		setRouter("Phicomm K3");
+		return ROUTER_PHICOMM_K3;
+	}
 	if (boardnum == 24 && nvram_match("boardtype", "0x0646")
 	    && nvram_match("boardrev", "0x1100")
 	    && nvram_match("gpio8", "wps_button")) {

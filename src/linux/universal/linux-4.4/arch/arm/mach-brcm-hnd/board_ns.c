@@ -996,6 +996,9 @@ struct mtd_partition *init_nflash_mtd_partitions(hndnand_t * nfl, struct mtd_inf
 	if (boardnum == 32 && nvram_match("boardtype", "0x0646") && nvram_match("boardrev", "0x1601") && nvram_match("et2phyaddr", "30")) {
 		bootossz = 0x4000000;
 	}
+	if (nvram_match("modelname", "K3")) {
+		nvsz = 0x100000;
+	}
 
 #ifdef CONFIG_FAILSAFE_UPGRADE
 	char *img_boot = nvram_get(BOOTPARTITION);
@@ -1064,7 +1067,15 @@ struct mtd_partition *init_nflash_mtd_partitions(hndnand_t * nfl, struct mtd_inf
 		else 
 		bcm947xx_nflash_parts[nparts].size = NFL_BOOT_SIZE - offset;
 		bcm947xx_nflash_parts[nparts].offset = offset;
+		if (nvram_match("modelname", "K3")) {
+			offset += bcm947xx_nflash_parts[nparts].size;
+			nparts++;
 
+			/* Setup phicomm partition */
+			bcm947xx_nflash_parts[nparts].name = "phicomm";
+			bcm947xx_nflash_parts[nparts].size = NFL_BOOT_SIZE - offset;
+			bcm947xx_nflash_parts[nparts].offset = offset;
+		}
 		offset = NFL_BOOT_SIZE;
 		nparts++;
 	}

@@ -2629,7 +2629,14 @@ void start_restore_defaults(void)
 			nvram_set("vlan2ports", "4 7u");
 		}
 		break;
-
+	case ROUTER_PHICOMM_K3:
+		if (!nvram_exists("vlan1ports") || nvram_match("vlan1ports", "")
+		    || !nvram_exists("vlan2ports")
+		    || nvram_match("vlan2ports", "")) {
+			nvram_set("vlan1ports", "0 1 2 5 8*");
+			nvram_set("vlan2ports", "3 8u");
+		}
+		break;
 	case ROUTER_ASUS_AC5300:
 		if (!nvram_exists("vlan1ports") || nvram_match("vlan1ports", "")
 		    || !nvram_exists("vlan2ports")
