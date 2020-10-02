@@ -18,7 +18,7 @@ IMAGEDIR := $(RELEASEDIR)/image
 export PATH := $(RELEASEDIR)/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin:$(PATH)
 export TOOLCHAIN := $(RELEASEDIR)/toolchains/toolchain-arm_cortex-a9_gcc-8.2.0_musl_eabi/bin
 #ifeq ($(wildcard $(RELEASEDIR)/.svn/*),)
-	SVNREV := 44433
+	SVNREV := 44480
 #else
 #	SVNREV := $(shell svnversion -n)
 #endif
